@@ -125,10 +125,14 @@ def data_fetch(ctx: Ctx, start: object, end: object, provider: str | None) -> No
     begin = start.date() if start else s.data.history_start  # type: ignore[attr-defined]
     finish = end.date() if end else clock.last_closed_session(clock.now_utc())  # type: ignore[attr-defined]
     prov = make_provider(s, ctx.secrets)
-    bars = prov.fetch(list(s.watchlist), begin, finish)
+    refs = [r for r in s.sources.reference_symbols if r not in s.watchlist]
+    bars = prov.fetch([*s.watchlist, *refs], begin, finish)
     missing = sorted(set(s.watchlist) - set(bars))
     if missing:
         raise DataError(f"no bars for watchlist symbols {missing}")
+    for r in refs:
+        if r not in bars:
+            click.echo(f"{r}: no bars; that baseline will be missing from the scoreboard")
     BarCache(s.data.cache_dir, DEFAULT_NAMESPACE).write(bars)
     for sym, df in sorted(bars.items()):
         click.echo(f"{sym:6s} {len(df):5d} bars {df.index[0].date()} to {df.index[-1].date()}")

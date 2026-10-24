@@ -167,6 +167,11 @@ def test_prompt_never_mentions_prices_and_never_asks_to_predict() -> None:
     assert "not a forecaster" in an.SYSTEM_PROMPT
 
 
+def test_system_prompt_is_long_enough_to_be_cached() -> None:
+    """Haiku 5.5 caches prompts of 512 tokens or more; shorter ones are silently not cached."""
+    assert len(an.SYSTEM_PROMPT) / 4 > 600
+
+
 def test_prompt_caching_flag_on_system_prompt(tmp_path: Path) -> None:
     client = FakeClient()
     a, _ = make(tmp_path, client)

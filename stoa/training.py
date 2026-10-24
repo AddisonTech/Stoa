@@ -246,19 +246,24 @@ def fit_final(settings: Settings, ds: Dataset, kind: str, cutoff: date) -> Train
 
 
 def long_short_returns(oos: pd.DataFrame, top: int, threshold: float) -> pd.Series:
-    """Non-overlapping excess returns of an equal-weight basket of the top-ranked names.
+    """Non-overlapping returns of the top-ranked names minus the average eligible name.
 
     Every ``horizon``-th decision day, take the names above ``threshold`` (at
-    most ``top``) and record their average excess return over the next
-    ``horizon`` sessions. Consecutive values never overlap, so the series has
-    honest volatility and an honest observation count. (Averaging overlapping
-    10 day returns every day would shrink the volatility by about the square
-    root of 10 and inflate the Sharpe by the same factor.)
+    most ``top``) and record their average forward return minus the average
+    forward return of every name the model scored that day. That isolates the
+    skill of the ranking: if the average stock happens to beat SPY over the
+    period, a random basket would too, and that is not edge. Days with no name
+    above the threshold count as zero (the money sits out).
 
-    A cost-free summary of whether the ranking has edge, used for the
-    registry's Sharpe and the DSR. The trading backtest, with every rule and
-    cost, is in the scoreboard. The series carries ``attrs["period"]``, the
-    number of sessions each value spans.
+    Consecutive values never overlap, so the series has honest volatility and
+    an honest observation count. (Averaging overlapping 10 day returns every
+    day would shrink the volatility by about the square root of 10 and inflate
+    the Sharpe by the same factor.)
+
+    A cost-free summary used for the registry's Sharpe and the DSR. The
+    trading backtest, with every rule and cost, against SPY, is the
+    scoreboard. The series carries ``attrs["period"]``, the number of sessions
+    each value spans.
     """
     h = max(1, int(oos.attrs.get("horizon", 1)))
     s = oos.loc[oos["fwd_excess"].notna()]
@@ -271,7 +276,9 @@ def long_short_returns(oos: pd.DataFrame, top: int, threshold: float) -> pd.Seri
 
     def day(g: pd.DataFrame) -> float:
         pick = g.loc[g["p"] > threshold].nlargest(top, "p")
-        return float(pick["fwd_excess"].mean()) if len(pick) else 0.0
+        if not len(pick):
+            return 0.0
+        return float(pick["fwd_excess"].mean() - g["fwd_excess"].mean())
 
     out = s.groupby(level="date").apply(day).astype(float)
     out.attrs["period"] = h

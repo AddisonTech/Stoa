@@ -53,6 +53,7 @@ class DailyRecord(BaseModel):
     benchmark_close: Decimal
     trades_closed: int = 0
     flow: Decimal = ZERO  # deposits minus withdrawals since the previous record
+    strategy: str = ""  # the strategy whose plan produced this day's result
 
 
 class Expectation(BaseModel):
@@ -280,8 +281,25 @@ class ExamStatus:
         return out
 
 
-def paper_exam(track: Track, cfg: ExamConfig) -> tuple[Grade, bool]:
-    paper_days = [d for d in track.days if d.mode in ("paper", "signal")]
+def trailing_run(days: list[DailyRecord], strategy: str) -> list[DailyRecord]:
+    """The latest unbroken run of records produced by ``strategy`` (plus the day before it).
+
+    The exam grades only the strategy that would go live. If the rule pipeline
+    traded for a while because no model was promoted yet, those days do not count.
+    """
+    if not strategy:
+        return list(days)
+    out: list[DailyRecord] = []
+    for d in reversed(days):
+        if d.strategy not in (strategy, ""):
+            out.append(d)  # the starting point of the run
+            break
+        out.append(d)
+    return list(reversed(out))
+
+
+def paper_exam(track: Track, cfg: ExamConfig, strategy: str = "") -> tuple[Grade, bool]:
+    paper_days = trailing_run([d for d in track.days if d.mode in ("paper", "signal")], strategy)
     g = grade(paper_days)
     passed = (
         g.sessions >= cfg.paper_min_sessions

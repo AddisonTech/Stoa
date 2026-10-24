@@ -28,6 +28,11 @@ ENV_PREFIX = "STOA__"
 LIVE_CONFIRM_PHRASE = "I_UNDERSTAND"
 
 
+def _blank_to_none(v: Any) -> Any:
+    """An empty environment override (``STOA__X__Y=``) means unset, not the current folder."""
+    return None if isinstance(v, str) and not v.strip() else v
+
+
 class _Frozen(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -239,6 +244,8 @@ class StateConfig(_Frozen):
     dir: Path = Path("state")
     shared_dir: Path | None = None  # models, registry, data shared by paper and live
 
+    _blank = field_validator("shared_dir", mode="before")(_blank_to_none)
+
 
 class MetricsConfig(_Frozen):
     risk_free_rate: float = 0.0
@@ -343,7 +350,7 @@ class AnalystConfig(_Frozen):
     batch_max_requests: int = Field(default=10000, ge=1, le=100000)
     cache_ttl: Literal["5m", "1h"] = "5m"
     batch_cache_ttl: Literal["5m", "1h"] = "1h"
-    est_system_tokens: int = Field(default=700, ge=0)
+    est_system_tokens: int = Field(default=950, ge=0)
     est_output_tokens: int = Field(default=120, ge=1)
 
 
@@ -403,6 +410,8 @@ class ExamConfig(_Frozen):
     paper_state_dir: Path | None = None  # where live mode reads the paper record from
     require_walkforward_pass: bool = True
     enforce_live: bool = True  # refuse live mode until the exams pass
+
+    _blank = field_validator("paper_state_dir", mode="before")(_blank_to_none)
 
 
 class Settings(_Frozen):

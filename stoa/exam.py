@@ -66,7 +66,8 @@ def paper_track(settings: Settings) -> Track:
 def status(settings: Settings, holdout_lock: Any | None = None) -> ExamStatus:
     wf = read_walkforward(settings.shared_dir)
     track = paper_track(settings)
-    g, passed = paper_exam(track, settings.exam)
+    strategy = "model" if settings.strategy.kind == "model" else "agents"
+    g, passed = paper_exam(track, settings.exam, strategy)
     lock = holdout_lock
     return ExamStatus(
         walkforward_done=wf is not None,

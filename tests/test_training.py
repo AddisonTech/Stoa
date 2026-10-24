@@ -379,3 +379,41 @@ def test_promotion_gate_rules() -> None:
 def test_synthetic_bars_fixture_is_long_enough() -> None:
     b = synthetic_bars(["SPY", "AAA"], date(2016, 1, 4), date(2017, 6, 30), seed=1)
     assert len(b["SPY"]) > 300
+
+
+def test_pipeline_does_not_invent_an_edge_in_noise(tmp_path: Path) -> None:
+    """On pure noise the walk-forward must fail; with a planted edge it must find it."""
+    from stoa.data.synthetic import synthetic_universe
+    from stoa.experiments import Registry as Reg
+    from stoa.retrain import judge
+
+    s = small_model_settings(tmp_path)
+    results = {}
+    for signal in (0.0, 1.5):
+        b, _ = synthetic_universe(
+            SMALL_WATCHLIST,
+            date(2016, 1, 4),
+            date(2021, 12, 31),
+            seed=3,
+            signal=signal,
+            extra=40,
+            references=(),
+        )
+        wf = run_walkforward(
+            s,
+            TrainingInputs(bars=b, extra_symbols=tuple(b)),
+            FeatureSet(quality=False),
+            kinds=("logistic",),
+        )
+        o = wf.scored()
+        o.attrs["horizon"] = wf.horizon
+        from stoa.training import long_short_returns
+
+        rets = long_short_returns(o, 5, 0.55)
+        d = ex.deflate(
+            Reg(tmp_path / f"r{signal}.jsonl"), list(rets), period=int(rets.attrs["period"])
+        )
+        results[signal] = (wf.pooled["logistic"], judge(s, wf, d)[0])
+    noise, edge = results[0.0], results[1.5]
+    assert not noise[1] and noise[0].auc < 0.55
+    assert edge[1] and edge[0].auc > 0.56

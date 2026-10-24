@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Keeps Stoa's durable state on a dedicated branch named stoa-state.
 #   state-branch.sh checkout <dir>          check the branch out into <dir>, creating it if needed
-#   state-branch.sh commit <dir> <message>  commit and push any change under <dir>/state
+#   state-branch.sh commit <dir> <message>  commit and push changes under <dir>/state,
+#                                           <dir>/live-state and <dir>/shared
 set -euo pipefail
 
 BRANCH="stoa-state"
@@ -28,12 +29,14 @@ case "$cmd" in
       git -C "$dir" add README.md
       git -C "$dir" commit --quiet -m "Start Stoa state branch"
     fi
-    mkdir -p "$dir/state"
+    mkdir -p "$dir/state" "$dir/shared"
     ;;
   commit)
     msg="${3:-update state}"
     identity "$dir"
-    git -C "$dir" add -A state
+    for sub in state live-state shared; do
+      if [ -e "$dir/$sub" ]; then git -C "$dir" add -A "$sub"; fi
+    done
     if git -C "$dir" diff --cached --quiet; then
       echo "state unchanged"
       exit 0

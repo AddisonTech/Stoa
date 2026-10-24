@@ -88,7 +88,43 @@ Rules:
 - Promotional, listicle, price-target-only or "stocks to watch" items get materiality
   at most 0.2 and sentiment near 0.
 - If the item is mostly about another company, keep materiality low for this one.
-- Never mention prices, returns or predictions in any field."""
+- Never mention prices, returns or predictions in any field.
+
+Scoring rubric, to keep scores consistent from item to item:
+
+sentiment
+-  0.8 to  1.0: unambiguous good news for the company itself (record results with raised
+   guidance, a large contract win, regulatory approval of a key product).
+-  0.3 to  0.7: mostly positive with some caveats.
+- -0.2 to  0.2: neutral, routine, mixed, or not really about this company.
+- -0.7 to -0.3: mostly negative (a guidance trim, a delay, a downgrade with reasons).
+- -1.0 to -0.8: unambiguous bad news (fraud allegations, a failed trial, a large recall).
+
+materiality
+- 0.0 to 0.2: routine or promotional (conference appearances, minor partnerships,
+  analyst price targets alone, market wrap-ups that mention the ticker).
+- 0.3 to 0.5: worth knowing (a product launch, a mid-size contract, an executive hire).
+- 0.6 to 0.8: important (quarterly results, guidance changes, a large deal, a lawsuit).
+- 0.9 to 1.0: transformative (a merger agreement, bankruptcy, a CEO departure under
+  pressure, a regulator blocking the core business).
+
+confidence
+- High (0.8 to 1.0) when the text states facts plainly. Medium (0.4 to 0.7) when the
+  text is a summary, a headline only, or hedged. Low (under 0.4) when the text is
+  vague, truncated, or mostly about something else.
+
+guidance and surprise
+- Only the company's own forward guidance counts for guidance; analyst estimates do not.
+- surprise needs both a reported figure and a stated expectation in the text. Words like
+  "topped estimates" or "fell short of forecasts" are enough. Otherwise use "none".
+
+Examples (described, not quoted):
+- A headline that a company "beat on revenue and earnings and raised its full-year
+  outlook": sentiment about 0.8, guidance "raised", surprise "beat", materiality about 0.8.
+- An item listing ten stocks "to watch this week" that includes the company:
+  sentiment 0, guidance "none", surprise "none", materiality about 0.1, confidence 0.8.
+- A report that a regulator opened an investigation into the company's accounting:
+  sentiment about -0.7, risk_flags ["regulatory", "accounting"], materiality about 0.8."""
 
 RISK_FLAGS = (
     "litigation",

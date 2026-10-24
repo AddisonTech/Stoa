@@ -234,9 +234,9 @@ def render_verdict(passed: bool, reasons: list[str], deflated: dict[str, Any]) -
         f"## Walk-forward verdict: {'PASS' if passed else 'FAIL'}",
         "",
         f"Deflated Sharpe {deflated.get('dsr', math.nan):.3f} after "
-        f"{int(deflated.get('trials', 0))} recorded trials "
-        f"(cost-free top-{int(deflated.get('top', 0)) or 'N'} basket, for ranking only; "
-        "the trading backtest is in the scoreboard).",
+        f"{int(deflated.get('trials', 0))} recorded trials, measured on a cost-free basket "
+        "of the top-ranked names to judge the ranking. The trading backtest with every rule "
+        "and cost is the scoreboard.",
     ]
     lines += [f"- {r}" for r in reasons]
     return "\n".join(lines) + "\n"

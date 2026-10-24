@@ -47,9 +47,19 @@ def settings(**kw: str) -> Settings:
     return make_settings(**base)
 
 
+_FEATURES: dict[int, dict[str, pd.DataFrame]] = {}
+
+
+def feats_of(bars: Bars) -> dict[str, pd.DataFrame]:
+    key = id(bars)
+    if key not in _FEATURES:
+        _FEATURES[key] = build_features(bars, "SPY")
+    return _FEATURES[key]
+
+
 def uptrend(bars: Bars, day: date) -> list[str]:
     """Symbols that pass the v1 uptrend gate (close above the 50 day average) on ``day``."""
-    f = build_features(bars, "SPY")
+    f = feats_of(bars)
     ts = pd.Timestamp(day)
     out = []
     for sym in SMALL_WATCHLIST:
@@ -65,7 +75,7 @@ def bull_day(bars: Bars, need: int = 3) -> date:
     """A bull-regime day, not an FOMC or CPI day, with at least ``need`` symbols in uptrend."""
     from stoa import events
 
-    f = build_features(bars, "SPY")
+    f = feats_of(bars)
     for ts in reversed(f["SPY"].index[:-30]):
         d = ts.date()
         calm = regime_is_bull(f, "SPY", d) and events.light_reason(d) is None
@@ -167,10 +177,12 @@ def test_event_day_halves_new_position_size(bars: Bars) -> None:
     from stoa import events
 
     s = settings(sizing__method="equal")
-    f = build_features(bars, "SPY")
+    f = feats_of(bars)
     light = calm = None
     for ts in f["SPY"].index[300:-30]:
         d0 = ts.date()
+        if light is not None and calm is not None:
+            break
         if not regime_is_bull(f, "SPY", d0) or not uptrend(bars, d0):
             continue
         if events.light_reason(d0) and light is None:

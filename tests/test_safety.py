@@ -599,3 +599,68 @@ def test_no_secret_appears_in_logs_or_alerts_of_a_full_run(
             continue
         assert value not in haystack, name
     redact.clear()
+
+
+def test_decide_uses_the_promoted_model(tmp_path: Path) -> None:
+    """Train and promote on synthetic data, then a live-style DECIDE ranks with that model."""
+    from stoa.data.synthetic import synthetic_universe
+    from stoa.pipeline import load_inputs
+    from stoa.retrain import train
+
+    s = make_settings(
+        watchlist=",".join(SMALL_WATCHLIST),
+        state__dir=str(tmp_path / "state"),
+        scout__kind="rule",
+        model__universe="watchlist",
+        model__min_train_sessions="300",
+        model__test_sessions="126",
+        model__candidates="[logistic]",
+        model__use_quality="false",
+        model__max_ece="0.2",
+        demo__signal="2.0",
+        crosscheck__enabled="false",
+        earnings__block_when_unknown="false",
+        data__provider="csv",
+    )
+    cutoff = date(2021, 6, 30)
+    out = train(
+        s,
+        load_inputs(s, cutoff, synthetic=True),
+        cutoff=cutoff,
+        results_dir=tmp_path / "r",
+        force_promote=True,
+    )
+    assert out.promoted
+    bars, _ = synthetic_universe(
+        list(s.watchlist), date(2016, 1, 4), date(2021, 12, 31), seed=s.metrics.seed, signal=2.0
+    )
+    broker = SimBroker(
+        Portfolio(cash=D(100)), s.costs, Universe.assume_all_fractionable(s.watchlist, "SPY")
+    )
+    broker.begin_session(
+        DECIDE_AT.date(), prices({k: bars[k] for k in s.watchlist}, DECIDE_AT.date(), "close")
+    )
+    rt, rec = rt_for(s, bars, broker, DECIDE_AT, PAPER)
+    res = jobs.decide(rt)
+    assert res.status == "decided", rec.titles()
+    journal = (s.state.dir / "journal").glob("*.jsonl")
+    records = [json.loads(line) for p in journal for line in p.read_text().splitlines()]
+    decision = next(r for r in records if r["step"] == "decision")
+    assert decision["data"]["strategy"] == "model"
+    assert all(c["source"].startswith("model:") for c in decision["data"]["candidates"])
+    summary = rec.alerts[-1].message
+    assert "No promoted model" not in summary
+
+
+def test_paper_exam_counts_only_the_strategy_that_would_go_live() -> None:
+    spy = walk(80, 0.0005, 0.012, 2)
+    recs = days(walk(80, 0.002, 0.004, 1), spy)
+    recs = [
+        r.model_copy(update={"strategy": "agents" if i < 40 else "model"})
+        for i, r in enumerate(recs)
+    ]
+    t = tracking.Track(days=recs)
+    g_all, _ = tracking.paper_exam(t, ExamConfig())
+    g_model, ok = tracking.paper_exam(t, ExamConfig(), "model")
+    assert g_all.sessions == 80 and g_model.sessions == 41
+    assert not ok or g_model.sessions >= ExamConfig().paper_min_sessions

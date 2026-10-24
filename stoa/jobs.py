@@ -19,7 +19,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -88,6 +88,8 @@ class Runtime:
     earnings_source: EarningsSource | None = None
     sleep: Callable[[float], None] = time.sleep
     use_external: bool = True  # build real HTTP clients for missing sources
+    news_client: Any = None  # stoa.data.news.AlpacaNewsClient, injectable
+    analyst_client: Any = None  # anthropic client, injectable
 
     @property
     def store(self) -> StateStore:
@@ -177,7 +179,9 @@ def make_scout(rt: Runtime, state: State) -> Scout:
     use_llm = s.scout.kind == "llm" or (
         s.scout.kind == "auto" and rt.secrets.llm_api_key is not None
     )
-    budget = Budget(s.llm.monthly_cost_cap_usd, state.llm_spend_by_month, clock=rt.now)
+    # The scout's own cap, never above the overall monthly cap; both share one ledger.
+    cap = min(s.llm.monthly_cost_cap_usd, s.budget.monthly_cap_usd)
+    budget = Budget(cap, state.llm_spend_by_month, clock=rt.now)
     return build_scout(s, rt.secrets, llm=use_llm, budget=budget)
 
 
@@ -231,6 +235,42 @@ def make_earnings_source(rt: Runtime) -> EarningsSource | None:
     return rt.earnings_source
 
 
+def score_todays_text(rt: Runtime, state: State, session: date, notes: list[str]) -> None:
+    """When text features are on: fetch the last two days of watchlist news and score it.
+
+    Runs one call per new item with the cached system prompt, charges the
+    shared monthly ledger, and never fails DECIDE (text is optional).
+    """
+    from stoa import analyst as an
+    from stoa.data.news import AlpacaNewsClient, NewsStore
+
+    s = rt.settings
+    key = rt.secrets.llm_api_key
+    if not (s.model.use_text and s.analyst.enabled and key is not None):
+        return
+    try:
+        news = rt.news_client
+        if news is None:
+            news = AlpacaNewsClient(alpaca_data_client(s, rt.secrets))
+        symbols = sorted(set(s.watchlist) - {s.benchmark})
+        df = news.fetch(symbols, session - timedelta(days=2), session)
+        NewsStore(s.news_path).merge(df)
+        items = an.items_from_news(df, s.analyst.text_chars, s.analyst.max_items_per_symbol_per_day)
+        client = rt.analyst_client or an.make_client(key.get_secret_value())
+        ledger = an.Ledger(s.budget.monthly_cap_usd, state.llm_spend_by_month, clock=rt.now)
+        a = an.Analyst(
+            s.analyst, s.budget, s.llm.prices, client, an.ScoreCache(s.analyst.cache_dir), ledger
+        )
+        rep = a.score_now(items)
+        an.merge_scores(s.analyst_scores_path, a.rows(items))
+        if rep.scored or rep.failed:
+            notes.append(
+                f"Analyst scored {rep.scored} new items (${rep.spent_usd:.3f}), {rep.failed} failed"
+            )
+    except Exception as exc:
+        notes.append(f"Analyst skipped today ({type(exc).__name__})")
+
+
 def build_strategy_for(
     rt: Runtime, state: State, bars: Bars, session: date, notes: list[str]
 ) -> Strategy:
@@ -239,6 +279,7 @@ def build_strategy_for(
         return rt.strategy
     s = rt.settings
     if s.strategy.kind == "model":
+        score_todays_text(rt, state, session, notes)
         upcoming = None
         src = make_earnings_source(rt)
         if src is not None:
@@ -477,6 +518,7 @@ def record_day(rt: Runtime, state: State, book: Book, snap: pd.DataFrame, sessio
     last = t.days[-1] if t.days else None
     flow = state.flows_since_close if last is not None else ZERO
     adjusted = book.equity - t.cost_drag
+    plan = state.pending_plan
     t.record(
         tracking.DailyRecord(
             session=session,
@@ -486,6 +528,7 @@ def record_day(rt: Runtime, state: State, book: Book, snap: pd.DataFrame, sessio
             benchmark_close=dec(cell(snap, s.benchmark, "close")),
             trades_closed=t.pending_trades,
             flow=flow,
+            strategy=(plan.strategy if plan is not None else (last.strategy if last else "")),
         )
     )
     t.pending_trades = 0
@@ -773,7 +816,7 @@ def _summary(
         cash=book.cash,
         next_actions=actions,
         api_spend=float(state.llm_spend_by_month.get(now.strftime("%Y-%m"), ZERO)),
-        api_cap=s.llm.monthly_cost_cap_usd,
+        api_cap=s.budget.monthly_cap_usd,
         realized_ytd=realized,
         tax_reserve=money.tax_reserve(realized, s.money.tax_rate),
         kill_switch=state.kill_switch.active,
