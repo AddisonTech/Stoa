@@ -327,3 +327,36 @@ Pre-registered on 2026-10-24, before any code for it was written. It asks one qu
 - **Evaluation.** Once, after **210 scored sessions** (2027-08-26 at the earliest), with `stoa analyst evaluate`. Two walk-forward runs, identical except for the text features: logistic regression, 10 session horizon, trial 1's features (all ten price features and the five quality features, z-scored), with and without the six text features (`t_sentiment`, `t_guidance`, `t_surprise`, `t_risk`, `t_materiality`, `t_count`). Same walk-forward (63 session test slices, expanding window, 504 sessions minimum training, embargo 10, isotonic calibration inside each fold), same costs. The holdout stays excluded. 210 sessions is what the unchanged walk-forward needs for a full test fold to train on a meaningful stretch of scored news; 60 was not enough (see the exchange on 2026-10-24).
 - **Pass bar.** Measured on the out-of-sample rows dated 2026-10-26 or later, for the model with text: calibration error under 0.05, log loss better than the base rate, log loss lower than the same model without text, and deflated Sharpe at least 0.95 counting every recorded trial. All four, or it fails.
 - **Registry.** `stoa analyst evaluate` logs exactly one trial and refuses to run a second time. It refuses to run before 210 scored sessions.
+
+## Trial 8: event-driven
+
+Pre-registered on 2026-10-24, before any code for it was written. A fixed rule with no fitted parameters: two well-known event effects (post-earnings drift after a strong surprise, and clusters of insider buying), traded on a universe widened into mid and small caps. It is run once with `stoa score --strategy event`. If it fails, the result is reported and nothing is tuned or retried.
+
+**Universe.** Point-in-time S&P 400 and S&P 600 membership with dated removals is not freely available (only commercial sources), so the universe is a liquidity universe, measured each day with no lookahead:
+
+- Candidates: every Alpaca US equity listed on NYSE, Nasdaq, NYSE American, NYSE Arca or Cboe BZX, active or inactive (delisted). OTC is excluded. On 2026-10-24 that is 13,187 active and 2,864 inactive symbols.
+- On each session: close at least $5 and 20 session average dollar volume (close times volume, the 20 sessions ending that day) at least $5 million. On 2026-10-23, 4,287 names passed. ETFs and funds can pass but never produce an event.
+- Account fit, applied at each decision in backtests exactly as live: the stock is fractionable at Alpaca, or its close is below the position size (20% of current equity). Fractionability is Alpaca's flag as of 2026-10-24 (delisted names keep their last flag). On 2026-10-23, 4,205 of the 4,287 passed.
+- Known bias: Alpaca's inactive list is the only record of delisted names, and it may miss names delisted before its coverage. Any such gap favors survivors.
+
+**Data, all point in time.** Daily bars from Alpaca (split and dividend adjusted), 2016 on. Insider purchases from the SEC Insider Transactions Data Sets, quarterly, 2015 Q3 to 2026 Q3. Earnings release times from SEC 8-K item 2.02 acceptance times by CIK; the CIK comes from the SEC ticker map, or for delisted names from the issuer ticker and CIK in the insider data sets. Sector for the 40% cap: the SIC major group (first two digits) from SEC submissions, `Unknown` when there is none.
+
+**Earnings drift signal.** For a release with a known time: the close before the release is the last close before the release time; the first full session after it is the first session that opens after the release (a release before the open uses that day; after the close, the next day; during a session, the next day). The excess return over SPY from that close to the close of the first full session must be at least +5%, and that session's volume at least 2 times the average volume of the 20 sessions before it. Known at the close of that session. Enter at the next open. Hold 20 sessions. Releases without a time (the volume-spike proxy) never produce this signal.
+
+**Insider cluster signal.** Open-market purchases (transaction code P, acquired) by officers or directors (relationship includes Officer or Director). Purchases flagged 10b5-1 (`AFF10B5ONE` true, where the flag exists, 2023 on) are excluded. An amendment that repeats a purchase (same insider, date, shares and price) counts once. A cluster is 2 or more distinct insiders whose purchase dates fall within 10 sessions, at least $100,000 combined (shares times price). **Known at the close of the first session after the filing date of the purchase that completes the cluster.** The brief said the close of the filing date, but the SEC data sets give the filing date without a time and Form 4s are filed until 10 pm, so that would use filings before they existed; this is Stoa's rule for date-only data. Enter at the next open. Hold 40 sessions. An issuer signals at most once in any 40 sessions.
+
+**Slots.** When signals exceed open slots: insider clusters first (largest combined purchase first), then earnings drift by size of the excess move. A signal not entered at its next open is dropped, not queued. A stock already held is not bought again.
+
+**Exits.** The hold period (decided at the close of the 20th or 40th session held, sold at the next open), the ATR stop and trailing stop (2.5 and 3 ATR, `exits`), the earnings rules (never hold through the next report), and the kill switch. Not the 30 session time exit, the trend break or the model's horizon exit.
+
+**Risk, unchanged.** 5 positions, 20% each, 40% per sector, 2% cash, the correlation check, the regime filter (no new entries while SPY is below its 200 day average), the daily loss limit, the 25% kill switch, and broker stops live.
+
+**Costs.** One-way slippage in basis points = 25 times the square root of ($10 million divided by the stock's 20 session average dollar volume), at least 5 and at most 75, per fill, using the average up to the decision day. $100 million a day costs about 8 bps, $10 million 25 bps, $5 million 35 bps. Sell fees unchanged. Applied to every strategy in this scoreboard run, so SPY and MTUM sit at the 5 bps floor as before.
+
+**Grading.** The combined strategy only. Per-signal results (trades, hit rate against SPY over the same holding period, average excess return per trade) are reported as diagnostics, never picked between.
+
+**Pass bar.** Every scoreboard check (Sharpe and Sortino above SPY and max drawdown below SPY on the validation window, Sharpe above SPY in at least 2 of the 3 tune windows, the 25% drawdown cap, at least 30 trades, the API cost cap), deflated Sharpe at least 0.95 counting every recorded trial, and Sharpe above MTUM's on the validation window. All, or it fails.
+
+**Holdout.** 2026-07-01 to 2026-10-23 stays excluded and unscored. The scoreboard windows end 2026-06-30.
+
+**Registry.** The one `stoa score --strategy event` run logs exactly one trial.
