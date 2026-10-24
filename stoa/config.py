@@ -43,6 +43,10 @@ class RiskLimits(_Frozen):
     max_orders_per_day: int = 10
     price_sanity_pct: Decimal = Decimal("0.08")
     block_entries_when_risk_off: bool = True
+    max_sector_pct: Decimal = Decimal("0.40")
+    max_pair_correlation: float = 0.8
+    correlation_lookback: int = 60
+    max_benchmark_pct: Decimal = Decimal("0.98")  # SPY-hold fallback only
 
     @model_validator(mode="after")
     def _check(self) -> RiskLimits:
@@ -66,6 +70,14 @@ class RiskLimits(_Frozen):
             )
         if self.price_sanity_pct <= 0:
             raise ValueError("price_sanity_pct must be positive")
+        if not self.max_position_pct <= self.max_sector_pct <= Decimal(1):
+            raise ValueError("max_sector_pct must be between max_position_pct and 1")
+        if not 0 < self.max_pair_correlation <= 1:
+            raise ValueError("max_pair_correlation must be in (0, 1]")
+        if self.correlation_lookback < 20:
+            raise ValueError("correlation_lookback must be at least 20 sessions")
+        if not Decimal(0) < self.max_benchmark_pct <= Decimal(1) - self.cash_buffer_pct:
+            raise ValueError("max_benchmark_pct must leave the cash buffer")
         return self
 
 
@@ -228,6 +240,161 @@ class MetricsConfig(_Frozen):
     seed: int = 7
 
 
+class StrategyConfig(_Frozen):
+    """Which pipeline DECIDE runs. ``model`` is the v0.2 default, ``rule`` is v1's."""
+
+    kind: Literal["model", "rule"] = "model"
+    trade_universe: Literal["watchlist", "universe"] = "watchlist"
+
+
+class SizingConfig(_Frozen):
+    """Bigger when sure and calm, smaller when not. Always clipped by the risk caps."""
+
+    method: Literal["confidence_vol", "equal"] = "confidence_vol"
+    edge: Literal["linear", "kelly"] = "kelly"
+    kelly_fraction: float = Field(default=0.25, gt=0, le=1)
+    vol_measure: Literal["realized", "atr"] = "realized"
+    vol_floor: float = Field(default=0.10, gt=0)  # annualized; stops tiny vol from exploding size
+    portfolio_vol_target: float = Field(default=0.15, gt=0, le=1)  # annualized
+    min_edge: float = Field(default=0.0, ge=0, lt=0.5)
+
+
+class EarningsConfig(_Frozen):
+    enabled: bool = True
+    exit_before: bool = True
+    holding_window_sessions: int = Field(default=10, ge=1)
+    unknown_lookahead_sessions: int = Field(default=15, ge=1)
+    unknown_stale_days: int = Field(default=80, ge=1)
+    block_when_unknown: bool = True
+    confirm_lead_sessions: int = Field(default=10, ge=1)  # backtests: when a date counts as known
+    upcoming_source: Literal["auto", "finnhub", "yahoo", "none"] = "auto"
+    heuristic_volume_multiple: float = Field(default=2.5, gt=1)
+
+
+class EventConfig(_Frozen):
+    enabled: bool = True
+    size_multiplier: float = Field(default=0.5, gt=0, le=1)
+
+
+class ModelConfig(_Frozen):
+    horizon: int = Field(default=10, ge=1, le=60)
+    test_horizon: int = Field(default=5, ge=1, le=60)
+    train_window: Literal["expanding", "rolling"] = "expanding"
+    rolling_sessions: int = Field(default=756, ge=126)
+    test_sessions: int = Field(default=63, ge=5)
+    min_train_sessions: int = Field(default=504, ge=126)
+    embargo_sessions: int | None = None  # None means equal to the horizon
+    calibration: Literal["isotonic", "sigmoid"] = "isotonic"
+    calibration_fraction: float = Field(default=0.25, gt=0.05, lt=0.6)
+    candidates: tuple[Literal["logistic", "hgb"], ...] = ("logistic", "hgb")
+    threshold: float = Field(default=0.55, gt=0.5, lt=1)
+    max_candidates: int = Field(default=10, ge=1)
+    hold_sessions: int | None = None  # None means equal to the horizon
+    use_quality: bool = True
+    use_text: bool = False
+    text_lookback_days: int = Field(default=10, ge=1)
+    min_price: float = Field(default=5.0, ge=0)
+    min_dollar_volume_20: float = Field(default=20_000_000.0, ge=0)
+    gate_folds: int = Field(default=4, ge=1)
+    gate_tolerance: float = Field(default=0.0, ge=0)
+    max_ece: float = Field(default=0.05, gt=0, lt=1)
+    seed: int = 7
+    artifact_dir: Path | None = None  # None means <state.dir>/models
+    registry_path: Path | None = None  # None means <state.dir>/experiments/registry.jsonl
+
+    @model_validator(mode="after")
+    def _check(self) -> ModelConfig:
+        if self.embargo_sessions is not None and self.embargo_sessions < self.horizon:
+            raise ValueError("embargo_sessions must be at least the horizon")
+        if not self.candidates:
+            raise ValueError("model.candidates is empty")
+        return self
+
+    @property
+    def embargo(self) -> int:
+        return self.embargo_sessions if self.embargo_sessions is not None else self.horizon
+
+    @property
+    def hold(self) -> int:
+        return self.hold_sessions if self.hold_sessions is not None else self.horizon
+
+
+class AnalystConfig(_Frozen):
+    """Claude reads text into scores. It never sees prices and never predicts."""
+
+    enabled: bool = True  # used only when ANTHROPIC_API_KEY is set
+    model: str = "claude-haiku-5-5"
+    max_tokens: int = Field(default=400, ge=128)
+    text_chars: int = Field(default=1200, ge=200)
+    filing_chars: int = Field(default=6000, ge=500)
+    max_items_per_symbol_per_day: int = Field(default=3, ge=1)
+    contamination_cutoff: date = date(2026, 7, 1)
+    cache_dir: Path = Path("data/analyst_cache")
+    batch_poll_seconds: float = Field(default=60.0, gt=0)
+    batch_max_requests: int = Field(default=10000, ge=1, le=100000)
+    cache_ttl: Literal["5m", "1h"] = "5m"
+    batch_cache_ttl: Literal["5m", "1h"] = "1h"
+    est_system_tokens: int = Field(default=700, ge=0)
+    est_output_tokens: int = Field(default=120, ge=1)
+
+
+class BudgetConfig(_Frozen):
+    """One monthly dollar cap for every Claude call Stoa makes."""
+
+    monthly_cap_usd: float = Field(default=25.0, ge=0)
+    batch_discount: float = Field(default=0.5, gt=0, le=1)
+    cache_write_multiplier_5m: float = 1.25
+    cache_write_multiplier_1h: float = 2.0
+    cache_read_multiplier: float = 0.1
+
+
+class DataSourcesConfig(_Frozen):
+    sec_user_agent: str = "Stoa research stalor54@yahoo.com"
+    sec_rate_per_second: float = Field(default=8.0, gt=0, le=10)
+    sec_cache_dir: Path = Path("data/sec")
+    news_cache_dir: Path = Path("data/news")
+    fundamentals_path: Path | None = None  # None means <state.dir>/fundamentals.parquet
+    earnings_path: Path | None = None  # None means <state.dir>/earnings.parquet
+    reference_symbols: tuple[str, ...] = ("MTUM",)
+
+
+class ApprovalConfig(_Frozen):
+    mode: Literal["auto", "always", "never"] = "auto"
+    live_days: int = Field(default=30, ge=0)
+    wait_minutes: float = Field(default=0.0, ge=0, le=60)
+    poll_interval_seconds: float = Field(default=20.0, gt=0)
+    exempt_reasons: tuple[str, ...] = ()
+
+
+class CrossCheckConfig(_Frozen):
+    enabled: bool = True
+    source: Literal["auto", "finnhub", "yahoo"] = "auto"
+    tolerance_pct: float = Field(default=0.01, gt=0, lt=0.5)
+    on_unavailable: Literal["skip", "proceed"] = "skip"
+    timeout_seconds: float = 10.0
+
+
+class HealthcheckConfig(_Frozen):
+    enabled: bool = True
+    timeout_seconds: float = 10.0
+    retries: int = Field(default=2, ge=0)
+
+
+class FallbackConfig(_Frozen):
+    enabled: bool = True
+    sharpe_window: int = Field(default=63, ge=20)
+    quit_after_sessions: int = Field(default=126, ge=20)
+    min_history_sessions: int = Field(default=63, ge=20)
+
+
+class ExamConfig(_Frozen):
+    paper_min_sessions: int = Field(default=42, ge=1)
+    paper_target_sessions: int = Field(default=63, ge=1)
+    paper_min_trades: int = Field(default=20, ge=0)
+    paper_state_dir: Path | None = None  # where live mode reads the paper record
+    require_walkforward_pass: bool = True
+
+
 class Settings(_Frozen):
     mode: Mode = "paper"
     benchmark: str = "SPY"
@@ -246,6 +413,19 @@ class Settings(_Frozen):
     money: MoneyConfig = MoneyConfig()
     state: StateConfig = StateConfig()
     metrics: MetricsConfig = MetricsConfig()
+    strategy: StrategyConfig = StrategyConfig()
+    sizing: SizingConfig = SizingConfig()
+    earnings: EarningsConfig = EarningsConfig()
+    events: EventConfig = EventConfig()
+    model: ModelConfig = ModelConfig()
+    analyst: AnalystConfig = AnalystConfig()
+    budget: BudgetConfig = BudgetConfig()
+    sources: DataSourcesConfig = DataSourcesConfig()
+    approval: ApprovalConfig = ApprovalConfig()
+    crosscheck: CrossCheckConfig = CrossCheckConfig()
+    healthcheck: HealthcheckConfig = HealthcheckConfig()
+    fallback: FallbackConfig = FallbackConfig()
+    exam: ExamConfig = ExamConfig()
 
     @field_validator("watchlist", mode="before")
     @classmethod
@@ -270,12 +450,51 @@ class Settings(_Frozen):
             raise ValueError("benchmark must be in the watchlist")
         return self
 
+    @property
+    def artifact_dir(self) -> Path:
+        return self.model.artifact_dir or self.state.dir / "models"
+
+    @property
+    def registry_path(self) -> Path:
+        return self.model.registry_path or self.state.dir / "experiments" / "registry.jsonl"
+
+    @property
+    def fundamentals_path(self) -> Path:
+        return self.sources.fundamentals_path or self.state.dir / "fundamentals.parquet"
+
+    @property
+    def earnings_path(self) -> Path:
+        return self.sources.earnings_path or self.state.dir / "earnings.parquet"
+
+    @property
+    def analyst_scores_path(self) -> Path:
+        return self.state.dir / "analyst_scores.parquet"
+
     def strategy_hash(self) -> str:
         """Hash of every setting that changes trading decisions or grading."""
-        keys = {"benchmark", "watchlist", "risk", "quant", "exits", "scout", "costs", "backtest"}
+        keys = {
+            "benchmark",
+            "watchlist",
+            "risk",
+            "quant",
+            "exits",
+            "scout",
+            "costs",
+            "backtest",
+            "strategy",
+            "sizing",
+            "earnings",
+            "events",
+        }
         payload = self.model_dump(mode="json", include=keys)
         payload["llm"] = self.llm.model_dump(
             mode="json", include={"model", "anonymize", "feature_decimals", "max_tokens"}
+        )
+        payload["model"] = self.model.model_dump(
+            mode="json", exclude={"artifact_dir", "registry_path"}
+        )
+        payload["analyst"] = self.analyst.model_dump(
+            mode="json", include={"model", "max_tokens", "text_chars", "filing_chars"}
         )
         blob = json.dumps(payload, sort_keys=True).encode()
         return hashlib.sha256(blob).hexdigest()

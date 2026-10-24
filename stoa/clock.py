@@ -17,6 +17,7 @@ import pandas as pd
 
 NY = ZoneInfo("America/New_York")
 CALENDAR_START = "2015-01-01"
+CALENDAR_END = "2030-12-31"  # the library default is only a year ahead
 
 
 @dataclass(frozen=True)
@@ -32,7 +33,7 @@ class Session:
 
 @lru_cache(maxsize=1)
 def _calendar() -> xc.ExchangeCalendar:
-    return xc.get_calendar("XNYS", start=CALENDAR_START)
+    return xc.get_calendar("XNYS", start=CALENDAR_START, end=CALENDAR_END)
 
 
 def now_utc() -> datetime:

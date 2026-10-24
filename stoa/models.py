@@ -98,6 +98,9 @@ class PlannedOrder(_Model):
     conviction: int | None = None
     thesis: str = ""
     client_order_id: str = ""
+    probability: float | None = None  # calibrated model probability, for the record
+    sector: str | None = None
+    max_weight: Decimal | None = None  # only for the benchmark in the SPY-hold fallback
 
 
 class Fill(_Model):
