@@ -22,23 +22,23 @@ from typing import Literal
 
 import pandas as pd
 
-from stoa import alerts, clock, money, risk
+from stoa import adjust, alerts, clock, money, risk
 from stoa.broker.alpaca import AlpacaBroker, make_trading_client
 from stoa.broker.base import Broker, BrokerPosition, OrderStatus
 from stoa.broker.sim import SimBroker
 from stoa.config import Secrets, Settings
-from stoa.data.base import BarProvider, Bars, DataError, require_fresh
+from stoa.data.base import BarProvider, Bars, DataError, fresh_subset
 from stoa.data.factory import alpaca_data_client, make_provider
 from stoa.features import build_features, cell, slice_features, snapshot
 from stoa.journal import Journal, hash_obj
-from stoa.models import ZERO, ClosedTrade, Holding, PositionMeta, Side, dec
+from stoa.models import ZERO, ClosedTrade, Holding, PlannedOrder, PositionMeta, Side, dec
 from stoa.planner import Decision, DecisionInput, make_plan
 from stoa.portfolio import Lot, Portfolio
 from stoa.roles.llm import Budget
 from stoa.roles.scout import Scout
 from stoa.state import Inception, KillSwitch, OpenOrder, Plan, State, StateStore
 from stoa.strategy import AgentStrategy, build_scout
-from stoa.trader import ExecutionReport, execute_plan
+from stoa.trader import ExecutionReport, execute_plan, scaled_atr
 from stoa.universe import AssetInfo, Universe
 
 log = logging.getLogger(__name__)
@@ -158,13 +158,15 @@ def send(rt: Runtime, result: JobResult, alert: alerts.Alert) -> None:
     result.alerts_sent.append(alert.title)
 
 
-def fetch_bars(rt: Runtime, session: date) -> Bars:
-    provider = rt.provider or make_provider(rt.settings, rt.secrets)
-    start = session - timedelta(days=rt.settings.data.live_lookback_days)
-    symbols = list(rt.settings.watchlist)
+def fetch_bars(rt: Runtime, session: date, held: set[str]) -> tuple[Bars, list[str]]:
+    """Fresh bars for the watchlist. The benchmark and held symbols must be fresh."""
+    s = rt.settings
+    provider = rt.provider or make_provider(s, rt.secrets)
+    start = session - timedelta(days=s.data.live_lookback_days)
+    symbols = list(s.watchlist)
     bars = provider.fetch(symbols, start, session)
-    require_fresh(bars, symbols, session)
-    return bars
+    required = {s.benchmark} | (held & set(symbols))
+    return fresh_subset(bars, symbols, session, required, s.data.min_fresh_fraction)
 
 
 def universe_from_broker(broker: Broker, settings: Settings) -> Universe:
@@ -208,7 +210,7 @@ def settle_open_orders(state: State, broker: Broker) -> list[ClosedTrade | str]:
                     o.symbol: PositionMeta(
                         entry_session=o.session,
                         entry_price=status.filled_avg_price,
-                        entry_atr=o.entry_atr or ZERO,
+                        entry_atr=scaled_atr(o.entry_atr, o.ref_price, status.filled_avg_price),
                     ),
                 }
             if o.side == Side.SELL.value and o.basis is not None:
@@ -225,12 +227,17 @@ def prev_close_equity(state: State, session: date, broker_value: Decimal | None)
     """Equity at the close before ``session``, the daily loss limit's baseline.
 
     Stoa's own record of that close wins; the broker's last_equity is the fallback.
+    Deposits and withdrawals seen since that close are added, so moving money
+    never looks like a down day.
     """
+    base = broker_value
     if state.last_close_equity is not None and state.last_close_session == clock.previous_session(
         session
     ):
-        return state.last_close_equity
-    return broker_value
+        base = state.last_close_equity
+    if base is None:
+        return None
+    return base + state.flows_since_close
 
 
 # ---- shadow portfolio for signal mode ------------------------------------------
@@ -278,7 +285,7 @@ def _book_signal(rt: Runtime, state: State, bars: Bars, session: date) -> Book:
     portfolio = load_shadow(state, s)
     universe = Universe.assume_all_fractionable(s.watchlist, s.benchmark)
     broker = SimBroker(portfolio, s.costs, universe)
-    prev = state.last_close_equity
+    prev = prev_close_equity(state, session, state.last_close_equity)
     settled = None
     plan = state.pending_plan
     held_prices = _prices(bars, session, "close")
@@ -340,14 +347,7 @@ def _book_broker(
         )
         for sym, p in managed.items()
     }
-    if isinstance(broker, AlpacaBroker):
-        since = state.inception.session if state.inception else session
-        flows = money.apply_flows(
-            state, money.parse_flows(broker.transfer_activities(after=since)), since
-        )
-        flow_alert = money.flows_alert(flows, state.principal_withdrawn)
-        if flow_alert is not None:
-            alerts.safe_send(rt.notifier, flow_alert)
+    sync_flows(rt, state, broker, session)
     book = Book(
         equity=close_equity(account.cash, positions, closes),
         cash=account.cash,
@@ -357,6 +357,23 @@ def _book_broker(
         unmanaged=sorted(set(positions) - set(managed)),
     )
     return book, notes
+
+
+def sync_flows(rt: Runtime, state: State, broker: Broker, session: date) -> None:
+    """Apply new deposits and withdrawals from Alpaca to the high-water mark.
+
+    Runs in DECIDE and again in EXECUTE before the kill switch check, so a
+    withdrawal made after the close can never trip the switch at the open.
+    """
+    if not isinstance(broker, AlpacaBroker):
+        return
+    since = state.inception.session if state.inception else session
+    flows = money.apply_flows(
+        state, money.parse_flows(broker.transfer_activities(after=since)), since
+    )
+    flow_alert = money.flows_alert(flows, state.principal_withdrawn)
+    if flow_alert is not None:
+        alerts.safe_send(rt.notifier, flow_alert)
 
 
 def decide(rt: Runtime, force: bool = False) -> JobResult:
@@ -386,7 +403,8 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
 
     result = JobResult(EXIT_OK, "decided", session)
     journal = rt.journal
-    bars = fetch_bars(rt, session)
+    held = set(state.positions_meta) | set(state.sim_positions)
+    bars, dropped = fetch_bars(rt, session, held)
     features = build_features(bars, s.benchmark)
     snap = snapshot(features, session)
     atr = {sym: cell(snap, sym, "atr_14") for sym in snap.index}
@@ -394,11 +412,15 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
         now, "decide", session, "data", symbols=sorted(bars), features_hash=hash_obj(snap.to_dict())
     )
 
-    notes: list[str] = []
+    notes: list[str] = adjust.apply_adjustments(state, bars, shadow=s.mode == "signal")
+    if dropped:
+        notes.append(f"No fresh bar today, skipped: {', '.join(dropped)}")
+    adjust.adjust_benchmark(state, bars, s.benchmark)
     if s.mode == "signal":
         book = _book_signal(rt, state, bars, session)
     else:
-        book, notes = _book_broker(rt, state, session, atr, _prices(bars, session, "close"))
+        book, broker_notes = _book_broker(rt, state, session, atr, _prices(bars, session, "close"))
+        notes += broker_notes
 
     if state.inception is None:
         state.inception = Inception(
@@ -486,6 +508,8 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
     send(rt, result, alerts.daily_summary_alert(_summary(rt, state, book, snap, plan, notes, now)))
     state.last_close_session = session
     state.last_close_equity = book.equity
+    state.flows_since_close = ZERO
+    adjust.anchor(state, bars, session, s.benchmark)
     state.mark_decided(session)
     store.save(state)
     return result
@@ -622,6 +646,7 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         raise Refusal(f"Alpaca says trading is blocked on this account (status {account.status})")
     if isinstance(broker, AlpacaBroker) and not broker.market_is_open():
         raise Refusal("Alpaca says the market is closed right now; orders would queue blind")
+    sync_flows(rt, state, broker, session)
     # The high-water mark only moves on closes, as in backtests. execute_plan checks it.
     hwm = state.high_water_mark or account.equity
 
@@ -672,7 +697,7 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         else:
             state.open_orders = [
                 *state.open_orders,
-                _open_order(f.order.symbol, st, session, before, f.order.entry_atr),
+                _open_order(f.order, st, session, before),
             ]
             send(
                 rt,
@@ -720,20 +745,22 @@ def closed_trades(report: ExecutionReport, meta: dict[str, PositionMeta]) -> lis
 
 
 def _open_order(
-    symbol: str,
+    order: PlannedOrder,
     st: OrderStatus,
     session: date,
     before: dict[str, BrokerPosition],
-    atr: Decimal | None,
 ) -> OpenOrder:
+    symbol = order.symbol
     basis = before[symbol].avg_entry_price if symbol in before else None
+    buy = st.side is Side.BUY
     return OpenOrder(
         client_order_id=st.client_order_id,
         symbol=symbol,
         side=st.side.value,
         session=session,
-        basis=basis if st.side is Side.SELL else None,
-        entry_atr=atr if st.side is Side.BUY else None,
+        basis=None if buy else basis,
+        entry_atr=order.entry_atr if buy else None,
+        ref_price=order.ref_price if buy else None,
     )
 
 

@@ -11,7 +11,6 @@ import pytest
 from stoa.broker.alpaca import AlpacaBroker
 from stoa.broker.base import BrokerError, OrderRequest
 from stoa.data.alpaca import AlpacaDataProvider
-from stoa.data.base import DataError
 from stoa.models import Side
 
 D = Decimal
@@ -332,12 +331,15 @@ def test_bars_fall_back_to_iex() -> None:
     assert feeds == ["sip", "iex"] and prov.last_feed_used == "iex"
 
 
-def test_bars_missing_symbol_fails() -> None:
+def test_bars_missing_symbol_is_reported_not_fatal() -> None:
+    """A delisted name returns nothing; the caller decides whether that is fatal."""
+
     def h(req: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"bars": {"SPY": [bar("2026-03-02T05:00:00Z", 500)]}})
 
-    with pytest.raises(DataError, match="AAPL"):
-        provider(h).fetch(["SPY", "AAPL"], date(2026, 3, 1), date(2026, 3, 3))
+    p = provider(h)
+    out = p.fetch(["SPY", "AAPL"], date(2026, 3, 1), date(2026, 3, 3))
+    assert set(out) == {"SPY"} and p.last_missing == ["AAPL"]
 
 
 def test_bars_retry_429() -> None:

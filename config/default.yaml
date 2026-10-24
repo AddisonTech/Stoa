@@ -119,6 +119,7 @@ data:
   live_lookback_days: 450          # calendar days of history fetched fresh for every live run
   timeout_seconds: 30
   max_retries: 4
+  min_fresh_fraction: 0.9          # DECIDE fails if fewer symbols than this have today's bar
 
 alpaca:
   paper_url: https://paper-api.alpaca.markets

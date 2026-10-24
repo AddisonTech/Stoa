@@ -17,6 +17,7 @@ from typing import Protocol
 import httpx
 
 from stoa.models import PlannedOrder, Side
+from stoa.redact import redact
 
 log = logging.getLogger(__name__)
 
@@ -88,8 +89,8 @@ class NtfyNotifier:
     def payload(self, alert: Alert) -> dict[str, object]:
         body: dict[str, object] = {
             "topic": self._topic,
-            "title": alert.title,
-            "message": truncate_utf8(alert.message, self.max_message_bytes),
+            "title": redact(alert.title),
+            "message": truncate_utf8(redact(alert.message), self.max_message_bytes),
             "priority": alert.priority,
         }
         if alert.tags:
@@ -123,7 +124,7 @@ class ConsoleNotifier:
     """Default when no topic is set: prints alerts to the log."""
 
     def send(self, alert: Alert) -> bool:
-        print(f"[alert p{alert.priority}] {alert.title}\n{alert.message}\n")
+        print(f"[alert p{alert.priority}] {redact(alert.title)}\n{redact(alert.message)}\n")
         return True
 
 

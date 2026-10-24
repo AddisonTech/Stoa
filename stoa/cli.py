@@ -14,7 +14,7 @@ from typing import Any, cast
 
 import click
 
-from stoa import __version__, alerts, clock
+from stoa import __version__, alerts, clock, redact
 from stoa.config import Secrets, Settings, load_settings
 from stoa.jobs import EXIT_OK, Runtime, live_lock_problems
 from stoa.jobs import decide as run_decide
@@ -93,6 +93,9 @@ def main(click_ctx: click.Context, config: Path | None, verbose: bool) -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    redact.install()
+    Secrets.from_env()  # registers every secret value with the redacting log filter
     click_ctx.obj = Ctx(config)
 
 
@@ -112,6 +115,7 @@ def data() -> None:
 @friendly_errors
 def data_fetch(ctx: Ctx, start: object, end: object, provider: str | None) -> None:
     """Download daily bars for the watchlist into the local cache."""
+    from stoa.data.base import DataError
     from stoa.data.cache import DEFAULT_NAMESPACE, BarCache
     from stoa.data.factory import make_provider
 
@@ -122,6 +126,9 @@ def data_fetch(ctx: Ctx, start: object, end: object, provider: str | None) -> No
     finish = end.date() if end else clock.last_closed_session(clock.now_utc())  # type: ignore[attr-defined]
     prov = make_provider(s, ctx.secrets)
     bars = prov.fetch(list(s.watchlist), begin, finish)
+    missing = sorted(set(s.watchlist) - set(bars))
+    if missing:
+        raise DataError(f"no bars for watchlist symbols {missing}")
     BarCache(s.data.cache_dir, DEFAULT_NAMESPACE).write(bars)
     for sym, df in sorted(bars.items()):
         click.echo(f"{sym:6s} {len(df):5d} bars {df.index[0].date()} to {df.index[-1].date()}")

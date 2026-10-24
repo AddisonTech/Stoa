@@ -58,6 +58,7 @@ class OpenOrder(BaseModel):
     session: date
     basis: Decimal | None = None  # cost basis per share for a sell, for realized P&L
     entry_atr: Decimal | None = None  # ATR at decision for a buy, for its stop
+    ref_price: Decimal | None = None  # the decision close the ATR was measured against
 
 
 class Inception(BaseModel):
@@ -79,6 +80,7 @@ class State(BaseModel):
     inception: Inception | None = None
     last_close_session: date | None = None
     last_close_equity: Decimal | None = None
+    last_benchmark_close: Decimal | None = None  # adjusted close at last_close_session
     decided_sessions: list[date] = Field(default_factory=list)
     executed_sessions: list[date] = Field(default_factory=list)
     pending_plan: Plan | None = None
@@ -87,6 +89,7 @@ class State(BaseModel):
     llm_spend_by_month: dict[str, Decimal] = Field(default_factory=dict)
     processed_activity_ids: list[str] = Field(default_factory=list)
     net_flows: Decimal = ZERO  # deposits minus withdrawals since inception
+    flows_since_close: Decimal = ZERO  # flows applied after last_close_session's DECIDE
     withdrawn_since_milestone: Decimal = ZERO
     principal_flow_pending: bool = False  # confirmed by hand, not yet seen in activities
     recent_trades: list[ClosedTrade] = Field(default_factory=list)

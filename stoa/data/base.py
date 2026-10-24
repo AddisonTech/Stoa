@@ -73,3 +73,36 @@ def require_fresh(bars: Bars, symbols: list[str], session: date) -> None:
             stale.append(f"{sym}={last}")
     if stale:
         raise DataError(f"stale data for session {session}: {', '.join(stale)}")
+
+
+def fresh_subset(
+    bars: Bars,
+    symbols: list[str],
+    session: date,
+    required: set[str],
+    min_fraction: float,
+) -> tuple[Bars, list[str]]:
+    """Keep the symbols whose latest bar is ``session``; fail loudly when that is not enough.
+
+    Every symbol in ``required`` (the benchmark and anything held) must be fresh.
+    The rest may be dropped for the day (a halt, a pending delisting, a late
+    print), but only while at least ``min_fraction`` of ``symbols`` are fresh.
+    Returns the fresh bars and the dropped symbols.
+    """
+    fresh: Bars = {}
+    dropped: list[str] = []
+    for sym in symbols:
+        df = bars.get(sym)
+        if df is not None and not df.empty and latest_session(bars, sym) == session:
+            fresh[sym] = df
+        else:
+            dropped.append(sym)
+    bad = sorted(required & set(dropped))
+    if bad:
+        require_fresh(bars, bad, session)
+    if symbols and len(fresh) / len(symbols) < min_fraction:
+        raise DataError(
+            f"only {len(fresh)} of {len(symbols)} symbols have a bar for {session}; "
+            f"need {min_fraction:.0%}. Dropped: {', '.join(dropped[:10])}"
+        )
+    return fresh, dropped

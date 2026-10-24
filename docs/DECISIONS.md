@@ -130,3 +130,26 @@ CI fails on co-author or sign-off trailers and on em dashes in commit messages, 
 ## Repository visibility
 
 The task description calls the repository private, but GitHub reports it as public. GitHub disables scheduled workflows in a public repository after 60 days without activity. It is not documented whether bot commits to the state branch count, so the runbook says not to rely on them.
+
+# v0.2
+
+## v1 review: defects found and fixed
+
+A skeptical pass over every v1 module before adding anything. Each item below was a real defect and has a regression test in `tests/test_v1_fixes.py`.
+
+1. **Splits and dividends broke stored prices.** Live bars use `adjustment=all`, so every split or dividend rewrites all earlier prices. Stoa stored entry price and entry ATR from an earlier run and compared them with re-adjusted closes. A 4 for 1 split looked like a 75% crash: the stop fired, and in signal mode the shadow book's share count no longer matched and the kill switch could trip. The inception SPY close drifted the same way on every SPY dividend. Fix: `stoa/adjust.py`. Every stored price carries an anchor (a session and the adjusted close seen then). Each DECIDE compares the anchor bar today with the stored close and rescales entry price, ATR and the signal-mode share count and average cost by the same factor, then moves the anchor to today.
+2. **Entry ATR on the wrong scale after an overnight split.** The plan's ATR came from the DECIDE bars, the entry price from the next morning's fill. A split effective at that open put the stop on the old scale. Fix: the ATR is carried as a fraction of the decision close and applied to the fill price (`trader.scaled_atr`), for immediate fills and for orders settled later.
+3. **A withdrawal after the close could trip the kill switch at the open.** Cash transfers were only read at DECIDE. A withdrawal made in the evening lowered equity at the next open, and EXECUTE compared it with the old high-water mark. Fix: EXECUTE reads transfers too, before the kill switch check (`jobs.sync_flows`).
+4. **Withdrawals looked like a down day.** The daily loss limit compared equity with the last close, without the money that moved since. A $50 withdrawal on a $100 account read as a 50% loss and blocked buying. Fix: flows applied since the last close are added to the baseline (`state.flows_since_close`).
+5. **One delisted or halted symbol stopped all trading.** DECIDE required every watchlist symbol to have today's bar, and the Alpaca provider raised if any symbol came back empty. A single halt or delisting meant no trades and no stop checks for anyone. Fix: the benchmark and every held symbol must be fresh (a stale held symbol still fails loudly, because its stop cannot be checked). Other stale symbols are skipped for the day and named in the summary, as long as at least `data.min_fresh_fraction` (90%) are fresh. The provider now reports missing symbols instead of raising; `stoa data fetch` still refuses an incomplete watchlist.
+6. **The simulated broker failed the whole execution when one symbol had no price.** Alpaca leaves a missing symbol out of its latest trades answer; the simulator raised. Backtests could crash on a symbol that stopped trading. Fix: the simulator matches Alpaca, and the risk check skips that one buy for having no live price.
+7. **Secrets could reach logs and alerts.** Exception text went straight into the urgent failure alert, and an HTTP error can carry a URL. v0.2 adds secret-bearing URLs (the healthcheck ping URL, a quote API token in a query string). Fix: `stoa/redact.py`. Every secret read from the environment is registered; a logging filter masks them in every record, `httpcore` debug logging is capped at WARNING, and every alert title and message is scrubbed before it is sent or printed.
+8. **Signal mode's daily loss baseline ignored the session check.** It used the last recorded close even when that close was not the previous session. Fix: it goes through the same `prev_close_equity` rule as paper and live.
+
+## v1 review: checked and correct
+
+- **Lookahead.** Features at t use bars up to t only; decisions at the close of t fill at the open of t+1; exits use the close of t. The perturbation test still holds and is extended to the model features in v0.2.
+- **Session alignment.** Cron slots, DST and early closes behave as documented. The second slot of each pair exits as already done.
+- **Idempotent EXECUTE.** A crash after submitting and before saving state re-runs safely: every order is looked up by its deterministic client order id and adopted, never resubmitted.
+- **Workflow.** DECIDE and EXECUTE share one concurrency group, state is saved even on failure, and a failure outside Stoa still sends its own urgent alert.
+- **The demo's $20 of cash.** On a $100 account the plan bought four names at $20 each. The scout's fifth idea (PG) was killed by the overbought gate (RSI 92.5 over 85). Had it passed, it would have been sized to $18, not $20: the 2% cash buffer ($2) comes out of the last slot. So the most a full book can hold is 98% invested with five positions, which is the intended reading of 5 positions, 20% each, 2% cash. A position can drift above 20% by rising after entry; Stoa never buys above the cap and does not trim winners.

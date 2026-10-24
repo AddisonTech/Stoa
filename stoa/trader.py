@@ -111,6 +111,19 @@ def cost_basis(positions: dict[str, BrokerPosition], state: State) -> dict[str, 
     return out
 
 
+def scaled_atr(atr: Decimal | None, ref_price: Decimal | None, fill: Decimal) -> Decimal:
+    """ATR from the decision close carried to the fill's price scale.
+
+    The plan's ATR is measured on the bars as adjusted at DECIDE. If a split or
+    dividend takes effect at the next open, the fill is on the new scale. Keeping
+    the ATR as a fraction of the reference close and applying it to the fill
+    price keeps stop and entry on the same scale.
+    """
+    if atr is None or ref_price is None or ref_price <= 0:
+        return atr if atr is not None else ZERO
+    return atr / ref_price * fill
+
+
 def update_meta(
     state: State, report: ExecutionReport, held_after: dict[str, BrokerPosition]
 ) -> None:
@@ -119,9 +132,11 @@ def update_meta(
     for f in report.fills:
         sym = f.order.symbol
         if f.order.side is Side.BUY and sym not in meta and f.status.filled_avg_price is not None:
-            atr = f.order.entry_atr if f.order.entry_atr is not None else ZERO
+            fill = f.status.filled_avg_price
             meta[sym] = PositionMeta(
-                entry_session=report.session, entry_price=f.status.filled_avg_price, entry_atr=atr
+                entry_session=report.session,
+                entry_price=fill,
+                entry_atr=scaled_atr(f.order.entry_atr, f.order.ref_price, fill),
             )
     for sym in list(meta):
         if sym not in held_after:

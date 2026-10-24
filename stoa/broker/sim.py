@@ -85,10 +85,10 @@ class SimBroker:
         return info
 
     def latest_prices(self, symbols: list[str]) -> dict[str, Decimal]:
-        missing = [s for s in symbols if s not in self.prices]
-        if missing:
-            raise BrokerError(f"no price for {missing}")
-        return {s: self.prices[s] for s in symbols}
+        """Prices for symbols that trade this session. Like Alpaca, a missing symbol
+        is left out instead of failing the whole request; the risk check then
+        skips that buy for having no live price."""
+        return {s: self.prices[s] for s in symbols if s in self.tradable_today}
 
     def find_order(self, client_order_id: str) -> OrderStatus | None:
         return self.orders.get(client_order_id)

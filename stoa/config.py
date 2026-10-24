@@ -18,6 +18,8 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
 
+from stoa import redact
+
 Mode = Literal["backtest", "signal", "paper", "live"]
 
 DEFAULT_CONFIG_PATH = Path("config/default.yaml")
@@ -182,6 +184,7 @@ class DataConfig(_Frozen):
     live_lookback_days: int = Field(default=450, ge=400)
     timeout_seconds: float = 30.0
     max_retries: int = Field(default=4, ge=0)
+    min_fresh_fraction: float = Field(default=0.9, gt=0, le=1)
 
 
 class AlpacaConfig(_Frozen):
@@ -291,6 +294,9 @@ class Secrets(BaseModel):
     ntfy_topic: SecretStr | None = None
     ntfy_token: SecretStr | None = None
     live_confirm: SecretStr | None = None
+    ntfy_approval_topic: SecretStr | None = None
+    healthcheck_url: SecretStr | None = None
+    finnhub_key: SecretStr | None = None
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Secrets:
@@ -300,7 +306,7 @@ class Secrets(BaseModel):
             value = e.get(name, "").strip()
             return SecretStr(value) if value else None
 
-        return cls(
+        out = cls(
             alpaca_paper_key_id=get("ALPACA_PAPER_KEY_ID"),
             alpaca_paper_secret=get("ALPACA_PAPER_SECRET"),
             alpaca_live_key_id=get("ALPACA_LIVE_KEY_ID"),
@@ -309,7 +315,21 @@ class Secrets(BaseModel):
             ntfy_topic=get("STOA_NTFY_TOPIC"),
             ntfy_token=get("STOA_NTFY_TOKEN"),
             live_confirm=get("STOA_LIVE_CONFIRM"),
+            ntfy_approval_topic=get("STOA_NTFY_APPROVAL_TOPIC"),
+            healthcheck_url=get("STOA_HEALTHCHECK_URL"),
+            finnhub_key=get("FINNHUB_API_KEY"),
         )
+        redact.register(out.values())
+        return out
+
+    def values(self) -> list[str]:
+        """Every secret value that is set, for log and alert redaction."""
+        out = []
+        for name in type(self).model_fields:
+            v = getattr(self, name)
+            if isinstance(v, SecretStr) and name != "live_confirm":
+                out.append(v.get_secret_value())
+        return out
 
     def has_paper_keys(self) -> bool:
         return self.alpaca_paper_key_id is not None and self.alpaca_paper_secret is not None
