@@ -41,6 +41,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from stoa.config import AnalystConfig, BudgetConfig, ModelPrice
+from stoa.files import replace_file
 from stoa.models import dec
 
 log = logging.getLogger(__name__)
@@ -373,7 +374,7 @@ class ScoreCache:
             json.dumps({"score": score.model_dump(mode="json"), "cost_usd": cost}),
             encoding="utf-8",
         )
-        tmp.replace(p)
+        replace_file(tmp, p)
 
 
 # ---- the client --------------------------------------------------------------------------------
@@ -633,7 +634,7 @@ class BatchJournal:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(".tmp")
         tmp.write_text(json.dumps(data, indent=1), encoding="utf-8")
-        tmp.replace(self.path)
+        replace_file(tmp, self.path)
 
     def opened(self, batch_id: str, keys: list[str]) -> None:
         d = self._load()
@@ -663,5 +664,5 @@ def merge_scores(path: Path, new: pd.DataFrame) -> pd.DataFrame:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     both.reset_index(drop=True).to_parquet(tmp)
-    tmp.replace(path)
+    replace_file(tmp, path)
     return both

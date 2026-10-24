@@ -44,6 +44,7 @@ import pandas as pd
 
 from stoa import pit
 from stoa.data.base import DataError
+from stoa.files import replace_file
 from stoa.net import request_with_retry
 
 log = logging.getLogger(__name__)
@@ -147,7 +148,7 @@ class SECClient:
         p.parent.mkdir(parents=True, exist_ok=True)
         tmp = p.with_suffix(".tmp")
         tmp.write_text(json.dumps(body), encoding="utf-8")
-        tmp.replace(p)
+        replace_file(tmp, p)
 
     def get_json(self, url: str, cache_name: str | None, refresh: bool = False) -> Any | None:
         """GET a JSON document. Returns None on 404 (a company with no XBRL facts)."""

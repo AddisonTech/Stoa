@@ -55,11 +55,19 @@ def test_account_and_headers() -> None:
     def h(req: httpx.Request) -> httpx.Response:
         seen.append(req)
         return httpx.Response(
-            200, json={"equity": "101.25", "cash": "50.5", "last_equity": "100", "status": "ACTIVE"}
+            200,
+            json={
+                "equity": "101.25",
+                "cash": "50.5",
+                "buying_power": "202.5",
+                "last_equity": "100",
+                "status": "ACTIVE",
+            },
         )
 
     acct = broker(h).account()
     assert acct.equity == D("101.25") and acct.cash == D("50.5") and acct.last_equity == D(100)
+    assert acct.buying_power == D("202.5")
     assert seen[0].url.path == "/v2/account"
     assert seen[0].headers["APCA-API-KEY-ID"] == "k"
 

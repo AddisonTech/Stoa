@@ -21,6 +21,7 @@ from typing import Any, Protocol, cast
 from pydantic import BaseModel, ValidationError
 
 from stoa.config import LLMConfig, ModelPrice
+from stoa.files import replace_file
 from stoa.models import dec
 
 log = logging.getLogger(__name__)
@@ -98,7 +99,7 @@ class ReplayCache:
         p.parent.mkdir(parents=True, exist_ok=True)
         tmp = p.with_suffix(".tmp")
         tmp.write_text(json.dumps(record, sort_keys=True, indent=1), encoding="utf-8")
-        tmp.replace(p)
+        replace_file(tmp, p)
 
 
 class Budget:

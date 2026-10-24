@@ -33,6 +33,8 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 
+from stoa.files import replace_file
+
 ARTIFACT_VERSION = 1
 P_MIN, P_MAX = 0.01, 0.99
 
@@ -244,7 +246,7 @@ class ModelStore:
             fh.write(json.dumps(record) + "\n")
         tmp = self.root / "current.json.tmp"
         tmp.write_text(json.dumps(record, indent=2), encoding="utf-8")
-        tmp.replace(self.root / "current.json")
+        replace_file(tmp, self.root / "current.json")
 
     def load_current(self) -> tuple[TrainedModel, ArtifactMeta] | None:
         v = self.current_version()

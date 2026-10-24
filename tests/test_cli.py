@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from decimal import Decimal
 from pathlib import Path
 
+import httpx
 import pytest
 from click.testing import CliRunner
 
@@ -12,6 +14,7 @@ from stoa.state import KillSwitch, StateStore
 from tests.conftest import ROOT
 
 CONFIG = str(ROOT / "config" / "default.yaml")
+Handler = Callable[[httpx.Request], httpx.Response]
 
 
 @pytest.fixture
@@ -56,6 +59,49 @@ def test_status_shows_locks(env: dict[str, str]) -> None:
     assert "mode            paper" in out
     assert "live lock       locked" in out
     assert "pending plan    none" in out
+
+
+def _alpaca_status(
+    env: dict[str, str], monkeypatch: pytest.MonkeyPatch, handler: Handler
+) -> tuple[int, str]:
+    def mock_client(base_url: str, key_id: str, secret: str, timeout: float = 30.0) -> httpx.Client:
+        return httpx.Client(base_url=base_url, transport=httpx.MockTransport(handler))
+
+    monkeypatch.setattr("stoa.jobs.make_trading_client", mock_client)
+    return run({**env, "ALPACA_PAPER_KEY_ID": "PKTEST", "ALPACA_PAPER_SECRET": "SKTEST"}, "status")
+
+
+def test_status_shows_account_when_keys_are_set(
+    env: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: list[str] = []
+
+    def h(req: httpx.Request) -> httpx.Response:
+        seen.append(req.url.path)
+        return httpx.Response(
+            200, json={"equity": "100", "cash": "100", "buying_power": "200", "status": "ACTIVE"}
+        )
+
+    code, out = _alpaca_status(env, monkeypatch, h)
+    assert code == 0 and seen == ["/v2/account"]
+    assert "equity          $100.00" in out
+    assert "cash            $100.00" in out
+    assert "buying power    $200.00" in out
+
+
+def test_status_warns_and_continues_when_account_fails(
+    env: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    code, out = _alpaca_status(env, monkeypatch, lambda _req: httpx.Response(403, json={}))
+    lines = [line for line in out.splitlines() if line.startswith("account ")]
+    assert code == 0 and len(lines) == 1 and "unavailable" in lines[0]
+    assert "equity " not in out
+    assert "pending plan    none" in out and "live model" in out
+
+
+def test_status_skips_account_without_keys(env: dict[str, str]) -> None:
+    code, out = run(env, "status")
+    assert code == 0 and "equity " not in out and "account " not in out
 
 
 def test_alert_test_console_fallback(env: dict[str, str]) -> None:
