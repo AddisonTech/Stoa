@@ -458,7 +458,7 @@ def test_execute_only_sends_approved_orders(tmp_path: Path, bars: Bars) -> None:
     assert [f.symbol for f in broker.fills] == [plan.orders[0].symbol]
     skipped = [a for a in rec.alerts if a.title.startswith("Skipped buy")]
     assert len(skipped) == len(plan.orders) - 1
-    assert all("approval no answer" in a.message for a in skipped)
+    assert all("Not approved (no answer)" in a.message for a in skipped)
 
 
 def test_execute_skip_wrong_nonce_and_silence_send_nothing(tmp_path: Path, bars: Bars) -> None:
@@ -664,3 +664,22 @@ def test_paper_exam_counts_only_the_strategy_that_would_go_live() -> None:
     g_model, ok = tracking.paper_exam(t, ExamConfig(), "model")
     assert g_all.sessions == 80 and g_model.sessions == 41
     assert not ok or g_model.sessions >= ExamConfig().paper_min_sessions
+
+
+def test_fallback_overrides_the_rule_pipeline_in_decide(tmp_path: Path, bars: Bars) -> None:
+    """With the fallback active, even strategy.kind=rule must not open new non-SPY positions."""
+    s, broker = setup(
+        tmp_path, bars, crosscheck__enabled="false", earnings__block_when_unknown="false"
+    )
+    store = StateStore(s.state.dir)
+    state = store.load()
+    tracking.activate(state.track, "test drift", DECIDE_AT.date())
+    store.save(state)
+    rt, _ = rt_for(s, bars, broker, DECIDE_AT, PAPER)
+    assert jobs.decide(rt).status == "decided"
+    plan = store.load().pending_plan
+    assert plan is not None
+    buys = [o for o in plan.orders if o.side is Side.BUY]
+    assert all(o.symbol == "SPY" for o in buys)
+    assert store.load().track.days[-1].strategy == ""
+    assert store.load().track.last_strategy == "fallback"

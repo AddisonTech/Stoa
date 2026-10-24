@@ -237,10 +237,14 @@ def rejected_order_alert(symbol: str, side: Side, detail: str, live: bool) -> Al
 
 
 def skipped_order_alert(symbol: str, side: Side, reason: str, detail: str) -> Alert:
+    if reason == "not_approved":
+        msg = f"Not approved ({detail.removeprefix('approval ')}). Nothing was sent for {symbol}."
+    else:
+        msg = f"Risk check {reason.replace('_', ' ')}: {detail}. Nothing was sent for {symbol}."
     return Alert(
         title=f"Skipped {side.value} {symbol}",
-        message=f"Risk check {reason.replace('_', ' ')}: {detail}. Nothing was sent for {symbol}.",
-        priority=LOW,
+        message=msg,
+        priority=HIGH if side is Side.SELL else LOW,
         tags=("no_entry_sign",),
     )
 

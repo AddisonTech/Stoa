@@ -1,19 +1,17 @@
 # Stoa
 
-AI trading agents that tell you what to buy and when, graded against just holding SPY.
+A daily equity trading system that has to prove it is better than just holding SPY, on risk, before it touches real money.
 
-Stoa runs once a day. A team of roles proposes trades, a rule-based risk engine has the final word, and every decision is logged with its reasoning and scored against two baselines. It has to prove itself in backtest, on a sealed holdout and in paper trading before it ever touches real money.
+Stoa runs once a day. A plain statistical model, trained the honest way, estimates the chance each stock beats SPY over the next two weeks. A rule-based risk engine sizes by confidence and volatility and has the final word. Claude is optional and only reads news into scores. Every decision is logged, and every version ever tried counts against the result.
 
 ## How it works
 
-1. After the close, Stoa pulls split and dividend adjusted daily bars for a 29 symbol watchlist.
-2. It checks open positions against their stops, trailing stops, time limit and trend.
-3. A scout (Claude, or a plain momentum rule) suggests a few names to buy, with a short reason.
-4. Quant gates kill ideas the numbers do not back, and the risk engine sizes what is left.
-5. The plan goes to your phone. After the next open, Stoa places notional market orders.
-6. Every step is journaled, and every run is graded against SPY and a 50/200 day rule.
-
-The model is allowed to have ideas. It never sizes a position, skips a limit or touches money.
+1. After the close, Stoa pulls split and dividend adjusted bars and checks open positions against their stops, the time limit and the next earnings date.
+2. The model ranks the watchlist by its calibrated probability of beating SPY over 10 sessions.
+3. Quant gates, the earnings rule, the regime filter, the 40% sector cap and a correlation check cut the list.
+4. Sizing: bigger when the model is sure and the stock is calm, halved on FOMC and CPI days, always under the caps.
+5. The plan goes to your phone with Approve and Skip buttons (required for the first live month). After the open, Stoa checks the price against a second source and places the approved orders.
+6. A dead man's switch on healthchecks.io alerts your phone if the daily summary never arrives.
 
 ## Quickstart
 
@@ -23,49 +21,50 @@ cd Stoa
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
-pytest                                   # offline, about a minute
+pytest                                   # offline, about two minutes
 python scripts/demo.py                   # synthetic end to end demo, no keys needed
-stoa backtest --strategy agents --window tune_a --synthetic
+stoa model train --synthetic             # walk-forward and the calibration report
 ```
 
 With an Alpaca paper account (free):
 
 ```bash
 export ALPACA_PAPER_KEY_ID=...  ALPACA_PAPER_SECRET=...
-stoa data fetch                          # daily bars from 2016 into data/bars
-stoa score                               # all strategies, all windows, graded
-stoa status
+stoa data fetch && stoa universe build   # bars, including companies that left the index
+stoa fundamentals fetch                  # SEC filings and earnings times
+stoa model train                         # walk-forward, report, promote
+stoa score                               # every strategy, graded on risk
+stoa exam status
 ```
 
-To run it every day from GitHub Actions and get alerts on your phone, follow [docs/RUNBOOK.md](docs/RUNBOOK.md).
+To run it every day from GitHub Actions, follow [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
-## Modes
+## Exam order
 
-| Mode | What it does |
-| --- | --- |
-| backtest | Replays history with the same decision, risk and execution code as live. |
-| signal | Sends the plan to your phone. Never touches a broker. Tracks a paper portfolio of its own. |
-| paper | Trades an Alpaca paper account. This is the default. |
-| live | Trades real money. Locked unless three separate switches are all on. |
+1. Walk-forward results must pass (calibrated, better than the base rate, deflated Sharpe above 0.95).
+2. Then the sealed holdout, scored once.
+3. Then at least two months of paper trading with 20 trades, graded after simulated costs.
+4. Only then does live unlock, on top of the three live switches.
+
+If it cannot beat SPY on risk, or the momentum fund MTUM, the report says so. If live drifts below what walk-forward promised, or six months pass with no edge, it holds SPY instead.
 
 ## Safety
 
-- Gross exposure never goes above 100% of equity. Stoa never borrows, shorts or trades options.
-- At most 5 positions, 20% each, with 2% always kept in cash.
-- No new buys after a 3% down day, or while SPY is below its 200 day average.
-- A 25% drawdown from the high-water mark trips the kill switch: sell everything, buy nothing until a person resets it.
-- A symbol is never bought and sold on the same day.
-- Live trading needs `mode: live`, `STOA_LIVE_CONFIRM=I_UNDERSTAND` and separate live keys. Any one missing and Stoa refuses.
-- Silence means something broke: a summary is sent after every close, even with no trades.
+- Gross exposure never above 100% of equity. No borrowing, shorting or options.
+- At most 5 positions, 20% each, 40% per sector, 2% always in cash.
+- Never holds through an earnings report.
+- A 25% drawdown trips the kill switch. A person resets it.
+- Live needs `mode: live`, `STOA_LIVE_CONFIRM=I_UNDERSTAND`, separate live keys and a passed exam.
 
 Details in [docs/RISK.md](docs/RISK.md).
 
 ## Scoreboard status
 
-Not passed yet. The pass bar is in [docs/SCOREBOARD.md](docs/SCOREBOARD.md) and has not been run on real data in this repository. The sample report in that file is on synthetic data and only shows the format. The holdout (July 2026 onward) is not sealed. See [docs/HOLDOUT.md](docs/HOLDOUT.md).
+Not passed. The bar has not been run on real market data in this repository. Sample reports in the docs are synthetic and only show the format. The holdout is not sealed.
 
 ## Docs
 
+- [docs/TRAINING.md](docs/TRAINING.md) the model, walk-forward, calibration, the trial penalty
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) the design
 - [docs/RUNBOOK.md](docs/RUNBOOK.md) setup and daily operation
 - [docs/RISK.md](docs/RISK.md) every limit and how it is enforced

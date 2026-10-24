@@ -36,8 +36,9 @@ from stoa.data.factory import alpaca_data_client, make_provider
 from stoa.features import build_features, cell, slice_features, snapshot
 from stoa.healthcheck import HealthcheckPinger, NullPinger, Pinger, safe_ping
 from stoa.journal import Journal, hash_obj
-from stoa.live import build_live_model
+from stoa.live import build_live_model, live_calendar
 from stoa.membership import sector_of
+from stoa.model_strategy import ModelStrategy, PanelPredictor
 from stoa.models import (
     ZERO,
     ClosedTrade,
@@ -278,6 +279,18 @@ def build_strategy_for(
     if rt.strategy is not None:
         return rt.strategy
     s = rt.settings
+    if state.track.fallback_active:
+        # SPY-hold: no model view needed. The model strategy's fallback path exits by the
+        # normal rules and buys only SPY, whichever strategy was trading before.
+        empty = pd.DataFrame(
+            columns=["p"], index=pd.MultiIndex.from_tuples([], names=["date", "symbol"])
+        )
+        return ModelStrategy(
+            s,
+            PanelPredictor(empty, {}, name="fallback"),
+            live_calendar(s, bars, None),
+            name="fallback",  # fallback days never count toward the model's paper exam
+        )
     if s.strategy.kind == "model":
         score_todays_text(rt, state, session, notes)
         upcoming = None
@@ -443,6 +456,7 @@ def _book_signal(rt: Runtime, state: State, bars: Bars, session: date) -> Book:
         for t in broker.closed_trades:
             state.add_realized(session.year, t.pnl)
         state.add_trades(broker.closed_trades)
+        state.track.pending_trades += len(broker.closed_trades)
         state.pending_plan = None
         state.mark_executed(session)
     broker.mark(held_prices)
@@ -518,7 +532,6 @@ def record_day(rt: Runtime, state: State, book: Book, snap: pd.DataFrame, sessio
     last = t.days[-1] if t.days else None
     flow = state.flows_since_close if last is not None else ZERO
     adjusted = book.equity - t.cost_drag
-    plan = state.pending_plan
     t.record(
         tracking.DailyRecord(
             session=session,
@@ -528,7 +541,7 @@ def record_day(rt: Runtime, state: State, book: Book, snap: pd.DataFrame, sessio
             benchmark_close=dec(cell(snap, s.benchmark, "close")),
             trades_closed=t.pending_trades,
             flow=flow,
-            strategy=(plan.strategy if plan is not None else (last.strategy if last else "")),
+            strategy=t.last_strategy,
         )
     )
     t.pending_trades = 0
@@ -576,13 +589,14 @@ def sync_flows(rt: Runtime, state: State, broker: Broker, session: date) -> None
 
 
 def decide(rt: Runtime, force: bool = False) -> JobResult:
-    started = False
+    """DECIDE with the dead man's switch: /start when work begins, then success or /fail.
+
+    A run outside the window or for a session already decided pings nothing,
+    so the second cron slot never resets the check.
+    """
 
     def body() -> JobResult:
-        nonlocal started
-        res = _decide(rt, force, on_start=lambda: safe_ping(make_pinger(rt), "start"))
-        started = res.status not in ("outside_window", "already_done")
-        return res
+        return _decide(rt, force, on_start=lambda: safe_ping(make_pinger(rt), "start"))
 
     result = _guarded(rt, "decide", body)
     if result.code == EXIT_OK and result.status == "decided":
@@ -712,6 +726,7 @@ def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: N
         created_at=now,
         equity=book.equity,
     )
+    state.track.last_strategy = strategy.name
     stale = state.pending_plan
     if stale is not None and stale.orders and stale.execute_session <= session:
         notes.append(f"plan for {stale.execute_session} was never executed and is dropped")
@@ -990,6 +1005,8 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
                 ),
             )
     for r in report.rejections:
+        if r.reason == "price_check":
+            continue  # already alerted at a higher priority by the cross-check
         send(rt, result, alerts.skipped_order_alert(r.symbol, r.side, r.reason, r.detail))
     state.pending_plan = None
     state.approval_nonce = None

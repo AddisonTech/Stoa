@@ -75,6 +75,7 @@ class Track(BaseModel):
     cost_drag: Decimal = ZERO  # cumulative simulated costs charged on top of broker fills
     trades_closed: int = 0
     pending_trades: int = 0  # closed since the last daily record
+    last_strategy: str = ""  # the strategy that made the most recent plan
     expectation: Expectation | None = None
     fallback_active: bool = False
     fallback_reason: str = ""

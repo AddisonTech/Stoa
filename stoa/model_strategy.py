@@ -20,6 +20,7 @@ SPY is topped up toward ``risk.max_benchmark_pct`` as cash frees up.
 
 from __future__ import annotations
 
+import dataclasses
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -191,14 +192,11 @@ class ModelStrategy:
             if reason:
                 multiplier = dec(s.events.size_multiplier)
                 note = reason
-            ideas = self._size(inp, snap, positions, passed, returns)
-        ctx = risk.RiskContext(
-            **{
-                **ctx.__dict__,
-                "entry_blocks": blocks,
-                "size_multiplier": multiplier,
-                "size_note": note,
-            }
+            selling = {e.symbol for e in exits}
+            keep = {k: v for k, v in positions.items() if k not in selling}
+            ideas = self._size(inp, snap, keep, passed, returns)
+        ctx = dataclasses.replace(
+            ctx, entry_blocks=blocks, size_multiplier=multiplier, size_note=note
         )
         result = risk.evaluate(ctx, exits, ideas)
         notes = (f"go light: {note}",) if note else ()
