@@ -296,7 +296,8 @@ def evaluate(
             reason = ctx.entry_blocks[sym]
         if reason is None and ctx.fallback_active and sym != ctx.universe.benchmark:
             reason = ("halted", ctx.halt_reason or "SPY-hold fallback is active")
-        if reason is None:
+        fallback_buy = ctx.fallback_active and sym == ctx.universe.benchmark
+        if reason is None and not fallback_buy:
             hit = too_correlated(
                 sym, kept | {b.symbol for b in buys}, ctx.returns, limits.max_pair_correlation
             )
@@ -305,7 +306,8 @@ def evaluate(
         if reason is not None:
             rejections.append(_reject(sym, Side.BUY, reason[0], reason[1]))
             continue
-        if open_count + len(buys) >= limits.max_positions:
+        topping_up = fallback_buy and sym in kept
+        if not topping_up and open_count + len(buys) >= limits.max_positions:
             rejections.append(
                 _reject(sym, Side.BUY, "max_positions", f"limit {limits.max_positions}")
             )
@@ -320,6 +322,8 @@ def evaluate(
         )
         want_w = cap_w if idea.target_weight is None else min(idea.target_weight, cap_w)
         want_w = want_w * ctx.size_multiplier
+        if topping_up:
+            want_w = want_w - ctx.positions[sym].value / ctx.equity
         if want_w <= 0:
             rejections.append(_reject(sym, Side.BUY, "zero_size", "sizing gave no weight"))
             continue
@@ -383,7 +387,11 @@ def _entry_rule_violation(
     if symbol in buying:
         return "already_held", "duplicate buy in this plan"
     pos = ctx.positions.get(symbol)
-    if pos is not None and pos.qty > 0:
+    if (
+        pos is not None
+        and pos.qty > 0
+        and not (ctx.fallback_active and symbol == ctx.universe.benchmark)
+    ):
         return "already_held", "position already open"
     return None
 
@@ -487,7 +495,8 @@ def check_buys(
         if not ctx.universe.is_fractionable(sym):
             rejections.append(_reject(sym, Side.BUY, "not_fractionable", "broker asset flags"))
             continue
-        if sym in ctx.held:
+        topping_up = fallback_buy and sym in ctx.held
+        if sym in ctx.held and not topping_up:
             rejections.append(_reject(sym, Side.BUY, "already_held", "held at execution"))
             continue
         if round_trip_blocked(sym, Side.BUY, ctx.traded_today):
@@ -497,7 +506,7 @@ def check_buys(
             detail = "no live price" if live is None else f"ref {o.ref_price:.2f} live {live:.2f}"
             rejections.append(_reject(sym, Side.BUY, "price_sanity", detail))
             continue
-        if positions >= limits.max_positions:
+        if positions >= limits.max_positions and not topping_up:
             rejections.append(
                 _reject(sym, Side.BUY, "max_positions", f"limit {limits.max_positions}")
             )
@@ -506,7 +515,8 @@ def check_buys(
             rejections.append(_reject(sym, Side.BUY, "max_orders", "per-day order limit"))
             continue
         cap_w = position_cap(sym, o.max_weight, ctx.universe.benchmark, ctx.fallback_active, limits)
-        target = cents_down(ctx.equity * cap_w)
+        already = ctx.position_values.get(sym, ZERO) if topping_up else ZERO
+        target = cents_down(max(ZERO, ctx.equity * cap_w - already))
         sec = sector_of(sym, ctx.sectors)
         sector_room = (
             room
@@ -527,6 +537,6 @@ def check_buys(
         room -= notional
         sector_value[sec] = sector_value.get(sec, ZERO) + notional
         count += 1
-        positions += 1
+        positions += 0 if topping_up else 1
         out.append(o.model_copy(update={"notional": notional}))
     return out, rejections

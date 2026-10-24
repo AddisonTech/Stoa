@@ -56,6 +56,8 @@ class DecisionInput:
     kill_switch_active: bool
     universe: Universe
     recent_trades: tuple[ClosedTrade, ...] = ()
+    halt_reason: str | None = None  # drift fallback or quit rule: no new entries
+    fallback_active: bool = False  # SPY-hold fallback: only the benchmark may be bought
 
 
 @dataclass(frozen=True)
