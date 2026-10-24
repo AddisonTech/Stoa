@@ -93,6 +93,7 @@ All times are New York time.
   - one alert per planned trade (priority 4), with Approve and Skip buttons when approval is on, and
   - the daily summary (priority 3), every trading day, even with no trades.
 - **The 2nd of each month, early morning**: the monthly retrain. New data, the same walk-forward, and a new model only if it is no worse than the current one. You get a short summary.
+  **Currently off** (disabled on 2026-10-24 with `gh workflow disable monthly`). It stays off until a design passes walk-forward: none has (trials 1 to 6 failed, see DECISIONS.md), and retraining a failed design only adds trials to the registry. Turn it back on with `gh workflow enable monthly` or the Actions tab once a model is promoted.
 - **About 9:50 am**: EXECUTE. Stoa places last night's orders and sends one alert per fill, then places a stop order at Alpaca for every position held from a prior day (see docs/RISK.md, Stops at the broker). If a stop fills during the day, DECIDE records it that evening and alerts you.
 - **After each daily run**: the pages workflow rebuilds the read-only dashboard at https://addisontech.github.io/Stoa/ from the committed state. It gets no secrets and has no buttons; approvals stay on your phone. To rebuild by hand: Actions, pages, Run workflow. One-time setup: Settings, Pages, Source: GitHub Actions.
 
