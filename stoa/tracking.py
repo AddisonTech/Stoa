@@ -54,6 +54,7 @@ class DailyRecord(BaseModel):
     trades_closed: int = 0
     flow: Decimal = ZERO  # deposits minus withdrawals since the previous record
     strategy: str = ""  # the strategy whose plan produced this day's result
+    reference_closes: dict[str, Decimal] = Field(default_factory=dict)  # e.g. MTUM
 
 
 class Expectation(BaseModel):

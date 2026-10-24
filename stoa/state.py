@@ -23,6 +23,7 @@ from stoa.tracking import Track
 STATE_VERSION = 1
 SESSION_HISTORY = 60
 RECENT_TRADES = 20
+STOP_OUTS_KEPT = 50
 
 
 class KillSwitch(BaseModel):
@@ -61,6 +62,41 @@ class OpenOrder(BaseModel):
     basis: Decimal | None = None  # cost basis per share for a sell, for realized P&L
     entry_atr: Decimal | None = None  # ATR at decision for a buy, for its stop
     ref_price: Decimal | None = None  # the decision close the ATR was measured against
+
+
+class ProtectiveStop(BaseModel):
+    """A stop sell Stoa placed at the broker at EXECUTE. Day orders, re-placed every morning."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    symbol: str
+    client_order_id: str
+    stop_price: Decimal
+    qty: Decimal
+    session: date
+
+
+class StopOut(BaseModel):
+    """A protective stop that filled during the day, recorded at DECIDE."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    symbol: str
+    client_order_id: str
+    session: date
+    qty: Decimal
+    stop_price: Decimal
+    fill_price: Decimal
+    filled_at: datetime | None = None
+
+
+class HeldAtClose(BaseModel):
+    """A position as marked at DECIDE, for the dashboard. The broker owns the quantity."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    qty: Decimal
+    close: Decimal
 
 
 class Inception(BaseModel):
@@ -102,6 +138,13 @@ class State(BaseModel):
     track: Track = Field(default_factory=Track)
     approval_nonce: str | None = None  # for the pending plan only
     approval_required: bool = False
+    protective_stops: list[ProtectiveStop] = Field(default_factory=list)
+    stop_outs: list[StopOut] = Field(default_factory=list)
+    holdings_at_close: dict[str, HeldAtClose] = Field(default_factory=dict)
+    last_reference_closes: dict[str, Decimal] = Field(default_factory=dict)
+
+    def add_stop_outs(self, items: list[StopOut]) -> None:
+        self.stop_outs = [*self.stop_outs, *items][-STOP_OUTS_KEPT:]
 
     def mark_decided(self, session: date) -> None:
         self.decided_sessions = _push(self.decided_sessions, session)

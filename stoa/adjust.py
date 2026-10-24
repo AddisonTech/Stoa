@@ -59,9 +59,10 @@ def apply_adjustments(state: State, bars: Bars, *, shadow: bool) -> list[str]:
         f = factor(bars, sym, m.ref_session, m.ref_close)
         if f == 1:
             continue
-        meta[sym] = m.model_copy(
-            update={"entry_price": m.entry_price * f, "entry_atr": m.entry_atr * f}
-        )
+        update = {"entry_price": m.entry_price * f, "entry_atr": m.entry_atr * f}
+        if m.stop_price is not None:
+            update["stop_price"] = m.stop_price * f
+        meta[sym] = m.model_copy(update=update)
         if shadow and sym in sim_qty:
             sim_qty[sym] = sim_qty[sym] / f
             sim_cost[sym] = sim_cost[sym] * f
@@ -87,6 +88,38 @@ def adjust_benchmark(state: State, bars: Bars, benchmark: str) -> None:
             d.model_copy(update={"benchmark_close": d.benchmark_close * f})
             for d in state.track.days
         ]
+
+
+def adjust_references(state: State, refs: Bars) -> None:
+    """Keep recorded reference closes (MTUM) on today's scale, like the benchmark."""
+    if not state.track.days:
+        return
+    for sym in refs:
+        f = factor(refs, sym, state.last_close_session, state.last_reference_closes.get(sym))
+        if f == 1:
+            continue
+        state.track.days = [
+            d.model_copy(
+                update={
+                    "reference_closes": {
+                        **d.reference_closes,
+                        sym: d.reference_closes[sym] * f,
+                    }
+                }
+            )
+            if sym in d.reference_closes
+            else d
+            for d in state.track.days
+        ]
+
+
+def reference_closes(refs: Bars, session: date) -> dict[str, Decimal]:
+    out = {}
+    for sym in sorted(refs):
+        close = _close(refs, sym, session)
+        if close is not None:
+            out[sym] = close
+    return out
 
 
 def anchor(state: State, bars: Bars, session: date, benchmark: str) -> None:

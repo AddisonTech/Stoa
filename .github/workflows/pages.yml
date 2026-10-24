@@ -1,0 +1,71 @@
+name: pages
+
+# Rebuilds the read-only dashboard after every daily run, and on demand.
+# It reads committed state from the stoa-state branch and nothing else: no
+# secrets are passed to this workflow, and the build makes no network calls.
+on:
+  workflow_run:
+    workflows: [daily]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      STOA_MODE: ${{ vars.STOA_MODE }}
+      STOA_STATE_DIR: ${{ vars.STOA_MODE == 'live' && 'state-branch/live-state' || 'state-branch/state' }}
+      STOA__EXAM__PAPER_STATE_DIR: state-branch/state
+      STOA__STATE__SHARED_DIR: state-branch/shared
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Check out the state branch, read only
+        run: |
+          if git ls-remote --exit-code --heads origin stoa-state >/dev/null 2>&1; then
+            git fetch --depth=1 origin stoa-state
+            git worktree add --detach state-branch FETCH_HEAD
+          else
+            echo "No stoa-state branch yet, so the dashboard shows the empty state."
+          fi
+          mkdir -p state-branch/state state-branch/shared
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install .
+
+      - name: Build the dashboard
+        run: stoa dashboard build --out site
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

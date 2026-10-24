@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Protocol
 
@@ -79,6 +79,9 @@ class OrderStatus(_Model):
     fees: Decimal = ZERO
     session: date | None = None
     detail: str = ""
+    qty: Decimal | None = None  # the ordered quantity, when the order was by quantity
+    stop_price: Decimal | None = None  # set on stop orders
+    filled_at: datetime | None = None
 
     @property
     def terminal(self) -> bool:

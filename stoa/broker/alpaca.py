@@ -4,6 +4,9 @@ Orders are notional (buys) or quantity (sells) market orders with time in
 force DAY, the only time in force Alpaca allows for fractional orders. Every
 order has a deterministic client order id, and the client looks it up before
 submitting, so a retried job can never double-submit.
+
+Protective stops are quantity stop sells, also DAY, so EXECUTE re-places them
+every morning. Stoa only lists, cancels or replaces orders it placed itself.
 """
 
 from __future__ import annotations
@@ -49,9 +52,16 @@ def _session_of(stamp: str | None) -> date | None:
     return ts.astimezone(NY).date()
 
 
+def _time(stamp: str | None) -> datetime | None:
+    if not stamp:
+        return None
+    return datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+
+
 def parse_order(body: dict[str, Any]) -> OrderStatus:
     filled_qty = _d(body.get("filled_qty"))
     avg = body.get("filled_avg_price")
+    stop = body.get("stop_price")
     return OrderStatus(
         client_order_id=str(body.get("client_order_id", "")),
         broker_order_id=str(body.get("id", "")),
@@ -62,6 +72,9 @@ def parse_order(body: dict[str, Any]) -> OrderStatus:
         filled_avg_price=_d(avg) if avg not in (None, "") else None,
         fees=ZERO,
         session=_session_of(body.get("submitted_at") or body.get("created_at")),
+        qty=_d(body["qty"]) if body.get("qty") not in (None, "") else None,
+        stop_price=_d(stop) if stop not in (None, "") else None,
+        filled_at=_time(body.get("filled_at")),
     )
 
 
@@ -257,6 +270,63 @@ class AlpacaBroker:
         }
         rows = self._json(self._call("GET", "/v2/orders", params=params), "orders")
         return [o for o in (parse_order(r) for r in rows) if o.session == session]
+
+    def open_orders(self) -> list[OrderStatus]:
+        """Every order still working at the broker. Read only."""
+        params = {"status": "open", "limit": 500, "direction": "asc"}
+        rows = self._json(self._call("GET", "/v2/orders", params=params), "open orders")
+        return [parse_order(r) for r in rows]
+
+    def submit_stop(
+        self, symbol: str, qty: Decimal, stop_price: Decimal, client_order_id: str
+    ) -> OrderStatus:
+        """A DAY stop sell for ``qty`` shares (fractional allowed) at ``stop_price``."""
+        existing = self.find_order(client_order_id)
+        if existing is not None:
+            return existing
+        places = 2 if stop_price >= 1 else 4
+        body: dict[str, Any] = {
+            "symbol": symbol,
+            "side": Side.SELL.value,
+            "type": "stop",
+            "time_in_force": "day",
+            "qty": _fmt(qty, QTY_PLACES),
+            "stop_price": format(stop_price.quantize(Decimal(1).scaleb(-places)), "f"),
+            "client_order_id": client_order_id,
+        }
+        resp = self._call("POST", "/v2/orders", json=body)
+        if resp.status_code == 422 and "client_order_id" in resp.text.lower():
+            found = self.find_order(client_order_id)
+            if found is not None:
+                return found
+        if resp.status_code in (403, 422):
+            return OrderStatus(
+                client_order_id=client_order_id,
+                broker_order_id="",
+                symbol=symbol,
+                side=Side.SELL,
+                status="rejected",
+                stop_price=stop_price,
+                detail=f"HTTP {resp.status_code}: {_error_text(resp)}",
+            )
+        return parse_order(self._json(resp, f"stop {client_order_id}"))
+
+    def cancel_order(self, order: OrderStatus) -> OrderStatus:
+        """Cancel one order and wait until the broker confirms it is no longer working.
+
+        Returns the final status. ``canceled`` is the normal outcome; ``filled``
+        means it traded before the cancel landed. Raises BrokerError if the
+        broker refuses or the cancel is not confirmed within the fill timeout.
+        """
+        resp = self._call("DELETE", f"/v2/orders/{order.broker_order_id}")
+        if resp.status_code >= 400 and resp.status_code != 422:
+            raise BrokerError(
+                f"cancel {order.client_order_id}: HTTP {resp.status_code}: {_error_text(resp)}"
+            )
+        final = self.await_terminal([order.client_order_id])
+        if not final or not final[0].terminal:
+            raise BrokerError(f"cancel {order.client_order_id} was not confirmed")
+        return final[0]
 
 
 def _error_text(resp: httpx.Response) -> str:

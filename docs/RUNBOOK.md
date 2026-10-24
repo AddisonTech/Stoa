@@ -93,7 +93,8 @@ All times are New York time.
   - one alert per planned trade (priority 4), with Approve and Skip buttons when approval is on, and
   - the daily summary (priority 3), every trading day, even with no trades.
 - **The 2nd of each month, early morning**: the monthly retrain. New data, the same walk-forward, and a new model only if it is no worse than the current one. You get a short summary.
-- **About 9:50 am**: EXECUTE. Stoa places last night's orders and sends one alert per fill.
+- **About 9:50 am**: EXECUTE. Stoa places last night's orders and sends one alert per fill, then places a stop order at Alpaca for every position held from a prior day (see docs/RISK.md, Stops at the broker). If a stop fills during the day, DECIDE records it that evening and alerts you.
+- **After each daily run**: the pages workflow rebuilds the read-only dashboard at https://addisontech.github.io/Stoa/ from the committed state. It gets no secrets and has no buttons; approvals stay on your phone. To rebuild by hand: Actions, pages, Run workflow. One-time setup: Settings, Pages, Source: GitHub Actions.
 
 GitHub runs each job twice an hour apart (because it ignores daylight saving time). The second run sees the first already did the work and does nothing. Weekends and market holidays are skipped. On early close days (like the day after Thanksgiving) DECIDE runs earlier on its own.
 
@@ -129,6 +130,12 @@ The day's bars were missing or late. Stoa did not trade. It tries again at the n
 
 **"Stoa decide refused to run" (priority 5)**
 A guard said no. The message says which: missing keys, live mode locked, or the account is blocked. Fix what it names.
+
+**"Stop place failed", "Stop replace failed", "Stop cancel failed" or "Stop check failed" (priority 5)**
+Stoa could not place, cancel or check a protective stop at Alpaca. The rest of the run carried on. Open the Alpaca app and look at the position and its open orders. A missing stop is placed again at the next EXECUTE; the close rules still apply in the meantime.
+
+**"Stopped out: SYMBOL" (priority 4)**
+A protective stop filled during the day. Stoa recorded it as a `stop_out` trade at DECIDE. Nothing to do.
 
 **"KILL SWITCH TRIPPED" (priority 5)**
 Equity fell 25% below its best close. Stoa is selling everything at the next open and will not buy again until you reset it. Do not rush. See "Kill switch" below.

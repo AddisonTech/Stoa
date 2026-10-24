@@ -149,6 +149,7 @@ class PositionMeta(_Model):
     entry_atr: Decimal
     ref_session: date | None = None
     ref_close: Decimal | None = None
+    stop_price: Decimal | None = None  # protective stop, set at DECIDE, only ever raised
 
 
 class Holding(_Model):

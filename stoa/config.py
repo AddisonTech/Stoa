@@ -533,6 +533,22 @@ class Settings(_Frozen):
         return hashlib.sha256(blob).hexdigest()
 
 
+# Every secret and the environment variable it is read from. Nothing else holds secrets.
+SECRET_ENV: dict[str, str] = {
+    "alpaca_paper_key_id": "ALPACA_PAPER_KEY_ID",
+    "alpaca_paper_secret": "ALPACA_PAPER_SECRET",
+    "alpaca_live_key_id": "ALPACA_LIVE_KEY_ID",
+    "alpaca_live_secret": "ALPACA_LIVE_SECRET",
+    "llm_api_key": "ANTHROPIC_API_KEY",
+    "ntfy_topic": "STOA_NTFY_TOPIC",
+    "ntfy_token": "STOA_NTFY_TOKEN",
+    "live_confirm": "STOA_LIVE_CONFIRM",
+    "ntfy_approval_topic": "STOA_NTFY_APPROVAL_TOPIC",
+    "healthcheck_url": "STOA_HEALTHCHECK_URL",
+    "finnhub_key": "FINNHUB_API_KEY",
+}
+
+
 class Secrets(BaseModel):
     """Secrets from the environment only. Values never appear in repr or logs."""
 
@@ -558,19 +574,7 @@ class Secrets(BaseModel):
             value = e.get(name, "").strip()
             return SecretStr(value) if value else None
 
-        out = cls(
-            alpaca_paper_key_id=get("ALPACA_PAPER_KEY_ID"),
-            alpaca_paper_secret=get("ALPACA_PAPER_SECRET"),
-            alpaca_live_key_id=get("ALPACA_LIVE_KEY_ID"),
-            alpaca_live_secret=get("ALPACA_LIVE_SECRET"),
-            llm_api_key=get("ANTHROPIC_API_KEY"),
-            ntfy_topic=get("STOA_NTFY_TOPIC"),
-            ntfy_token=get("STOA_NTFY_TOKEN"),
-            live_confirm=get("STOA_LIVE_CONFIRM"),
-            ntfy_approval_topic=get("STOA_NTFY_APPROVAL_TOPIC"),
-            healthcheck_url=get("STOA_HEALTHCHECK_URL"),
-            finnhub_key=get("FINNHUB_API_KEY"),
-        )
+        out = cls(**{name: get(env_name) for name, env_name in SECRET_ENV.items()})
         redact.register(out.values())
         return out
 
