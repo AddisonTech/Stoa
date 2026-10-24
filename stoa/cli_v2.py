@@ -1,5 +1,5 @@
-"""The v0.2 commands: universe, fundamentals, news, analyst, model, experiments, exam,
-fallback and approve. Registered on the main `stoa` group in cli.py."""
+"""The v0.2 and later commands: universe, fundamentals, news, analyst, model, experiments,
+exam, fallback, approve and dashboard. Registered on the main `stoa` group in cli.py."""
 
 from __future__ import annotations
 
@@ -390,6 +390,36 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
         tracking.reset(state.track)
         store.save(state)
         click.echo("Fallback reset. The model trades again from the next DECIDE.")
+
+    # ---- dashboard --------------------------------------------------------------------------
+
+    @main.group()
+    def dashboard() -> None:
+        """The read-only status page for GitHub Pages."""
+
+    @dashboard.command("build")
+    @click.option(
+        "--out", type=click.Path(path_type=Path), default=Path("site"), help="Output folder."
+    )
+    @click.option(
+        "--repo",
+        type=click.Path(path_type=Path),
+        default=Path("."),
+        help="Repository root, for HOLDOUT.lock.",
+    )
+    @click.option(
+        "--results",
+        type=click.Path(path_type=Path),
+        default=None,
+        help="Model reports folder (default <shared>/results).",
+    )
+    @pass_ctx
+    def dashboard_build(ctx: Any, out: Path, repo: Path, results: Path | None) -> None:
+        """Build the static site from committed state only. No network, no broker, no secrets."""
+        from stoa import dashboard as dash
+
+        index = dash.build(ctx.settings, out, repo, results=results)
+        click.echo(f"Wrote {index} and {index.parent / 'data.json'}")
 
     # ---- approve ----------------------------------------------------------------------------
 

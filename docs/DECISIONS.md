@@ -285,3 +285,15 @@ The owner calls this release v0.2, so the package version is 0.2.0. v1's interna
 ## Strict typing
 
 mypy strict covers every module that handles money, sizing, approvals, the model or secrets: the v1 list plus `adjust`, `analyst`, `approvals`, `calibration`, `crosscheck`, `events`, `exam`, `experiments`, `healthcheck`, `membership`, `model`, `pit`, `redact`, `retrain`, `sizing`, `tracking` and `walkforward`. scikit-learn ships no type information, so its imports are untyped and the classifier is reached through a small `Classifier` protocol.
+
+## v0.3: broker stops and the dashboard
+
+- **Which stop goes to the broker.** The one the exit rules already use: the ATR stop or, once higher, the trailing stop. DECIDE stores it on the position and only ever raises it, so the broker stop is never looser than the rule. Rounded up to the tick for the same reason.
+- **DAY stops, re-placed each morning.** Positions are fractional at this account size and Alpaca takes fractional orders only as DAY orders. The gap between the open and EXECUTE is the same window the close-based rules always had.
+- **No stop on a position bought that morning.** A stop that fills the same day would be a round trip, which the risk engine never allows.
+- **Price already through the stop at the open.** No order is placed, because a stop above the market fills at once and that would be a new market sell nobody planned. An alert goes out and the close rule decides. A split that lands overnight shows up the same way and is handled the same way.
+- **Cancel before any sell, confirmed.** A working stop holds the shares, so the planned sell would be rejected. The kill switch flatten goes through the same hook.
+- **MTUM on the dashboard.** DECIDE now fetches the reference funds beside the watchlist (never traded, never fatal) and records each close in the daily record, rescaled for dividends like the SPY close. The chart starts on the first day every line has a value.
+- **The dashboard is read only by construction.** It is built in a workflow that gets no secrets, from committed files, with no network calls and no scripts in the page. The output is also scrubbed for every secret name and any secret value in the build environment.
+- **Whether the dead man's switch ping went out.** Not recorded before; DECIDE now writes `healthcheck.json` (signal, time, sent or not, never the URL).
+- **Version 0.3.0.** `stops`, `dashboard` and `files` join the strict mypy list.

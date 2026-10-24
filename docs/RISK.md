@@ -63,12 +63,26 @@ All exits are checked on the close and sell the whole position at the next open.
 
 Entry price and ATR are rescaled whenever a split or dividend re-adjusts history, so a split never fires a stop.
 
+### Stops at the broker
+
+The rules above look at the close. During the day, a real stop order at Alpaca covers every position held from a prior day.
+
+- **Price.** DECIDE stores each position's stop: the stop or the trailing stop above, whichever is higher, rounded up to the cent. It only ever goes up, so it is never looser than the rule, and it is rescaled with the entry on a split.
+- **Placed.** EXECUTE runs the plan first, then places a DAY stop sell for the whole position. Positions are fractional at this size and Alpaca only takes fractional orders as DAY orders, so the stops expire at the close and are placed again every morning. A position bought that morning gets no stop, so nothing is ever bought and sold the same day. If the price is already at or below the stop at the open, no order is placed (it would fill at once) and you get an alert; the close rule sells it if it stays there.
+- **Before a sell.** Any planned sell, including the kill switch flatten, first cancels that position's open Stoa stop and waits for the broker to confirm, so the sell is never rejected for shares held by the stop.
+- **Fills.** DECIDE checks every stop it placed. A filled one is recorded as a `stop_out` trade with its fill price and time, the position is closed in state, and an alert goes out.
+- **Only its own.** Every stop's client order id starts with `stoa-stop-`. Stoa never lists, cancels or replaces any other order.
+- **Failures.** If placing, cancelling or checking a stop fails, an urgent alert goes out and the rest of the run carries on.
+- **Kill switch.** No new buys, as always. Protective stops stay: any position still held after the flatten gets its stop.
+
+Paper and live use the same code. The live lock is unchanged.
+
 ## The kill switch
 
 The high-water mark is the highest equity at any close. If equity falls 25% or more below it, the kill switch trips:
 
 1. An urgent alert goes to your phone.
-2. Every Stoa position is sold at the next open.
+2. Every Stoa position is sold at the next open (its broker stop is cancelled first).
 3. No new buys happen until a person resets it.
 
 The check runs after each close and again at the open, so an overnight gap can trip it too. Positions outside the watchlist are left alone.

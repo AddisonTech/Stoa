@@ -26,6 +26,7 @@ log = logging.getLogger(__name__)
 Gate = Callable[
     [list[PlannedOrder], Mapping[str, Decimal]], tuple[list[PlannedOrder], list[Rejection]]
 ]
+BeforeSells = Callable[[list[str]], None]
 
 BROKER_MIN_NOTIONAL = Decimal("1.00")
 
@@ -162,6 +163,7 @@ def execute_plan(
     sectors: Mapping[str, str] | None = None,
     halt_reason: str | None = None,
     fallback_active: bool = False,
+    before_sells: BeforeSells | None = None,
 ) -> ExecutionReport:
     """Run one plan. Safe to call again for the same session after a crash.
 
@@ -172,6 +174,9 @@ def execute_plan(
     sent, and returns the ones allowed through plus rejections. EXECUTE uses
     it for the hand approval and the price cross-check. Sells pass the gate
     first so exits are decided before buys.
+
+    ``before_sells`` gets the symbols about to be sold, just before the sells
+    are sent. EXECUTE uses it to cancel their protective stops first.
     """
     report = ExecutionReport(session=session)
     positions = broker.positions()
@@ -206,6 +211,8 @@ def execute_plan(
             for o in plan.orders
             if o.side is Side.BUY
         )
+        if before_sells is not None and flatten:
+            before_sells(sorted({o.symbol for o in flatten}))
         _record(report, _submit_all(broker, flatten), basis)
         update_meta(state, report, broker.positions())
         return report
@@ -256,7 +263,10 @@ def execute_plan(
             sells, {s: p.qty for s, p in positions.items()}, context(positions)
         )
         report.rejections.extend(rej)
-        _record(report, _submit_all(broker, gated(ok, {})), basis)
+        to_sell = gated(ok, {})
+        if before_sells is not None and to_sell:
+            before_sells(sorted({o.symbol for o in to_sell}))
+        _record(report, _submit_all(broker, to_sell), basis)
 
     if buys:
         positions_mid = broker.positions()

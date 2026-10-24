@@ -2,6 +2,8 @@
 
 A daily equity trading system that has to prove it is better than just holding SPY, on risk, before it touches real money.
 
+**Dashboard:** [addisontech.github.io/Stoa](https://addisontech.github.io/Stoa/), read only, rebuilt after every daily run.
+
 Stoa runs once a day. A plain statistical model, trained the honest way, estimates the chance each stock beats SPY over the next two weeks. A rule-based risk engine sizes by confidence and volatility and has the final word. Claude is optional and only reads news into scores. Every decision is logged, and every version ever tried counts against the result.
 
 ## How it works
@@ -11,7 +13,8 @@ Stoa runs once a day. A plain statistical model, trained the honest way, estimat
 3. Quant gates, the earnings rule, the regime filter, the 40% sector cap and a correlation check cut the list.
 4. Sizing: bigger when the model is sure and the stock is calm, halved on FOMC and CPI days, always under the caps.
 5. The plan goes to your phone with Approve and Skip buttons (required for the first live month). After the open, Stoa checks the price against a second source and places the approved orders.
-6. A dead man's switch on healthchecks.io alerts your phone if the daily summary never arrives.
+6. Then it places a stop order at the broker for every position held from a prior day, at the stop the risk engine already uses, so a crash during the day is not left for the next close. A position bought that morning gets none: nothing is ever bought and sold the same day.
+7. A dead man's switch on healthchecks.io alerts your phone if the daily summary never arrives.
 
 ## Quickstart
 
@@ -53,6 +56,7 @@ If it cannot beat SPY on risk, or the momentum fund MTUM, the report says so. If
 - Gross exposure never above 100% of equity. No borrowing, shorting or options.
 - At most 5 positions, 20% each, 40% per sector, 2% always in cash.
 - Never holds through an earnings report.
+- Every position held overnight has a stop order at the broker during the day. Stops only move up.
 - A 25% drawdown trips the kill switch. A person resets it.
 - Live needs `mode: live`, `STOA_LIVE_CONFIRM=I_UNDERSTAND`, separate live keys and a passed exam.
 

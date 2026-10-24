@@ -12,6 +12,7 @@ through the same execution code as paper, live and backtests.
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 import traceback
@@ -23,7 +24,7 @@ from typing import Any, Literal
 
 import pandas as pd
 
-from stoa import adjust, alerts, approvals, clock, exam, money, risk, tracking
+from stoa import adjust, alerts, approvals, clock, exam, money, risk, stops, tracking
 from stoa.approvals import ApprovalClient
 from stoa.broker.alpaca import AlpacaBroker, make_trading_client
 from stoa.broker.base import Broker, BrokerPosition, OrderStatus
@@ -34,7 +35,8 @@ from stoa.data.base import BarProvider, Bars, DataError, fresh_subset
 from stoa.data.external import EarningsSource, PriceSource, pick_source
 from stoa.data.factory import alpaca_data_client, make_provider
 from stoa.features import build_features, cell, slice_features, snapshot
-from stoa.healthcheck import HealthcheckPinger, NullPinger, Pinger, safe_ping
+from stoa.files import replace_file
+from stoa.healthcheck import HealthcheckPinger, NullPinger, Pinger, Signal, safe_ping
 from stoa.journal import Journal, hash_obj
 from stoa.live import build_live_model, live_calendar
 from stoa.membership import sector_of
@@ -53,9 +55,17 @@ from stoa.planner import Decision, DecisionInput, Strategy, make_plan
 from stoa.portfolio import Lot, Portfolio
 from stoa.roles.llm import Budget
 from stoa.roles.scout import Scout
-from stoa.state import Inception, KillSwitch, OpenOrder, Plan, State, StateStore
+from stoa.state import (
+    HeldAtClose,
+    Inception,
+    KillSwitch,
+    OpenOrder,
+    Plan,
+    State,
+    StateStore,
+)
 from stoa.strategy import AgentStrategy, build_scout
-from stoa.trader import ExecutionReport, execute_plan, scaled_atr
+from stoa.trader import ExecutionReport, execute_plan, scaled_atr, traded_sides
 from stoa.universe import AssetInfo, Universe
 
 log = logging.getLogger(__name__)
@@ -329,6 +339,22 @@ def fetch_bars(rt: Runtime, session: date, held: set[str]) -> tuple[Bars, list[s
     return fresh_subset(bars, symbols, session, required, s.data.min_fresh_fraction)
 
 
+def fetch_references(rt: Runtime, session: date, bars: Bars) -> Bars:
+    """Bars for the reference funds (MTUM), for the record only. Never traded, never fatal."""
+    s = rt.settings
+    out: Bars = {sym: bars[sym] for sym in s.sources.reference_symbols if sym in bars}
+    missing = [sym for sym in s.sources.reference_symbols if sym not in out]
+    if not missing:
+        return out
+    provider = rt.provider or make_provider(s, rt.secrets)
+    start = session - timedelta(days=s.data.live_lookback_days)
+    try:
+        out.update(provider.fetch(missing, start, session))
+    except Exception as exc:
+        log.warning("reference bars for %s unavailable: %s", missing, type(exc).__name__)
+    return out
+
+
 def universe_from_broker(broker: Broker, settings: Settings) -> Universe:
     assets: dict[str, AssetInfo] = {s: broker.asset(s) for s in settings.watchlist}
     return Universe(watchlist=settings.watchlist, benchmark=settings.benchmark, assets=assets)
@@ -438,6 +464,7 @@ class Book:
     universe: Universe
     settled: ExecutionReport | None = None
     unmanaged: list[str] = field(default_factory=list)
+    alerts: list[alerts.Alert] = field(default_factory=list)
 
 
 def _book_signal(rt: Runtime, state: State, bars: Bars, session: date) -> Book:
@@ -499,6 +526,18 @@ def _book_broker(
     if account.trading_blocked:
         raise Refusal(f"Alpaca says trading is blocked on this account (status {account.status})")
     positions = broker.positions()
+    stop_alerts: list[alerts.Alert] = []
+    if isinstance(broker, stops.StopBroker):
+        rec = stops.reconcile(broker, state, positions, session, s.costs, s.mode)
+        stop_alerts = rec.alerts
+        state.add_trades(rec.trades)
+        state.track.pending_trades += len(rec.trades)
+        state.track.cost_drag += rec.cost
+        for t in rec.trades:
+            state.add_realized(t.exit_session.year, t.pnl)
+        notes += [
+            f"Stopped out of {o.symbol} at {alerts.money(o.fill_price)}" for o in rec.stop_outs
+        ]
     notes += reconcile_meta(state, positions, session, atr)
     universe = universe_from_broker(broker, s)
     managed = {sym: p for sym, p in positions.items() if sym in s.watchlist}
@@ -516,11 +555,19 @@ def _book_broker(
         prev_equity=prev_close_equity(state, session, account.last_equity),
         universe=universe,
         unmanaged=sorted(set(positions) - set(managed)),
+        alerts=stop_alerts,
     )
     return book, notes
 
 
-def record_day(rt: Runtime, state: State, book: Book, snap: pd.DataFrame, session: date) -> None:
+def record_day(
+    rt: Runtime,
+    state: State,
+    book: Book,
+    snap: pd.DataFrame,
+    session: date,
+    references: Mapping[str, Decimal] | None = None,
+) -> None:
     """One honest daily record: broker equity and equity after Stoa's own cost model.
 
     In paper and live the broker's fills carry no simulated slippage, so the
@@ -542,6 +589,7 @@ def record_day(rt: Runtime, state: State, book: Book, snap: pd.DataFrame, sessio
             trades_closed=t.pending_trades,
             flow=flow,
             strategy=t.last_strategy,
+            reference_closes=dict(references or {}),
         )
     )
     t.pending_trades = 0
@@ -600,10 +648,34 @@ def decide(rt: Runtime, force: bool = False) -> JobResult:
 
     result = _guarded(rt, "decide", body)
     if result.code == EXIT_OK and result.status == "decided":
-        safe_ping(make_pinger(rt), "success", f"decided {result.session}")
+        ok = safe_ping(make_pinger(rt), "success", f"decided {result.session}")
+        record_checkin(rt, "success", ok, result.session)
     elif result.code != EXIT_OK:
-        safe_ping(make_pinger(rt), "fail", result.status)
+        ok = safe_ping(make_pinger(rt), "fail", result.status)
+        record_checkin(rt, "fail", ok, result.session)
     return result
+
+
+CHECKIN_FILE = "healthcheck.json"
+
+
+def record_checkin(rt: Runtime, signal: Signal, sent: bool, session: date | None) -> None:
+    """Whether the dead man's switch ping went out, for the dashboard. Never the URL."""
+    record = {
+        "at": rt.now().isoformat(),
+        "session": session.isoformat() if session else None,
+        "signal": signal,
+        "configured": rt.secrets.healthcheck_url is not None and rt.settings.healthcheck.enabled,
+        "sent": sent,
+    }
+    root = rt.settings.state.dir
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        tmp = root / f"{CHECKIN_FILE}.tmp"
+        tmp.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+        replace_file(tmp, root / CHECKIN_FILE)
+    except OSError as exc:
+        log.warning("could not record the healthcheck check-in: %s", type(exc).__name__)
 
 
 def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: None) -> JobResult:
@@ -632,6 +704,7 @@ def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: N
     journal = rt.journal
     held = set(state.positions_meta) | set(state.sim_positions)
     bars, dropped = fetch_bars(rt, session, held)
+    refs = fetch_references(rt, session, bars)
     features = build_features(bars, s.benchmark)
     snap = snapshot(features, session)
     atr = {sym: cell(snap, sym, "atr_14") for sym in snap.index}
@@ -643,11 +716,15 @@ def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: N
     if dropped:
         notes.append(f"No fresh bar today, skipped: {', '.join(dropped)}")
     adjust.adjust_benchmark(state, bars, s.benchmark)
+    adjust.adjust_references(state, refs)
+    ref_closes = adjust.reference_closes(refs, session)
     if s.mode == "signal":
         book = _book_signal(rt, state, bars, session)
     else:
         book, broker_notes = _book_broker(rt, state, session, atr, _prices(bars, session, "close"))
         notes += broker_notes
+    for a in book.alerts:
+        send(rt, result, a)
 
     if state.inception is None:
         state.inception = Inception(
@@ -661,7 +738,7 @@ def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: N
     state.high_water_mark = risk.next_high_water_mark(state.high_water_mark, book.equity)
     hwm = state.high_water_mark
 
-    record_day(rt, state, book, snap, session)
+    record_day(rt, state, book, snap, session, ref_closes)
     fallback_alert = update_fallback(rt, state, session)
     if fallback_alert is not None:
         send(rt, result, fallback_alert)
@@ -687,6 +764,12 @@ def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: N
         )
     )
     notes.extend(decision.notes)
+    stops.raise_stops(state, book.positions, features, s.exits)
+    closes = _prices(bars, session, "close")
+    state.holdings_at_close = {
+        sym: HeldAtClose(qty=h.qty, close=closes.get(sym, h.avg_entry_price))
+        for sym, h in book.positions.items()
+    }
     journal.write(
         now,
         "decide",
@@ -781,6 +864,7 @@ def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: N
     state.last_close_equity = book.equity
     state.flows_since_close = ZERO
     adjust.anchor(state, bars, session, s.benchmark)
+    state.last_reference_closes = ref_closes
     state.mark_decided(session)
     store.save(state)
     return result
@@ -930,6 +1014,12 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
     track = state.track
     gate = make_gate(rt, state, plan, session, result)
     sectors = {sym: sector_of(sym) for sym in set(s.watchlist) | set(before)}
+
+    def cancel_before_sells(symbols: list[str]) -> None:
+        if isinstance(broker, stops.StopBroker):
+            for a in stops.cancel_stops(broker, symbols):
+                send(rt, result, a)
+
     report = execute_plan(
         plan,
         broker,
@@ -942,6 +1032,7 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         sectors=sectors,
         halt_reason=track.fallback_reason if track.fallback_active else None,
         fallback_active=track.fallback_active,
+        before_sells=cancel_before_sells,
     )
     closed = closed_trades(report, meta_before)
     state.add_trades(closed)
@@ -1008,6 +1099,8 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         if r.reason == "price_check":
             continue  # already alerted at a higher priority by the cross-check
         send(rt, result, alerts.skipped_order_alert(r.symbol, r.side, r.reason, r.detail))
+    if isinstance(broker, stops.StopBroker):
+        protect(rt, broker, state, report, session, result)
     state.pending_plan = None
     state.approval_nonce = None
     state.approval_required = False
@@ -1017,6 +1110,58 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         result.code = EXIT_FAILED
         result.status = "live_order_rejected"
     return result
+
+
+def protect(
+    rt: Runtime,
+    broker: stops.StopBroker,
+    state: State,
+    report: ExecutionReport,
+    session: date,
+    result: JobResult,
+) -> None:
+    """Place the day's protective stops. A failure alerts urgently and never fails EXECUTE.
+
+    Runs after the plan, so a stop is never in the way of a planned sell, and
+    whether or not the kill switch is on: protective stops always stay in place.
+    """
+    s = rt.settings
+    try:
+        positions = broker.positions()
+        bought = {f.status.symbol for f in report.fills if f.status.side is Side.BUY}
+        bought |= {f.order.symbol for f in report.unfilled if f.order.side is Side.BUY}
+        for sym, sides in traded_sides(broker.orders_for_session(session)).items():
+            if Side.BUY in sides:
+                bought.add(sym)
+        held = sorted((set(positions) & set(s.watchlist)) - bought)
+        try:
+            prices = broker.latest_prices(held) if held else {}
+        except Exception as exc:
+            log.warning("latest prices for stops unavailable: %s", type(exc).__name__)
+            prices = {}
+        run = stops.place_stops(
+            broker,
+            state,
+            positions,
+            session,
+            managed=s.watchlist,
+            bought_today=bought,
+            prices=prices,
+        )
+    except Exception as exc:
+        send(rt, result, stops.failure_alert("place", "positions", f"{type(exc).__name__}: {exc}"))
+        return
+    for a in run.alerts:
+        send(rt, result, a)
+    rt.journal.write(
+        rt.now(),
+        "execute",
+        session,
+        "stops",
+        placed=[p.model_dump(mode="json") for p in run.placed],
+        kept=[p.model_dump(mode="json") for p in run.kept],
+        problems=[a.title for a in run.alerts],
+    )
 
 
 def make_gate(
