@@ -17,10 +17,11 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from stoa.models import ZERO, PlannedOrder, PositionMeta
+from stoa.models import ZERO, ClosedTrade, PlannedOrder, PositionMeta
 
 STATE_VERSION = 1
 SESSION_HISTORY = 60
+RECENT_TRADES = 20
 
 
 class KillSwitch(BaseModel):
@@ -45,6 +46,19 @@ class Plan(BaseModel):
     orders: tuple[PlannedOrder, ...]
     equity_at_decide: Decimal
     kill_switch: bool = False
+
+
+class OpenOrder(BaseModel):
+    """An order still working at the broker when EXECUTE stopped waiting."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    client_order_id: str
+    symbol: str
+    side: str
+    session: date
+    basis: Decimal | None = None  # cost basis per share for a sell, for realized P&L
+    entry_atr: Decimal | None = None  # ATR at decision for a buy, for its stop
 
 
 class Inception(BaseModel):
@@ -73,6 +87,11 @@ class State(BaseModel):
     realized_by_year: dict[str, Decimal] = Field(default_factory=dict)
     llm_spend_by_month: dict[str, Decimal] = Field(default_factory=dict)
     processed_activity_ids: list[str] = Field(default_factory=list)
+    net_flows: Decimal = ZERO  # deposits minus withdrawals since inception
+    withdrawn_since_milestone: Decimal = ZERO
+    principal_flow_pending: bool = False  # confirmed by hand, not yet seen in activities
+    recent_trades: list[ClosedTrade] = Field(default_factory=list)
+    open_orders: list[OpenOrder] = Field(default_factory=list)
     sim_cash: Decimal | None = None
     sim_positions: dict[str, Decimal] = Field(default_factory=dict)
     sim_avg_cost: dict[str, Decimal] = Field(default_factory=dict)
@@ -82,6 +101,9 @@ class State(BaseModel):
 
     def mark_executed(self, session: date) -> None:
         self.executed_sessions = _push(self.executed_sessions, session)
+
+    def add_trades(self, trades: list[ClosedTrade]) -> None:
+        self.recent_trades = [*self.recent_trades, *trades][-RECENT_TRADES:]
 
     def realized_for_year(self, year: int) -> Decimal:
         return self.realized_by_year.get(str(year), ZERO)

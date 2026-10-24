@@ -6,13 +6,15 @@ This is the one pipeline that runs in backtest, signal, paper and live.
 from __future__ import annotations
 
 from stoa import risk
-from stoa.config import Settings
+from stoa.baselines import BuyAndHold, SMACrossover
+from stoa.config import Secrets, Settings
 from stoa.exits import evaluate_exits, initial_stop
 from stoa.features import cell, regime_is_bull, snapshot
 from stoa.models import Candidate, QuantKill, dec
-from stoa.planner import Decision, DecisionInput, ScoutRun
+from stoa.planner import Decision, DecisionInput, ScoutRun, Strategy
+from stoa.roles.llm import Budget, LLMClient, ReplayCache, make_anthropic_client
 from stoa.roles.quant import apply_gates
-from stoa.roles.scout import Scout, ScoutInput
+from stoa.roles.scout import LLMScout, RuleScout, Scout, ScoutInput
 
 
 class AgentStrategy:
@@ -95,3 +97,34 @@ class AgentStrategy:
             regime_bull=bull,
             scout=scout_run,
         )
+
+
+def build_scout(
+    settings: Settings, secrets: Secrets, *, llm: bool, budget: Budget | None = None
+) -> Scout:
+    """The rule scout, or the LLM scout (replay cache first) when ``llm`` is set."""
+    if not llm:
+        return RuleScout(settings.scout)
+    key = secrets.anthropic_api_key
+    client = (
+        make_anthropic_client(key.get_secret_value(), settings.llm) if key is not None else None
+    )
+    llm_client = LLMClient(
+        settings.llm,
+        client,
+        ReplayCache(settings.llm.cache_dir),
+        budget or Budget(settings.llm.monthly_cost_cap_usd),
+    )
+    return LLMScout(settings.scout, settings.llm, llm_client)
+
+
+def build_strategy(
+    settings: Settings, secrets: Secrets, name: str, *, llm: bool = False
+) -> Strategy:
+    if name == "spy":
+        return BuyAndHold(settings.benchmark)
+    if name == "sma":
+        return SMACrossover(settings.benchmark)
+    if name == "agents":
+        return AgentStrategy(settings, build_scout(settings, secrets, llm=llm))
+    raise ValueError(f"unknown strategy {name!r}")

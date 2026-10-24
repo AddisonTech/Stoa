@@ -11,7 +11,8 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Callable
-from datetime import date, datetime
+from datetime import UTC, date, datetime, timedelta
+from datetime import time as time_of_day
 from typing import Any
 
 import httpx
@@ -24,6 +25,7 @@ from stoa.net import request_with_retry
 log = logging.getLogger(__name__)
 
 PAGE_LIMIT = 10000
+SIP_DELAY_MINUTES = 16  # free plan: no SIP data from the latest 15 minutes
 SYMBOLS_PER_REQUEST = 30
 
 
@@ -38,8 +40,10 @@ class AlpacaDataProvider:
         fallback_feed: str | None = "iex",
         max_retries: int = 4,
         sleep: Callable[[float], None] = time.sleep,
+        now: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self.client = client
+        self.now = now
         self.feed = feed
         self.fallback_feed = fallback_feed
         self.max_retries = max_retries
@@ -78,12 +82,16 @@ class AlpacaDataProvider:
     ) -> dict[str, list[dict[str, Any]]]:
         rows: dict[str, list[dict[str, Any]]] = {}
         token: str | None = None
+        end_ts = min(
+            datetime.combine(end, time_of_day(23, 59, 59), tzinfo=UTC),
+            self.now() - timedelta(minutes=SIP_DELAY_MINUTES),
+        )
         while True:
             params: dict[str, Any] = {
                 "symbols": ",".join(symbols),
                 "timeframe": "1Day",
                 "start": f"{start.isoformat()}T00:00:00Z",
-                "end": f"{end.isoformat()}T23:59:59Z",
+                "end": end_ts.strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "adjustment": "all",
                 "feed": feed,
                 "limit": PAGE_LIMIT,

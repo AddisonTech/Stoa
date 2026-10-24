@@ -9,6 +9,8 @@ import pandas as pd
 
 from stoa.data.base import Bars, DataError, validate_bars
 
+DEFAULT_NAMESPACE = "default"
+
 
 class BarCache:
     def __init__(self, root: Path, namespace: str) -> None:
@@ -44,3 +46,8 @@ class CachedProvider:
 
     def fetch(self, symbols: list[str], start: date, end: date) -> Bars:
         return self.cache.read(symbols, start, end)
+
+
+def load_cached_bars(cache_dir: Path, symbols: list[str], start: date, end: date) -> Bars:
+    """Bars saved by `stoa data fetch`. Backtests and scoring read only from here."""
+    return BarCache(cache_dir, DEFAULT_NAMESPACE).read(symbols, start, end)

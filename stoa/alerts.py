@@ -1,0 +1,345 @@
+"""Phone alerts through ntfy, plus the alert texts themselves.
+
+Alerts must never crash a job. A failed send is logged and retried, and the
+job's final status still reflects the trading outcome. The ntfy topic is the
+password, so it is never logged and never committed.
+"""
+
+from __future__ import annotations
+
+import logging
+import time
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
+from decimal import Decimal
+from typing import Protocol
+
+import httpx
+
+from stoa.models import PlannedOrder, Side
+
+log = logging.getLogger(__name__)
+
+URGENT = 5
+HIGH = 4
+DEFAULT = 3
+LOW = 2
+MIN = 1
+
+
+@dataclass(frozen=True)
+class Alert:
+    title: str
+    message: str
+    priority: int = DEFAULT
+    tags: tuple[str, ...] = ()
+    click: str | None = None
+    markdown: bool = False
+
+    def __post_init__(self) -> None:
+        if not MIN <= self.priority <= URGENT:
+            raise ValueError(f"priority {self.priority} outside 1..5")
+
+
+class Notifier(Protocol):
+    def send(self, alert: Alert) -> bool: ...
+
+
+def truncate_utf8(text: str, max_bytes: int) -> str:
+    """Keep messages under ntfy's attachment threshold without splitting a character."""
+    raw = text.encode("utf-8")
+    if len(raw) <= max_bytes:
+        return text
+    suffix = "\n[truncated]"
+    cut = raw[: max_bytes - len(suffix.encode())]
+    return cut.decode("utf-8", errors="ignore") + suffix
+
+
+class NtfyNotifier:
+    """Publishes JSON to the server root, which handles UTF-8 titles cleanly."""
+
+    def __init__(
+        self,
+        server: str,
+        topic: str,
+        *,
+        token: str | None = None,
+        default_click: str | None = None,
+        retries: int = 2,
+        max_message_bytes: int = 3500,
+        client: httpx.Client | None = None,
+        timeout: float = 10.0,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
+        if not topic:
+            raise ValueError("ntfy topic is empty")
+        self.server = server.rstrip("/")
+        self._topic = topic
+        self._token = token
+        self.default_click = default_click
+        self.retries = retries
+        self.max_message_bytes = max_message_bytes
+        self.client = client or httpx.Client(timeout=timeout)
+        self.sleep = sleep
+
+    def __repr__(self) -> str:
+        return f"NtfyNotifier(server={self.server!r}, topic=<hidden>)"
+
+    def payload(self, alert: Alert) -> dict[str, object]:
+        body: dict[str, object] = {
+            "topic": self._topic,
+            "title": alert.title,
+            "message": truncate_utf8(alert.message, self.max_message_bytes),
+            "priority": alert.priority,
+        }
+        if alert.tags:
+            body["tags"] = list(alert.tags)
+        click = alert.click or self.default_click
+        if click:
+            body["click"] = click
+        if alert.markdown:
+            body["markdown"] = True
+        return body
+
+    def send(self, alert: Alert) -> bool:
+        headers = {"Authorization": f"Bearer {self._token}"} if self._token else {}
+        for attempt in range(self.retries + 1):
+            try:
+                resp = self.client.post(
+                    self.server + "/", json=self.payload(alert), headers=headers
+                )
+                if resp.status_code < 300:
+                    return True
+                log.warning("ntfy returned HTTP %s for %r", resp.status_code, alert.title)
+            except httpx.HTTPError as exc:
+                log.warning("ntfy send failed for %r: %s", alert.title, type(exc).__name__)
+            if attempt < self.retries:
+                self.sleep(1.0 + attempt)
+        log.error("alert not delivered after %d attempts: %r", self.retries + 1, alert.title)
+        return False
+
+
+class ConsoleNotifier:
+    """Default when no topic is set: prints alerts to the log."""
+
+    def send(self, alert: Alert) -> bool:
+        log.info("ALERT p%d %s\n%s", alert.priority, alert.title, alert.message)
+        print(f"[alert p{alert.priority}] {alert.title}\n{alert.message}\n")
+        return True
+
+
+@dataclass
+class RecordingNotifier:
+    """Test double that keeps every alert."""
+
+    alerts: list[Alert] = field(default_factory=list)
+    fail: bool = False
+
+    def send(self, alert: Alert) -> bool:
+        self.alerts.append(alert)
+        return not self.fail
+
+    def titles(self) -> list[str]:
+        return [a.title for a in self.alerts]
+
+
+def safe_send(notifier: Notifier, alert: Alert) -> bool:
+    """Send without ever raising."""
+    try:
+        return notifier.send(alert)
+    except Exception as exc:
+        log.error("notifier raised %s for %r", type(exc).__name__, alert.title)
+        return False
+
+
+# ---- alert texts --------------------------------------------------------------
+
+
+def money(value: Decimal | float) -> str:
+    v = float(value)
+    sign = "-" if v < 0 else ""
+    return f"{sign}${abs(v):,.2f}"
+
+
+def pct(value: float, signed: bool = True) -> str:
+    return f"{value:+.1%}" if signed else f"{value:.1%}"
+
+
+def shares(qty: Decimal) -> str:
+    text = f"{qty:.6f}".rstrip("0").rstrip(".")
+    return text or "0"
+
+
+def signal_alert(order: PlannedOrder, equity: Decimal, mode: str) -> Alert:
+    when = "at the open" if mode != "signal" else "at the open (you place it)"
+    if order.side is Side.BUY:
+        assert order.notional is not None
+        share = float(order.notional / equity) if equity > 0 else 0.0
+        stop = f" Stop {money(order.stop_price)}." if order.stop_price is not None else ""
+        why = order.thesis or order.reason
+        msg = (
+            f"BUY {order.symbol} {money(order.notional)} ({share:.0%} of account) {when}."
+            f"{stop} Why: {why}"
+        )
+        return Alert(
+            title=f"BUY {order.symbol}",
+            message=msg,
+            priority=HIGH,
+            tags=("chart_with_upwards_trend",),
+        )
+    qty = shares(order.qty) if order.qty is not None else "all"
+    why = order.reason.replace("_", " ")
+    detail = f" ({order.thesis})" if order.thesis else ""
+    msg = f"SELL {order.symbol} all {qty} sh {when}. Why: {why}{detail}."
+    return Alert(
+        title=f"SELL {order.symbol}",
+        message=msg,
+        priority=HIGH,
+        tags=("chart_with_downwards_trend",),
+    )
+
+
+def fill_alert(symbol: str, side: Side, qty: Decimal, price: Decimal, mode: str) -> Alert:
+    gross = qty * price
+    action = f"{side.value.upper()} {symbol}"
+    msg = f"{action}: {shares(qty)} sh at {money(price)} = {money(gross)} ({mode})."
+    return Alert(
+        title=f"Filled {side.value} {symbol}",
+        message=msg,
+        priority=HIGH,
+        tags=("white_check_mark",),
+    )
+
+
+def rejected_order_alert(symbol: str, side: Side, detail: str, live: bool) -> Alert:
+    return Alert(
+        title=f"Order rejected: {side.value} {symbol}",
+        message=f"The broker did not fill {side.value} {symbol}: {detail}. Check the Alpaca app.",
+        priority=URGENT if live else HIGH,
+        tags=("x",),
+    )
+
+
+def skipped_order_alert(symbol: str, side: Side, reason: str, detail: str) -> Alert:
+    return Alert(
+        title=f"Skipped {side.value} {symbol}",
+        message=f"Risk check {reason.replace('_', ' ')}: {detail}. Nothing was sent for {symbol}.",
+        priority=LOW,
+        tags=("no_entry_sign",),
+    )
+
+
+def kill_switch_alert(equity: Decimal, hwm: Decimal, drawdown: float) -> Alert:
+    msg = (
+        f"Equity {money(equity)} is {drawdown:.1%} below the high of {money(hwm)}. "
+        "Stoa is selling everything at the next open and will not buy again until you reset it. "
+        "Read docs/RUNBOOK.md, section Kill switch, before resetting."
+    )
+    return Alert(
+        title="KILL SWITCH TRIPPED", message=msg, priority=URGENT, tags=("rotating_light",)
+    )
+
+
+def job_failure_alert(job: str, error: str) -> Alert:
+    return Alert(
+        title=f"Stoa {job} failed",
+        message=f"{error[:500]}\nNothing else happens until this is fixed. Check the Actions log.",
+        priority=URGENT,
+        tags=("warning",),
+    )
+
+
+def data_failure_alert(job: str, error: str) -> Alert:
+    return Alert(
+        title=f"Stoa {job}: bad data",
+        message=f"{error[:500]}\nStoa did not trade on partial data. It retries at the next slot.",
+        priority=URGENT,
+        tags=("warning",),
+    )
+
+
+def refusal_alert(job: str, reason: str) -> Alert:
+    return Alert(
+        title=f"Stoa {job} refused to run",
+        message=reason,
+        priority=URGENT,
+        tags=("lock",),
+    )
+
+
+def llm_fallback_alert(reason: str, spent: float, cap: float) -> Alert:
+    msg = (
+        f"The AI scout was not used today ({reason.replace('_', ' ')}). "
+        f"The rule-based scout ran instead. API spend this month {money(spent)} of {money(cap)}."
+    )
+    return Alert(title="Scout fell back to rules", message=msg, priority=HIGH, tags=("robot",))
+
+
+@dataclass(frozen=True)
+class PositionLine:
+    symbol: str
+    value: Decimal
+    gain: float
+
+
+@dataclass(frozen=True)
+class Summary:
+    session: str
+    mode: str
+    equity: Decimal
+    day_change: float | None
+    since_start: float | None
+    spy_since_start: float | None
+    positions: Sequence[PositionLine]
+    cash: Decimal
+    next_actions: Sequence[str]
+    api_spend: float
+    api_cap: float
+    realized_ytd: Decimal
+    tax_reserve: Decimal
+    kill_switch: bool
+    notes: Sequence[str] = ()
+
+
+def daily_summary_alert(s: Summary) -> Alert:
+    lines = [
+        f"Equity {money(s.equity)}"
+        + (f" ({pct(s.day_change)} today)" if s.day_change is not None else "")
+    ]
+    if s.since_start is not None and s.spy_since_start is not None:
+        edge = s.since_start - s.spy_since_start
+        lines.append(
+            f"Since start {pct(s.since_start)} vs SPY {pct(s.spy_since_start)} ({pct(edge)})"
+        )
+    if s.positions:
+        held = ", ".join(f"{p.symbol} {money(p.value)} {pct(p.gain)}" for p in s.positions)
+        lines.append(f"Holding: {held}")
+    else:
+        lines.append("Holding: nothing")
+    lines.append(f"Cash {money(s.cash)}")
+    lines.append(
+        "Next: " + ("; ".join(s.next_actions) if s.next_actions else "no trades at the open")
+    )
+    lines.append(f"API spend {money(s.api_spend)} of {money(s.api_cap)} this month")
+    lines.append(
+        f"Realized short-term gains this year {money(s.realized_ytd)}, "
+        f"set aside {money(s.tax_reserve)} for tax"
+    )
+    if s.kill_switch:
+        lines.append("KILL SWITCH ACTIVE: no new buys until reset")
+    lines.extend(s.notes)
+    return Alert(
+        title=f"Stoa {s.session} ({s.mode})",
+        message="\n".join(lines),
+        priority=DEFAULT,
+        tags=("bar_chart",),
+    )
+
+
+def hello_alert() -> Alert:
+    return Alert(
+        title="Stoa test alert",
+        message="If you can read this on your phone, alerts work.",
+        priority=DEFAULT,
+        tags=("tada",),
+    )
