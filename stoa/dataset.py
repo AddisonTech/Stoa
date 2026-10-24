@@ -64,9 +64,30 @@ class FeatureSet:
     price: bool = True
     quality: bool = True
     text: bool = False
+    price_columns: tuple[str, ...] | None = None  # a subset of PRICE_COLUMNS; None means all
+    normalize: str = "zscore"  # zscore or rank, across stocks on each date
+
+    def __post_init__(self) -> None:
+        unknown = sorted(set(self.price_columns or ()) - set(PRICE_COLUMNS))
+        if unknown:
+            raise ValueError(f"unknown price features {unknown}; known: {list(PRICE_COLUMNS)}")
+        if self.normalize not in NORMALIZERS:
+            raise ValueError(f"unknown normalization {self.normalize!r}")
+
+    @classmethod
+    def from_columns(cls, columns: Iterable[str], normalize: str = "zscore") -> FeatureSet:
+        """The feature set a trained model was fit on, from its column list."""
+        cols = list(columns)
+        price = tuple(c for c in cols if c in PRICE_COLUMNS)
+        return cls(
+            quality="q_roe" in cols,
+            text="t_sentiment" in cols,
+            price_columns=None if set(price) == set(PRICE_COLUMNS) else price,
+            normalize=normalize,
+        )
 
     def columns(self) -> list[str]:
-        cols = list(PRICE_COLUMNS)
+        cols = list(self.price_columns or PRICE_COLUMNS)
         if self.quality:
             cols += list(QUALITY_COLUMNS)
         if self.text:
@@ -75,7 +96,12 @@ class FeatureSet:
 
     @property
     def name(self) -> str:
-        parts = ["price"] + (["quality"] if self.quality else []) + (["text"] if self.text else [])
+        price = "price"
+        if self.price_columns is not None:
+            price += ":" + ",".join(c.removeprefix("f_") for c in self.price_columns)
+        parts = [price] + (["quality"] if self.quality else []) + (["text"] if self.text else [])
+        if self.normalize != "zscore":
+            parts.append(self.normalize)
         return "+".join(parts)
 
 
@@ -190,6 +216,25 @@ def standardize(panel: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     return out
 
 
+def rank_normalize(panel: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    """Cross-sectional percentile rank per date, scaled to -1..1; missing values become 0.
+
+    Ties share their average rank. Only the order of stocks on a date matters, so
+    one extreme value cannot stretch the scale for everyone else.
+    """
+    out = panel.copy()
+    g = out.groupby(level="date")
+    for c in columns:
+        rank = g[c].rank(method="average")
+        n = g[c].transform("count")
+        scaled = 2.0 * (rank - 0.5) / n - 1.0
+        out[c] = scaled.where(n > 1, 0.0).fillna(0.0)
+    return out
+
+
+NORMALIZERS = {"zscore": standardize, "rank": rank_normalize}
+
+
 def _attach_pit(
     panel: pd.DataFrame, records: pd.DataFrame | None, columns: list[str]
 ) -> pd.DataFrame:
@@ -282,7 +327,7 @@ def build_dataset(
 ) -> Dataset:
     """Assemble the standardized feature panel with labels for every tradable row."""
     features = features or FeatureSet()
-    raw = price_features(bars, benchmark)
+    raw = price_features(bars, benchmark)[list(features.price_columns or PRICE_COLUMNS)]
     lab = labels(bars, benchmark, horizon)
     mask = universe_mask(
         bars,
@@ -301,7 +346,7 @@ def build_dataset(
     if features.text:
         panel = _attach_pit(panel, text_daily(text_scores, text_lookback_days), list(TEXT_COLUMNS))
     cols = features.columns()
-    panel = standardize(panel, cols)
+    panel = NORMALIZERS[features.normalize](panel, cols)
     panel = panel.join(lab, how="left")
     panel = panel.sort_index()
     sessions = sorted({d.date() for d in panel.index.get_level_values("date")})

@@ -210,7 +210,9 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
 
     @model.command("report")
     @click.option("--synthetic", is_flag=True)
-    @click.option("--horizon", type=int, default=None, help="Default: model.test_horizon too.")
+    @click.option(
+        "--horizon", type=int, default=None, help="Default: model.horizon and model.test_horizon."
+    )
     @click.option("--ablation", is_flag=True, help="Also compare with and without text.")
     @click.option("--results", type=click.Path(path_type=Path), default=Path("results"))
     @click.option("--repo", type=click.Path(path_type=Path), default=Path("."))
@@ -241,7 +243,8 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
             else min(last, clock.previous_session(s.backtest.holdout_start))
         )
         inputs = load_inputs(s, cutoff, synthetic=synthetic)
-        horizons = [horizon] if horizon else sorted({s.model.horizon, s.model.test_horizon})
+        both = {s.model.horizon, s.model.test_horizon} - {None}
+        horizons = [horizon] if horizon else sorted(h for h in both if h is not None)
         reg = Registry(s.registry_path)
         out = results / f"{pipeline_stamp()}-report"
         md = []

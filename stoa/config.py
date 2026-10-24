@@ -292,7 +292,7 @@ class EventConfig(_Frozen):
 
 class ModelConfig(_Frozen):
     horizon: int = Field(default=10, ge=1, le=60)
-    test_horizon: int = Field(default=5, ge=1, le=60)
+    test_horizon: int | None = Field(default=5, ge=1, le=60)  # None: report one horizon only
     train_window: Literal["expanding", "rolling"] = "expanding"
     rolling_sessions: int = Field(default=756, ge=126)
     test_sessions: int = Field(default=63, ge=5)
@@ -307,6 +307,9 @@ class ModelConfig(_Frozen):
     universe: Literal["sp500", "watchlist"] = "sp500"  # training cross-section
     use_quality: bool = True
     use_text: bool = False
+    price_features: tuple[str, ...] | None = None  # None means every price feature
+    normalize: Literal["zscore", "rank"] = "zscore"  # how features are scaled across stocks
+    rebalance: Literal["daily", "monthly"] = "daily"  # monthly: entries on month starts only
     text_lookback_days: int = Field(default=10, ge=1)
     min_price: float = Field(default=5.0, ge=0)
     min_dollar_volume_20: float = Field(default=20_000_000.0, ge=0)
@@ -323,6 +326,8 @@ class ModelConfig(_Frozen):
             raise ValueError("embargo_sessions must be at least the horizon")
         if not self.candidates:
             raise ValueError("model.candidates is empty")
+        if self.price_features is not None and not self.price_features:
+            raise ValueError("model.price_features is empty; use null for every price feature")
         return self
 
     @property

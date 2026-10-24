@@ -438,10 +438,11 @@ def ablation(
     """
     k = kind or settings.model.candidates[0]
     out: dict[str, Any] = {"cutoff": str(cutoff), "kind": k, "runs": {}}
-    for label, fs in (
-        ("without_text", FeatureSet(quality=settings.model.use_quality, text=False)),
-        ("with_text", FeatureSet(quality=settings.model.use_quality, text=True)),
-    ):
+    m = settings.model
+    for label, text in (("without_text", False), ("with_text", True)):
+        fs = FeatureSet(
+            quality=m.use_quality, text=text, price_columns=m.price_features, normalize=m.normalize
+        )
         wf = run_walkforward(settings, inputs, fs, kinds=(k,))
         s = wf.scored(k)
         days = s.index.get_level_values("date")

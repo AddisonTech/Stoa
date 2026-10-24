@@ -23,7 +23,7 @@ import pandas as pd
 
 from stoa.config import Settings
 from stoa.data.base import BarProvider, Bars, DataError
-from stoa.dataset import build_dataset
+from stoa.dataset import FeatureSet, build_dataset
 from stoa.earnings import (
     EXEMPT_DEFAULT,
     EarningsCalendar,
@@ -34,7 +34,6 @@ from stoa.earnings import (
 from stoa.membership import default_membership
 from stoa.model import ModelStore
 from stoa.model_strategy import ModelPredictor, ModelStrategy
-from stoa.pipeline import feature_set
 
 log = logging.getLogger(__name__)
 
@@ -107,8 +106,7 @@ def build_live_model(
             notes.append(
                 f"only {share:.0%} of index members had today's bar; ranked on the watchlist only"
             )
-    fs = feature_set(s)
-    fs_model = type(fs)(quality="q_roe" in model.features, text="t_sentiment" in model.features)
+    fs_model = FeatureSet.from_columns(model.features, normalize=s.model.normalize)
     ds = build_dataset(
         cross,
         s.benchmark,

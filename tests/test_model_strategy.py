@@ -201,8 +201,58 @@ def test_event_day_halves_new_position_size(bars: Bars) -> None:
     assert calm_buys and calm_buys[0].notional == D("20.00")
 
 
+def month_end_bull_day(bars: Bars, need: int = 3) -> date:
+    """A calm bull day whose next session opens a new month."""
+    from stoa import events
+
+    f = feats_of(bars)
+    for ts in reversed(f["SPY"].index[:-30]):
+        d = ts.date()
+        if clock.next_session(d).month == d.month:
+            continue
+        calm = regime_is_bull(f, "SPY", d) and events.light_reason(d) is None
+        if calm and len(uptrend(bars, d)) >= need:
+            return d
+    raise AssertionError("no suitable month-end day")
+
+
+def test_monthly_rebalance_opens_positions_only_at_month_start(bars: Bars) -> None:
+    mid = bull_day(bars, need=3)
+    while clock.next_session(mid).month != mid.month:  # make sure it is mid-month
+        mid = clock.previous_session(mid)
+    end = month_end_bull_day(bars)
+    picks = {d: uptrend(bars, d)[:3] for d in (mid, end)}
+
+    def buys(rebalance: str, day: date) -> list[str]:
+        pred = PanelPredictor(probs_panel(bars, dict.fromkeys(picks[day], 0.65)), {})
+        d = decision(settings(model__rebalance=rebalance), bars, day, pred)
+        return [o.symbol for o in d.orders if o.side is Side.BUY]
+
+    if uptrend(bars, mid):
+        assert buys("daily", mid)  # daily: any day
+        assert buys("monthly", mid) == []  # monthly: not mid-month
+    assert buys("monthly", end)  # executes on the first session of the next month
+    assert buys("daily", end)
+
+
+def test_monthly_rebalance_still_exits_every_day(bars: Bars) -> None:
+    day = bull_day(bars)
+    while clock.next_session(day).month != day.month:
+        day = clock.previous_session(day)
+    sym = uptrend(bars, day)[0] if uptrend(bars, day) else "AAPL"
+    entry = clock.sessions_between(day - timedelta(days=60), day)[-25]
+    meta = PositionMeta(entry_session=entry, entry_price=D(1), entry_atr=D(50))
+    held = {sym: Holding(symbol=sym, qty=D("0.1"), avg_entry_price=D(1), meta=meta)}
+    low = PanelPredictor(probs_panel(bars, {sym: 0.40}), {})
+    s = settings(model__rebalance="monthly", model__hold_sessions="20")
+    d = decision(s, bars, day, low, holdings=held, cash="90")
+    assert any(e.symbol == sym and e.reason == "horizon_exit" for e in d.exits)
+    assert any(o.symbol == sym and o.side is Side.SELL for o in d.orders)
+    assert "no new entries until the monthly rebalance" in d.notes
+
+
 def test_horizon_exit_when_model_no_longer_favors(bars: Bars) -> None:
-    s = settings()
+    s = settings(model__hold_sessions="10")  # held 12 sessions below: past a 10 session hold
     day = bull_day(bars)
     sym = uptrend(bars, day)[0]
     entry = clock.sessions_between(day - timedelta(days=40), day)[-12]

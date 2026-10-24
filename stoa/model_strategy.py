@@ -78,6 +78,19 @@ class PanelPredictor:
         return float(self.ratios.get(session, 1.0))
 
 
+def is_rebalance(rebalance: str, inp: DecisionInput) -> bool:
+    """Whether new positions may open on this decision.
+
+    ``monthly``: only when the orders execute on the first session of a month,
+    that is when the decision session and the execute session fall in different
+    months. Exits, stops and the kill switch are not affected.
+    """
+    if rebalance == "daily":
+        return True
+    d, x = inp.session, inp.execute_session
+    return (d.year, d.month) != (x.year, x.month)
+
+
 def conviction_from(p: float) -> int:
     """1 to 5, for the alert text only. Size comes from the sizing module."""
     return max(1, min(5, int((p - 0.5) * 50) + 1))
@@ -179,8 +192,11 @@ class ModelStrategy:
         blocks: dict[str, tuple[str, str]] = {}
         multiplier = Decimal(1)
         note = ""
+        waiting = ""
         if entries_possible and inp.fallback_active:
             ideas = self._fallback_ideas(inp, snap, positions)
+        elif entries_possible and not is_rebalance(s.model.rebalance, inp):
+            waiting = "no new entries until the monthly rebalance"
         elif entries_possible:
             candidates = self._candidates(inp, snap, probs)
             passed, kills = apply_gates(candidates, snap, set(inp.holdings), s.quant)
@@ -199,7 +215,7 @@ class ModelStrategy:
             ctx, entry_blocks=blocks, size_multiplier=multiplier, size_note=note
         )
         result = risk.evaluate(ctx, exits, ideas)
-        notes = (f"go light: {note}",) if note else ()
+        notes = tuple(n for n in (f"go light: {note}" if note else "", waiting) if n)
         return Decision(
             orders=result.orders,
             exits=tuple(exits),

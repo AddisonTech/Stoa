@@ -298,7 +298,7 @@ def holdout_model_source(settings: Settings, repo: Path, now: object, synthetic:
     end = clock.last_closed_session(now)  # type: ignore[arg-type]
     inputs = load_inputs(settings, end, synthetic=synthetic)
     t = inputs.training
-    fs = FeatureSet(quality="q_roe" in model.features, text="t_sentiment" in model.features)
+    fs = FeatureSet.from_columns(model.features, normalize=settings.model.normalize)
     ds = build_dataset(
         t.bars,
         settings.benchmark,

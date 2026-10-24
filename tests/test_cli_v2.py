@@ -78,7 +78,8 @@ def test_model_train_report_promote_experiments_and_exam(
     code, out = run(
         env, "model", "report", "--synthetic", "--results", results, "--repo", str(ROOT)
     )
-    assert code == 0 and "10 sessions" in out and "5 sessions" in out
+    # One model, one horizon (model.test_horizon is null): one report, no second horizon.
+    assert code == 0 and out.count("## Walk-forward calibration") == 1 and "21 sessions" in out
 
 
 def test_model_promote_by_hand_requires_a_known_version(env: dict[str, str]) -> None:

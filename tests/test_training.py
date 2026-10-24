@@ -101,6 +101,36 @@ def test_label_beats_spy_flag() -> None:
     assert lab.loc[(bars["SPY"].index[3], "AAA"), "y"] == 0.0
 
 
+def test_rank_normalize_is_cross_sectional_order_only() -> None:
+    from stoa.dataset import rank_normalize
+
+    idx = pd.MultiIndex.from_product(
+        [[pd.Timestamp("2024-01-02"), pd.Timestamp("2024-01-03")], list("ABCDE")],
+        names=["date", "symbol"],
+    )
+    vals = [1.0, 2.0, 3.0, 4.0, 1e9, 5.0, 5.0, np.nan, 1.0, 9.0]  # two days of five
+    out = rank_normalize(pd.DataFrame({"f": vals}, index=idx), ["f"])
+    day1 = out.xs(pd.Timestamp("2024-01-02"), level="date")["f"]
+    assert list(day1) == pytest.approx([-0.8, -0.4, 0.0, 0.4, 0.8])  # the outlier is just top
+    day2 = out.xs(pd.Timestamp("2024-01-03"), level="date")["f"]
+    assert day2["C"] == 0.0  # missing sits in the middle
+    assert day2["A"] == day2["B"] == pytest.approx(0.0)  # ties share the average rank
+    assert day2["D"] == pytest.approx(-0.75) and day2["E"] == pytest.approx(0.75)
+
+
+def test_feature_subset_and_round_trip() -> None:
+    fs = FeatureSet(price_columns=("f_mom_12_1", "f_vol_60"), normalize="rank")
+    assert fs.columns()[:2] == ["f_mom_12_1", "f_vol_60"] and "f_mom_3" not in fs.columns()
+    assert fs.name == "price:mom_12_1,vol_60+quality+rank"
+    assert FeatureSet.from_columns(fs.columns(), normalize="rank") == fs
+    assert FeatureSet.from_columns(FeatureSet().columns()) == FeatureSet()
+    with pytest.raises(ValueError, match="unknown price features"):
+        FeatureSet(price_columns=("f_nope",))
+    ds = build_dataset(tiny_bars(), "SPY", 2, min_dollar_volume=0, min_price=0, features=fs)
+    assert ds.features == fs.columns()
+    assert "f_mom_3" not in ds.panel.columns
+
+
 def test_standardize_is_cross_sectional_and_clipped() -> None:
     idx = pd.MultiIndex.from_product(
         [[pd.Timestamp("2024-01-02"), pd.Timestamp("2024-01-03")], list("ABCDEFGHIJ")],
@@ -329,6 +359,26 @@ def test_registry_paths_are_portable(tmp_path: Path) -> None:
 
 
 # ---- training end to end (small) -------------------------------------------------------------
+
+
+def test_one_model_one_horizon_logs_exactly_one_trial(tmp_path: Path, bars: Bars) -> None:
+    s = make_settings(
+        watchlist=",".join(SMALL_WATCHLIST),
+        state__dir=str(tmp_path / "state"),
+        model__min_train_sessions="300",
+        model__test_sessions="126",
+        model__min_dollar_volume_20="0",
+    )
+    # The shipped config is the pre-registered trial 6: one model, one horizon.
+    assert (s.model.horizon, s.model.test_horizon, s.model.candidates) == (21, None, ("logistic",))
+    assert s.model.embargo == 21 and s.model.normalize == "rank"
+    inputs = TrainingInputs(bars=bars, extra_symbols=tuple(SMALL_WATCHLIST))
+    wf = run_walkforward(s, inputs, FeatureSet(quality=False, normalize="rank"))
+    assert wf.kinds == ("logistic",) and wf.horizon == 21
+    reg = ex.Registry(s.registry_path)
+    log_trials(reg, s, wf)
+    log_trials(reg, s, wf, name_prefix="report")  # the report reruns the same configuration
+    assert len(reg.load()) == 2 and len(reg.unique_trials()) == 1
 
 
 def small_model_settings(tmp_path: Path) -> Settings:

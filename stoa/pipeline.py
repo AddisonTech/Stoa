@@ -43,7 +43,12 @@ COVERAGE_FILE = "coverage.json"
 
 def feature_set(settings: Settings, text: bool | None = None) -> FeatureSet:
     m = settings.model
-    return FeatureSet(quality=m.use_quality, text=m.use_text if text is None else text)
+    return FeatureSet(
+        quality=m.use_quality,
+        text=m.use_text if text is None else text,
+        price_columns=m.price_features,
+        normalize=m.normalize,
+    )
 
 
 def _read_parquet(path: Path) -> pd.DataFrame | None:

@@ -46,7 +46,9 @@ Quality features (from SEC filings, `stoa fundamentals fetch`):
 
 Text features (optional, from the Claude analyst, `model.use_text`): average sentiment, guidance direction, results surprise, risk flags, materiality and count of recent news items.
 
-Every feature is standardized across all stocks on the same day (a z-score, clipped at 3). The model learns which stocks look better than the others today, not what the market will do.
+Every feature is scaled across all stocks on the same day: a z-score clipped at 3 (`model.normalize: zscore`), or the percentile rank scaled to -1 to 1 (`rank`), with missing values in the middle either way. The model learns which stocks look better than the others today, not what the market will do. `model.price_features` picks a subset of the price features (null means all ten).
+
+`model.rebalance: monthly` lets the model open positions only when the orders execute on the first session of a month. Exits, stops and the kill switch still run every day. The current configuration is trial 6, pre-registered in DECISIONS.md.
 
 ## Point in time
 

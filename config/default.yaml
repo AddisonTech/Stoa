@@ -162,8 +162,10 @@ strategy:
 
 model:
   universe: sp500                  # training cross-section: point-in-time S&P 500 members
-  horizon: 10                      # label: beats SPY from the next open to the close 10 sessions later
-  test_horizon: 5                  # second horizon reported by `stoa model report`
+  # Trial 6, pre-registered in docs/DECISIONS.md: 21 sessions, four price features plus
+  # quality, rank-normalized, logistic only. Trials 1 to 5 (10 and 5 sessions) failed.
+  horizon: 21                      # label: beats SPY from the next open to the close 21 sessions later
+  test_horizon: null               # second horizon for `stoa model report`; null reports one
   train_window: expanding          # expanding or rolling
   rolling_sessions: 756
   test_sessions: 63                # walk-forward test slice
@@ -171,12 +173,15 @@ model:
   embargo_sessions: null           # gap between train and test; null means the horizon
   calibration: isotonic            # isotonic or sigmoid (Platt), fit inside each training fold
   calibration_fraction: 0.25
-  candidates: [logistic, hgb]      # baseline and challenger; picked by out-of-sample log loss
+  candidates: [logistic]           # logistic and/or hgb; picked by out-of-sample log loss
   threshold: 0.55                  # minimum calibrated probability to consider a buy
   max_candidates: 10
   hold_sessions: null              # exit after this many sessions unless the model still favors it
   use_quality: true                # SEC fundamentals (stoa fundamentals fetch)
   use_text: false                  # analyst scores; turn on only if the ablation shows they help
+  price_features: [f_mom_12_1, f_mom_6_1, f_trend_200, f_vol_60]  # null means all ten
+  normalize: rank                  # zscore or rank, across stocks each day
+  rebalance: daily                 # daily or monthly (new positions only on a month's first session)
   text_lookback_days: 10
   min_price: 5.0
   min_dollar_volume_20: 20000000
