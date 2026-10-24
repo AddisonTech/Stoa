@@ -61,10 +61,19 @@ def last_safe_session(event_time: datetime, after_open_minutes: int) -> date:
 
 
 def with_known_lead(table: pd.DataFrame, lead_sessions: int) -> pd.DataFrame:
-    """Set ``known_at`` for historical rows: ``lead_sessions`` sessions before the release."""
+    """Set ``known_at`` for historical rows: ``lead_sessions`` sessions before the release.
+
+    SEC history goes back decades, but the NYSE calendar starts in 2015 and bars
+    in 2016. A release too early for the calendar to place (with room for the
+    lead) can never affect a decision, so it is dropped rather than looked up.
+    """
     if table.empty:
         return table
-    out = table.copy()
+    floor = clock.first_session()
+    for _ in range(lead_sessions + 2):
+        floor = clock.next_session(floor)
+    days = pd.to_datetime(table["event_time"], utc=True).dt.tz_convert(clock.NY).dt.date
+    out = table.loc[(days >= floor).to_numpy()].copy()
     known = []
     for et, kn, src in zip(out["event_time"], out["known_at"], out["source"], strict=True):
         if src in ("finnhub", "yahoo", "manual"):

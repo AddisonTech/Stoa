@@ -46,6 +46,12 @@ def to_ny(ts: datetime) -> datetime:
     return ts.astimezone(NY)
 
 
+def first_session() -> date:
+    """The first session the calendar knows. Nothing earlier can be placed on it."""
+    first: pd.Timestamp = _calendar().first_session
+    return first.date()
+
+
 def is_session(day: date) -> bool:
     return bool(_calendar().is_session(pd.Timestamp(day)))
 

@@ -81,6 +81,16 @@ def test_label_is_next_open_to_close_h_sessions_later_vs_spy() -> None:
     assert lab.loc[(days[-4], "AAA"), "label_end"] == days[-1]
 
 
+def test_label_with_a_symbol_that_never_traded_in_the_window() -> None:
+    # Real universes include names whose bars all fall outside the window.
+    bars = tiny_bars()
+    empty = bars["AAA"].iloc[0:0]
+    bars["ZZZ"] = empty
+    lab = labels(bars, "SPY", horizon=3)
+    assert lab.xs("ZZZ", level="symbol")["fwd_ret"].isna().all()
+    assert lab.loc[(bars["SPY"].index[4], "AAA"), "y"] == 1.0
+
+
 def test_label_beats_spy_flag() -> None:
     bars = tiny_bars()
     spy = bars["SPY"].copy()

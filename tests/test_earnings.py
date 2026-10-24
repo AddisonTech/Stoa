@@ -129,6 +129,36 @@ def test_with_known_lead_sets_known_at_before_the_release() -> None:
     assert out["known_at"].iloc[1] == pd.Timestamp(at("2024-10-01", 9, 0))
 
 
+def test_with_known_lead_drops_releases_before_the_calendar() -> None:
+    # Real SEC history reaches back to 2004; the calendar starts in 2015.
+    df = pd.DataFrame(
+        [
+            {
+                "symbol": "A",
+                "event_time": datetime(2004, 11, 12, 21, 5, tzinfo=UTC),
+                "known_at": datetime(2004, 11, 12, 21, 5, tzinfo=UTC),
+                "source": "sec_8k_2.02",
+            },
+            {
+                "symbol": "A",
+                "event_time": datetime(2015, 1, 6, 21, 5, tzinfo=UTC),
+                "known_at": datetime(2015, 1, 6, 21, 5, tzinfo=UTC),
+                "source": "sec_8k_2.02",
+            },
+            {
+                "symbol": "A",
+                "event_time": at("2024-07-25", 16, 5),
+                "known_at": at("2024-07-25", 16, 5),
+                "source": "sec_8k_2.02",
+            },
+        ]
+    )
+    out = with_known_lead(df, 10)
+    assert len(out) == 1
+    assert out["event_time"].iloc[0] == pd.Timestamp(at("2024-07-25", 16, 5))
+    assert out["known_at"].iloc[0].to_pydatetime() < at("2024-07-25", 0, 0)
+
+
 def test_volume_proxy_finds_spikes() -> None:
     days = clock.sessions_between(date(2024, 1, 2), date(2024, 6, 28))
     idx = pd.DatetimeIndex([pd.Timestamp(d) for d in days])

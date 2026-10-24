@@ -123,7 +123,7 @@ def labels(bars: Bars, benchmark: str, horizon: int) -> pd.DataFrame:
     alive_until = close.apply(lambda c: c.last_valid_index())
     dead_fill = close.ffill()
     for sym, last in alive_until.items():
-        if last is not None:
+        if pd.notna(last):  # a symbol with no close on this calendar has nothing to carry
             dead_fill.loc[dead_fill.index > last, sym] = close.at[last, sym]
     entry = opens.shift(-1)
     exit_ = dead_fill.shift(-horizon)
