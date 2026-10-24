@@ -10,7 +10,7 @@ from __future__ import annotations
 import subprocess
 import sys
 
-EM_DASH = "—"
+EM_DASH = chr(0x2014)
 BANNED_TRAILERS = ("co-authored-by", "signed-off-by")
 
 

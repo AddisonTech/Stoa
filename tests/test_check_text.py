@@ -7,7 +7,7 @@ from pathlib import Path
 from tests.conftest import ROOT
 
 SCRIPT = ROOT / "scripts" / "check_text.py"
-DASH = "—"
+DASH = chr(0x2014)
 
 
 def git(repo: Path, *args: str) -> None:
