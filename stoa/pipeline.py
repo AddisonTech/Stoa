@@ -32,6 +32,7 @@ from stoa.earnings import (
     volume_proxy,
     with_known_lead,
 )
+from stoa.holdout import holdout_dates
 from stoa.membership import Membership, default_membership
 from stoa.training import TrainingInputs
 
@@ -127,8 +128,22 @@ class Inputs:
     synthetic: bool
 
 
-def load_inputs(settings: Settings, end: date, *, synthetic: bool = False) -> Inputs:
-    """Bars, membership, fundamentals, earnings and text for training and backtests."""
+BLOCK_HOLDOUT: Any = object()  # the default: keep the holdout out of every training dataset
+
+
+def load_inputs(
+    settings: Settings,
+    end: date,
+    *,
+    synthetic: bool = False,
+    blocked: tuple[date, date] | None = BLOCK_HOLDOUT,
+) -> Inputs:
+    """Bars, membership, fundamentals, earnings and text for training and backtests.
+
+    ``blocked`` is the window no training row or label may touch. By default it
+    is the holdout. Pass ``holdout.blocked_window(repo, settings)`` to free it
+    once the holdout is scored, or None only where the holdout itself is scored.
+    """
     s = settings
     refs = tuple(r for r in s.sources.reference_symbols if r not in s.watchlist)
     if synthetic:
@@ -184,6 +199,7 @@ def load_inputs(settings: Settings, end: date, *, synthetic: bool = False) -> In
         text_scores=text,
         extra_symbols=tuple(s.watchlist),
         exclude=refs,
+        blocked=holdout_dates(s) if blocked is BLOCK_HOLDOUT else blocked,
     )
     tradable = set(s.watchlist) if s.strategy.trade_universe == "watchlist" else set(bars)
     return Inputs(

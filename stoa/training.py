@@ -29,7 +29,7 @@ import pandas as pd
 from stoa import calibration as cal
 from stoa.config import Settings
 from stoa.data.base import Bars
-from stoa.dataset import Dataset, FeatureSet, build_dataset
+from stoa.dataset import Dataset, FeatureSet, build_dataset, exclude_window
 from stoa.experiments import Registry, hash_frame_like
 from stoa.membership import Membership
 from stoa.model import ArtifactMeta, ModelStore, TrainedModel, fit, model_id
@@ -44,6 +44,7 @@ class TrainingInputs:
     text_scores: pd.DataFrame | None = None
     extra_symbols: tuple[str, ...] = ()
     exclude: tuple[str, ...] = ()
+    blocked: tuple[date, date] | None = None  # the unscored holdout: no row or label inside it
 
 
 def data_hash(inputs: TrainingInputs) -> str:
@@ -62,7 +63,7 @@ def dataset_for(
     settings: Settings, inputs: TrainingInputs, features: FeatureSet, horizon: int | None = None
 ) -> Dataset:
     m = settings.model
-    return build_dataset(
+    ds = build_dataset(
         inputs.bars,
         settings.benchmark,
         horizon or m.horizon,
@@ -76,6 +77,9 @@ def dataset_for(
         min_dollar_volume=m.min_dollar_volume_20,
         text_lookback_days=m.text_lookback_days,
     )
+    if inputs.blocked is not None:
+        ds = exclude_window(ds, *inputs.blocked)
+    return ds
 
 
 def folds_for(settings: Settings, ds: Dataset, end: date | None = None) -> list[Fold]:

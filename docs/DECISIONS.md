@@ -310,3 +310,7 @@ Pre-registered on 2026-10-24, before any code for it was written and before it w
 - **Data:** the universe and fundamentals as of 2026-10-24, with the renamed tickers (BK, FI, JEC, WLTW) fetched under their current symbols. Training stops on 2026-06-30, the day before the holdout. The holdout is not sealed or scored.
 - **What it adds to the registry:** `stoa model train` logs exactly one new trial (logistic, 21 sessions). `stoa model report` reruns the same configuration, which is not a new trial. `stoa score` appends its scoreboard backtest record, as every scoreboard run does.
 - **If it passes every walk-forward check:** promote it and set `model.rebalance: monthly` in `config/default.yaml` so paper DECIDE uses it. **If it fails:** report it and stop.
+
+## The holdout gets a fixed end
+
+Decided 2026-10-24, before the holdout was sealed. The holdout was every session from 2026-07-01 onward, which left no clean data for a forward test of anything. It is now 2026-07-01 to 2026-10-23 (`backtest.holdout_end`), about 80 sessions after the analyst model's knowledge cutoff. Until it is scored, no training row or label touches it; later sessions are free for forward tests. Features after the end look back over the window as live decisions always do. `stoa holdout score` is the only reader. A perturbation test guards it.

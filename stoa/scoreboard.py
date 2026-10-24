@@ -534,6 +534,8 @@ def write_report(report: Report, root: Path) -> Path:
 
 def holdout_window(settings: Settings, end: date) -> tuple[date, date]:
     start = settings.backtest.holdout_start
+    if settings.backtest.holdout_end is not None:
+        end = min(end, settings.backtest.holdout_end)
     if end <= start + timedelta(days=30):
         raise ValueError("the holdout needs more than a month of data after its start")
     return start, end

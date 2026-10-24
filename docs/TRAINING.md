@@ -86,7 +86,7 @@ Train on the past, test on the next slice, roll forward.
 - Training uses all history before the gap (`expanding`) or the last 3 years (`rolling`).
 - The gap (embargo) is at least the 10 session horizon. Training rows whose label would end inside or after the test slice are dropped (purged). So no training label ever overlaps a test label. Tests prove it for both window types and several horizons.
 - Calibration is fit inside each training set only, on its last quarter, with its own gap.
-- Training stops at the day before the sealed holdout until the holdout has been scored.
+- Until the holdout has been scored, no training row or label touches 2026-07-01 to 2026-10-23. Sessions after it may be used (see HOLDOUT.md).
 
 Every out-of-sample probability comes from a model that never saw that test slice. The backtests in the scoreboard use only those probabilities.
 

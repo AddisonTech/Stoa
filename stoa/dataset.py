@@ -353,6 +353,24 @@ def build_dataset(
     return Dataset(panel=panel, features=cols, horizon=horizon, sessions=sessions)
 
 
+def exclude_window(ds: Dataset, start: date, end: date) -> Dataset:
+    """Drop every row dated inside [start, end] and every row whose label reaches into it.
+
+    A row before the window is kept only if its label ends before ``start``;
+    a row after the window only uses later prices for its label. Features of
+    rows after the window still look back over it (a year of momentum, for
+    example), as every live decision does; no label, test row or score does.
+    """
+    dates = ds.panel.index.get_level_values("date")
+    lo, hi = pd.Timestamp(start), pd.Timestamp(end)
+    inside = (dates >= lo) & (dates <= hi)
+    label_end = pd.to_datetime(ds.panel["label_end"])
+    reaches_in = (dates < lo) & (label_end >= lo).fillna(False).to_numpy()
+    panel = ds.panel.loc[~(inside | reaches_in)]
+    sessions = sorted({d.date() for d in panel.index.get_level_values("date")})
+    return Dataset(panel=panel, features=ds.features, horizon=ds.horizon, sessions=sessions)
+
+
 def regime_series(bars: Bars, benchmark: str) -> pd.Series:
     """True on sessions where the benchmark closed above its 200 day average."""
     f = build_features({benchmark: bars[benchmark]}, benchmark)[benchmark]

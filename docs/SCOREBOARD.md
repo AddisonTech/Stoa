@@ -27,7 +27,7 @@ The baselines run through the same backtest engine, simulated broker, slippage a
 | tune_b | 2021-01-01 to 2022-12-31 | Tuning |
 | tune_c | 2023-01-01 to 2024-12-31 | Tuning |
 | validation | 2025-01-01 to 2026-06-30 | Checked, not tuned on. The model choice ignores it. |
-| holdout | 2026-07-01 onward | Sealed, scored once. See HOLDOUT.md |
+| holdout | 2026-07-01 to 2026-10-23 | Sealed, scored once. See HOLDOUT.md |
 
 The model's walk-forward needs about two years of training before its first test slice, so it starts making predictions in early 2019. Data begins in 2016.
 

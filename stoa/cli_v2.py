@@ -242,7 +242,7 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
             if not synthetic
             else min(last, clock.previous_session(s.backtest.holdout_start))
         )
-        inputs = load_inputs(s, cutoff, synthetic=synthetic)
+        inputs = load_inputs(s, cutoff, synthetic=synthetic, blocked=h.blocked_window(repo, s))
         both = {s.model.horizon, s.model.test_horizon} - {None}
         horizons = [horizon] if horizon else sorted(h for h in both if h is not None)
         reg = Registry(s.registry_path)
@@ -533,7 +533,7 @@ def run_training(
         cutoff = min(last, clock.previous_session(s.backtest.holdout_start))
     else:
         cutoff = h.training_cutoff(repo, s, last)
-    inputs = load_inputs(s, cutoff, synthetic=synthetic)
+    inputs = load_inputs(s, cutoff, synthetic=synthetic, blocked=h.blocked_window(repo, s))
     out = train(
         s,
         inputs,

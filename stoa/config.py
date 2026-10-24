@@ -178,16 +178,22 @@ class BacktestConfig(_Frozen):
     starting_equity: Decimal = Decimal("100")
     warmup_sessions: int = Field(default=260, ge=200)
     holdout_start: date = date(2026, 7, 1)
+    holdout_end: date | None = date(2026, 10, 23)  # last holdout session; None means open-ended
     windows: dict[str, Window] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _check(self) -> BacktestConfig:
         if self.starting_equity <= 0:
             raise ValueError("starting_equity must be positive")
+        if self.holdout_end is not None and self.holdout_end <= self.holdout_start:
+            raise ValueError("holdout_end must be after holdout_start")
         for name, w in self.windows.items():
-            if w.end >= self.holdout_start:
+            if self.overlaps_holdout(w.start, w.end):
                 raise ValueError(f"window {name} overlaps the sealed holdout")
         return self
+
+    def overlaps_holdout(self, start: date, end: date) -> bool:
+        return end >= self.holdout_start and (self.holdout_end is None or start <= self.holdout_end)
 
 
 class DataConfig(_Frozen):

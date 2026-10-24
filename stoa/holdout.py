@@ -34,6 +34,7 @@ class HoldoutLock(BaseModel):
     scoreboard_hash: str
     strategy_hash: str
     holdout_start: date
+    holdout_end: date | None = None
     sealed_at: datetime
     model_version: str = ""  # the promoted model at seal time; scoring uses exactly this one
     scored_at: datetime | None = None
@@ -116,6 +117,7 @@ def seal(
         scoreboard_hash=file_sha256(repo / scoreboard_path),
         strategy_hash=s.strategy_hash(),
         holdout_start=s.backtest.holdout_start,
+        holdout_end=s.backtest.holdout_end,
         sealed_at=now,
         model_version=current_model_version(s),
     )
@@ -129,20 +131,41 @@ def current_model_version(settings: Settings) -> str:
     return ModelStore(settings.artifact_dir).current_version() or ""
 
 
+def is_scored(repo: Path) -> bool:
+    lock = read_lock(repo)
+    return lock is not None and lock.scored_at is not None
+
+
 def training_cutoff(repo: Path, settings: Settings, last_session: date) -> date:
     """The last session training may use.
 
-    Until the holdout has been scored, nothing on or after its start date may
-    train a model: the session before the holdout start is the cutoff. Once
-    scored, the holdout is spent and every session may be used.
+    Until the holdout has been scored, nothing inside it may train or evaluate
+    a model. While the holdout has not ended, that means stopping the session
+    before its start. After ``backtest.holdout_end``, later sessions are usable
+    again, and the holdout rows themselves are removed by ``blocked_window``.
+    Once scored, the holdout is spent and every session may be used.
     """
     from stoa import clock
 
-    lock = read_lock(repo)
-    if lock is not None and lock.scored_at is not None:
+    if is_scored(repo):
+        return last_session
+    end = settings.backtest.holdout_end
+    if end is not None and last_session > end:
         return last_session
     before = clock.previous_session(settings.backtest.holdout_start)
     return min(last_session, before)
+
+
+def blocked_window(repo: Path, settings: Settings) -> tuple[date, date] | None:
+    """The holdout dates training and evaluation must not touch, or None once it is scored."""
+    if is_scored(repo):
+        return None
+    return holdout_dates(settings)
+
+
+def holdout_dates(settings: Settings) -> tuple[date, date]:
+    b = settings.backtest
+    return b.holdout_start, b.holdout_end or date.max
 
 
 def verify(repo: Path, config_path: Path, scoreboard_path: Path, settings: Settings) -> HoldoutLock:

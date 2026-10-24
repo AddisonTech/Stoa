@@ -1,6 +1,17 @@
 # Holdout
 
-The holdout is every session from 2026-07-01 onward. It is scored exactly once, after everything else is frozen.
+The holdout is every session from 2026-07-01 to 2026-10-23 (`backtest.holdout_start` and `backtest.holdout_end`), about 80 sessions. It is scored exactly once, after everything else is frozen.
+
+## A fixed end
+
+The end was fixed on 2026-10-24, before the holdout was sealed, so the sessions after it can be used for forward tests (trial 7, see DECISIONS.md). Until the holdout is scored:
+
+- Nothing inside it trains, tests or scores a model. Every training dataset drops the rows dated 2026-07-01 to 2026-10-23 and every earlier row whose label would reach into them (`holdout.blocked_window`, applied in `training.dataset_for`; `pipeline.load_inputs` blocks it by default).
+- Before 2026-10-23 training still stops the session before the start. After it, later sessions are usable again.
+- Features of sessions after the end look back over the window (a year of momentum, for example), as every live decision does. No label, test row or score comes from it.
+- `stoa holdout score` is the one command that reads it, and it stops at the end.
+
+A test wrecks every price inside a stand-in window and checks that no training label and no earlier row changes.
 
 ## Why July 2026
 
@@ -33,7 +44,7 @@ Sealing refuses a dirty tree and refuses if a lock already exists.
 
 ## Score
 
-Wait until there is enough holdout data (at least a month; more is better). Fetch fresh data, then:
+The holdout data is complete (it ended 2026-10-23). Fetch fresh data, then:
 
 ```bash
 stoa data fetch
@@ -52,4 +63,4 @@ It runs the sealed model (each holdout session predicted on its own data, no ret
 
 ## The rule
 
-One shot. If the holdout fails, the right move is to write down what was learned, not to tweak and score again. A new holdout would need a new, later start date and a new seal. The code enforces the one shot; honesty covers the rest.
+One shot. If the holdout fails, the right move is to write down what was learned, not to tweak and score again. A new holdout would need a new, later window and a new seal. The code enforces the one shot; honesty covers the rest.

@@ -296,7 +296,10 @@ def holdout_model_source(settings: Settings, repo: Path, now: object, synthetic:
         return None
     model, _ = ModelStore(settings.artifact_dir).load(lock.model_version)
     end = clock.last_closed_session(now)  # type: ignore[arg-type]
-    inputs = load_inputs(settings, end, synthetic=synthetic)
+    if settings.backtest.holdout_end is not None:
+        end = min(end, settings.backtest.holdout_end)
+    # The one place that reads the holdout: scoring it.
+    inputs = load_inputs(settings, end, synthetic=synthetic, blocked=None)
     t = inputs.training
     fs = FeatureSet.from_columns(model.features, normalize=settings.model.normalize)
     ds = build_dataset(
