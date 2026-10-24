@@ -55,7 +55,9 @@ def synthetic_bars(
 class SyntheticProvider:
     name = "synthetic"
 
-    def __init__(self, seed: int = 1, benchmark: str = "SPY", start: date = date(2016, 1, 4)) -> None:
+    def __init__(
+        self, seed: int = 1, benchmark: str = "SPY", start: date = date(2016, 1, 4)
+    ) -> None:
         self.seed = seed
         self.benchmark = benchmark
         self.start = start

@@ -63,7 +63,9 @@ class AlpacaDataProvider:
         except _FeedRefused as exc:
             if not self.fallback_feed:
                 raise DataError(str(exc)) from exc
-            log.warning("feed %s refused (%s), falling back to %s", self.feed, exc, self.fallback_feed)
+            log.warning(
+                "feed %s refused (%s), falling back to %s", self.feed, exc, self.fallback_feed
+            )
             try:
                 raw = self._paginate(symbols, start, end, self.fallback_feed)
             except _FeedRefused as exc2:
@@ -90,8 +92,12 @@ class AlpacaDataProvider:
             if token:
                 params["page_token"] = token
             resp = request_with_retry(
-                self.client, "GET", "/v2/stocks/bars", params=params,
-                max_retries=self.max_retries, sleep=self.sleep,
+                self.client,
+                "GET",
+                "/v2/stocks/bars",
+                params=params,
+                max_retries=self.max_retries,
+                sleep=self.sleep,
             )
             if resp.status_code in (403, 422):
                 raise _FeedRefused(f"HTTP {resp.status_code} for feed {feed}: {resp.text[:200]}")
