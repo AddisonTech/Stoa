@@ -218,7 +218,7 @@ class Registry:
             rdir.mkdir(parents=True, exist_ok=True)
             rp = rdir / f"{eid}.parquet"
             returns.to_frame("r").to_parquet(rp)
-            returns_path = str(rp.relative_to(self.path.parent))
+            returns_path = rp.relative_to(self.path.parent).as_posix()  # same on every OS
         exp = Experiment(
             id=eid,
             created=created,
@@ -293,7 +293,8 @@ class Registry:
         for e in self.unique_trials(("train",)):
             if not e.returns_path:
                 continue
-            p = self.path.parent / e.returns_path
+            # Records written on Windows before the fix used backslashes; read both.
+            p = self.path.parent / e.returns_path.replace("\\", "/")
             if p.exists():
                 cols[e.id] = pd.read_parquet(p)["r"]
         if len(cols) < 2:

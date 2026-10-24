@@ -305,6 +305,29 @@ def test_registry_is_append_only_and_counts_trials(tmp_path: Path) -> None:
     assert reg.trial_matrix() is not None
 
 
+def test_registry_paths_are_portable(tmp_path: Path) -> None:
+    reg = ex.Registry(tmp_path / "experiments" / "registry.jsonl")
+    rets = pd.Series(np.linspace(-0.01, 0.01, 50))
+    for i in range(2):
+        e = reg.append(
+            kind="train",
+            name=f"t{i}",
+            config_hash=f"c{i}",
+            data_hash="d",
+            params={},
+            metrics={"sharpe_daily": 0.01},
+            returns=rets + 0.001 * i,
+            sha="abc",
+        )
+        assert "\\" not in e.returns_path and e.returns_path.startswith("returns/")
+    # A record written on Windows by an older version still resolves.
+    path = tmp_path / "experiments" / "registry.jsonl"
+    path.write_text(path.read_text().replace("returns/", "returns\\\\"), encoding="utf-8")
+    assert "returns\\\\" in path.read_text()
+    m = reg.trial_matrix()
+    assert m is not None and m.shape[1] == 2
+
+
 # ---- training end to end (small) -------------------------------------------------------------
 
 
