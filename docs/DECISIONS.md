@@ -297,3 +297,16 @@ mypy strict covers every module that handles money, sizing, approvals, the model
 - **The dashboard is read only by construction.** It is built in a workflow that gets no secrets, from committed files, with no network calls and no scripts in the page. The output is also scrubbed for every secret name and any secret value in the build environment.
 - **Whether the dead man's switch ping went out.** Not recorded before; DECIDE now writes `healthcheck.json` (signal, time, sent or not, never the URL).
 - **Version 0.3.0.** `stops`, `dashboard` and `files` join the strict mypy list.
+
+## Trial 6: monthly horizon
+
+Pre-registered on 2026-10-24, before any code for it was written and before it was trained. Trial 5 and earlier (the 10 and 5 session price and quality models) failed walk-forward on real data: out-of-sample AUC 0.496, log loss worse than the base rate. This is the one follow-up design. It is trained once. If it fails, the result is reported and nothing is tuned or retried.
+
+- **Target:** the probability a stock beats SPY over the next 21 sessions, from the next open to the close 21 sessions later (`model.horizon: 21`).
+- **Rebalance:** new positions only when the execute session is the first session of a month (`model.rebalance: monthly`). Stops, the broker stops, earnings exits, the other exit rules and the kill switch still run every day.
+- **Features:** 12-1 month momentum (`f_mom_12_1`), 6-1 month momentum (`f_mom_6_1`), distance from the 200 day average (`f_trend_200`), 60 day volatility (`f_vol_60`), and the five existing quality features (`q_gross_profitability`, `q_roe`, `q_accruals`, `q_leverage`, `q_earnings_stability`). All rank-normalized across stocks each day: the percentile rank, scaled to -1 to 1, missing values at 0 (`model.price_features`, `model.normalize: rank`).
+- **Model:** logistic regression only, one model, one horizon (`model.candidates: [logistic]`, `model.test_horizon: null`).
+- **Unchanged:** the walk-forward (63 session test slices, expanding window, 504 sessions minimum training), the embargo (at least the horizon, so 21), isotonic calibration inside each training fold, the 0.55 threshold, up to 10 candidates, costs, the scoreboard windows and the pass bar (calibration error under 0.05, log loss better than the base rate, deflated Sharpe at least 0.95 counting every recorded trial, and every scoreboard check).
+- **Data:** the universe and fundamentals as of 2026-10-24, with the renamed tickers (BK, FI, JEC, WLTW) fetched under their current symbols. Training stops on 2026-06-30, the day before the holdout. The holdout is not sealed or scored.
+- **What it adds to the registry:** `stoa model train` logs exactly one new trial (logistic, 21 sessions). `stoa model report` reruns the same configuration, which is not a new trial. `stoa score` appends its scoreboard backtest record, as every scoreboard run does.
+- **If it passes every walk-forward check:** promote it and set `model.rebalance: monthly` in `config/default.yaml` so paper DECIDE uses it. **If it fails:** report it and stop.
