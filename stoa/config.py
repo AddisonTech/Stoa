@@ -355,13 +355,27 @@ class AnalystConfig(_Frozen):
 
 
 class BudgetConfig(_Frozen):
-    """One monthly dollar cap for every Claude call Stoa makes."""
+    """One monthly dollar cap for every Claude call Stoa makes.
+
+    The analyst warns once a month at ``warn_fraction`` of the cap and pauses at
+    the cap. A tap can raise this month's cap by ``raise_step_usd``, never past
+    ``hard_ceiling_usd``. Raises end with the month.
+    """
 
     monthly_cap_usd: float = Field(default=25.0, ge=0)
+    hard_ceiling_usd: float = Field(default=75.0, ge=0)
+    raise_step_usd: float = Field(default=10.0, gt=0)
+    warn_fraction: float = Field(default=0.8, gt=0, le=1)
     batch_discount: float = Field(default=0.5, gt=0, le=1)
     cache_write_multiplier_5m: float = 1.25
     cache_write_multiplier_1h: float = 2.0
     cache_read_multiplier: float = 0.1
+
+    @model_validator(mode="after")
+    def _ceiling(self) -> BudgetConfig:
+        if self.hard_ceiling_usd < self.monthly_cap_usd:
+            raise ValueError("budget.hard_ceiling_usd must be at least budget.monthly_cap_usd")
+        return self
 
 
 class DataSourcesConfig(_Frozen):

@@ -134,6 +134,15 @@ A guard said no. The message says which: missing keys, live mode locked, or the 
 **"Stop place failed", "Stop replace failed", "Stop cancel failed" or "Stop check failed" (priority 5)**
 Stoa could not place, cancel or check a protective stop at Alpaca. The rest of the run carried on. Open the Alpaca app and look at the position and its open orders. A missing stop is placed again at the next EXECUTE; the close rules still apply in the meantime.
 
+**"Analyst spend at 80% of the cap" (priority 3)**
+The Claude analyst has used 80% of this month's cap. Once a month at most. Nothing to do.
+
+**"Analyst paused at its cap" (priority 4, Approve and Skip buttons)**
+The analyst reached this month's cap and stopped spending. Approve raises this month's cap by $10 (`budget.raise_step_usd`); Skip, no tap within the approval wait, a stale button or a late tap leaves it paused until the 1st. Raises end with the month, and no month goes past `budget.hard_ceiling_usd` ($75). Trading carries on either way: the model just runs without new news scores, as it does with the analyst off. Every raise is recorded in state and the dashboard shows spend against the cap.
+
+**"Analyst stays paused" or "Analyst cap raised" (priority 3)**
+The outcome of the ask above. Nothing to do.
+
 **"Stopped out: SYMBOL" (priority 4)**
 A protective stop filled during the day. Stoa recorded it as a `stop_out` trade at DECIDE. Nothing to do.
 

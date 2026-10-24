@@ -32,7 +32,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from stoa import __version__, clock, exam, holdout, redact
+from stoa import __version__, clock, exam, holdout, redact, spendcap
 from stoa.config import SECRET_ENV, Settings
 from stoa.journal import read_journal
 from stoa.state import State, StateStore
@@ -216,6 +216,26 @@ def exam_progress(settings: Settings, repo: Path) -> dict[str, Any]:
     }
 
 
+def analyst_spend(state: State, settings: Settings, now: datetime) -> dict[str, Any]:
+    """This month's analyst spend against its cap. Raise nonces stay in state, not here."""
+    month = spendcap.month_of(now)
+    cap = spendcap.cap_for(state, settings.budget, month)
+    used = spendcap.spent(state, month)
+    return {
+        "month": month,
+        "spent": float(used),
+        "cap": float(cap),
+        "base_cap": settings.budget.monthly_cap_usd,
+        "ceiling": settings.budget.hard_ceiling_usd,
+        "paused": cap > 0 and used >= cap,
+        "raises": [
+            {"amount": float(r.amount), "at": r.at.isoformat()}
+            for r in state.cap_raises
+            if r.month == month
+        ],
+    }
+
+
 def calibration(report: tuple[str, dict[str, Any]] | None) -> dict[str, Any] | None:
     if report is None:
         return None
@@ -250,11 +270,12 @@ def collect(
     state_dir = settings.state.dir
     state = StateStore(state_dir).load()
     records = read_journal(state_dir / "journal")
+    built = now or clock.now_utc()
     track = state.track
     mode = track.days[-1].mode if track.days else settings.mode
     equity = track.days[-1] if track.days else None
     return {
-        "generated_at": (now or clock.now_utc()).isoformat(),
+        "generated_at": built.isoformat(),
         "version": __version__,
         "mode": mode,
         "benchmark": settings.benchmark,
@@ -293,6 +314,7 @@ def collect(
             ),
         },
         "fallback": {"active": track.fallback_active, "reason": track.fallback_reason},
+        "analyst": analyst_spend(state, settings, built),
     }
 
 
@@ -670,6 +692,12 @@ def render_health(data: dict[str, Any]) -> str:
         )
     ks = data["kill_switch"]
     fb = data["fallback"]
+    an = data["analyst"]
+    spend = f"{_money(an['spent'])} of {_money(an['cap'])} in {_e(an['month'])}"
+    if an["raises"]:
+        spend += f" (raised {_money(sum(r['amount'] for r in an['raises']))} this month)"
+    if an["paused"]:
+        spend += ' <span class="warn">paused at the cap</span>'
     rows = [
         ("Last run", f"{_when(run['at'])} ({_e(run['job'])})" if run else "never"),
         ("Last DECIDE", _e(data["last_decided"] or "never")),
@@ -679,6 +707,7 @@ def render_health(data: dict[str, Any]) -> str:
             "Kill switch",
             f'<span class="bad">ON since {_e(ks["since"])}</span>' if ks["active"] else "off",
         ),
+        ("Analyst spend", spend),
         (
             "SPY fallback",
             f'<span class="warn">ON: {_e(fb["reason"])}</span>' if fb["active"] else "off",

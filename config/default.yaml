@@ -225,6 +225,9 @@ analyst:
 
 budget:
   monthly_cap_usd: 25.0            # one hard cap for every Claude call
+  hard_ceiling_usd: 75.0           # no approved raise can take a month past this
+  raise_step_usd: 10.0             # one Approve tap raises this month's cap by this much
+  warn_fraction: 0.8               # one heads-up a month at this share of the cap
   batch_discount: 0.5
   cache_write_multiplier_5m: 1.25
   cache_write_multiplier_1h: 2.0

@@ -174,6 +174,26 @@ def decide(
     deadline: datetime,
 ) -> dict[str, Verdict]:
     """The verdict for each order from the messages read off the approval topic."""
+    return decide_keys(
+        [o.symbol for o in orders],
+        messages,
+        plan_id=plan_id,
+        nonce=nonce,
+        created_at=created_at,
+        deadline=deadline,
+    )
+
+
+def decide_keys(
+    keys: list[str],
+    messages: list[dict[str, Any]],
+    *,
+    plan_id: str,
+    nonce: str,
+    created_at: datetime,
+    deadline: datetime,
+) -> dict[str, Verdict]:
+    """The verdict for each key (a symbol, or another name such as ANALYST)."""
     latest: dict[str, Decision] = {}
     bad_nonce: set[str] = set()
     late: set[str] = set()
@@ -193,18 +213,18 @@ def decide(
         if cur is None or d.at >= cur.at:
             latest[d.symbol] = d
     out = {}
-    for o in orders:
-        d = latest.get(o.symbol)
+    for k in keys:
+        d = latest.get(k)
         if d is not None and d.verb == APPROVE:
-            out[o.symbol] = Verdict(o.symbol, True, "approved")
+            out[k] = Verdict(k, True, "approved")
         elif d is not None:
-            out[o.symbol] = Verdict(o.symbol, False, "skipped")
-        elif o.symbol in late:
-            out[o.symbol] = Verdict(o.symbol, False, "late")
-        elif o.symbol in bad_nonce:
-            out[o.symbol] = Verdict(o.symbol, False, "wrong_nonce")
+            out[k] = Verdict(k, False, "skipped")
+        elif k in late:
+            out[k] = Verdict(k, False, "late")
+        elif k in bad_nonce:
+            out[k] = Verdict(k, False, "wrong_nonce")
         else:
-            out[o.symbol] = Verdict(o.symbol, False, "no_answer")
+            out[k] = Verdict(k, False, "no_answer")
     return out
 
 
@@ -222,8 +242,36 @@ def wait_and_decide(
     sleep: Callable[[float], None],
 ) -> dict[str, Verdict]:
     """Poll until every order has an answer, ``wait_minutes`` pass, or the deadline."""
+    return wait_for(
+        client,
+        [o.symbol for o in orders],
+        plan_id=plan_id,
+        nonce=nonce,
+        created_at=created_at,
+        deadline=deadline,
+        wait_minutes=wait_minutes,
+        poll_seconds=poll_seconds,
+        now=now,
+        sleep=sleep,
+    )
+
+
+def wait_for(
+    client: ApprovalClient | None,
+    keys: list[str],
+    *,
+    plan_id: str,
+    nonce: str,
+    created_at: datetime,
+    deadline: datetime,
+    wait_minutes: float,
+    poll_seconds: float,
+    now: Callable[[], datetime],
+    sleep: Callable[[float], None],
+) -> dict[str, Verdict]:
+    """Poll until every key has an answer, ``wait_minutes`` pass, or the deadline."""
     if client is None:
-        return {o.symbol: Verdict(o.symbol, False, "unavailable") for o in orders}
+        return {k: Verdict(k, False, "unavailable") for k in keys}
     stop = min(deadline, now() + timedelta(minutes=wait_minutes))
     # Bounded by count as well as by the clock, so a stalled clock can never hang EXECUTE.
     max_polls = int(wait_minutes * 60 / poll_seconds) + 1
@@ -232,12 +280,12 @@ def wait_and_decide(
         polls += 1
         try:
             msgs = client.poll(created_at - timedelta(minutes=1))
-            verdicts = decide(
-                orders, msgs, plan_id=plan_id, nonce=nonce, created_at=created_at, deadline=deadline
+            verdicts = decide_keys(
+                keys, msgs, plan_id=plan_id, nonce=nonce, created_at=created_at, deadline=deadline
             )
         except (httpx.HTTPError, RuntimeError) as exc:
             log.warning("approval poll failed: %s", type(exc).__name__)
-            verdicts = {o.symbol: Verdict(o.symbol, False, "unavailable") for o in orders}
+            verdicts = {k: Verdict(k, False, "unavailable") for k in keys}
         answered = all(v.reason not in ("no_answer", "unavailable") for v in verdicts.values())
         if answered or now() >= stop or polls >= max_polls:
             return verdicts

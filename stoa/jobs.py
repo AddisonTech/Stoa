@@ -250,16 +250,41 @@ def score_todays_text(rt: Runtime, state: State, session: date, notes: list[str]
     """When text features are on: fetch the last two days of watchlist news and score it.
 
     Runs one call per new item with the cached system prompt, charges the
-    shared monthly ledger, and never fails DECIDE (text is optional).
+    shared monthly ledger, and never fails DECIDE (text is optional). At the
+    month's cap the analyst pauses (see spendcap.py) and DECIDE goes on exactly
+    as it does with the analyst off.
     """
     from stoa import analyst as an
+    from stoa import spendcap
     from stoa.data.news import AlpacaNewsClient, NewsStore
 
     s = rt.settings
     key = rt.secrets.llm_api_key
     if not (s.model.use_text and s.analyst.enabled and key is not None):
         return
+
+    def send_alert(a: alerts.Alert) -> None:
+        alerts.safe_send(rt.notifier, a)
+
     try:
+        topic = rt.secrets.ntfy_approval_topic
+        g = spendcap.gate(
+            state,
+            s.budget,
+            s.approval,
+            now=rt.now,
+            sleep=rt.sleep,
+            send=send_alert,
+            client=make_approvals(rt),
+            server=s.alerts.server,
+            approval_topic=topic.get_secret_value() if topic is not None else None,
+        )
+        if g.paused:
+            notes.append(
+                f"Analyst paused at its cap ({alerts.money(g.spent)} of {alerts.money(g.cap)} "
+                f"in {g.month}); the model ran without new news scores"
+            )
+            return
         news = rt.news_client
         if news is None:
             news = AlpacaNewsClient(alpaca_data_client(s, rt.secrets))
@@ -268,7 +293,7 @@ def score_todays_text(rt: Runtime, state: State, session: date, notes: list[str]
         NewsStore(s.news_path).merge(df)
         items = an.items_from_news(df, s.analyst.text_chars, s.analyst.max_items_per_symbol_per_day)
         client = rt.analyst_client or an.make_client(key.get_secret_value())
-        ledger = an.Ledger(s.budget.monthly_cap_usd, state.llm_spend_by_month, clock=rt.now)
+        ledger = an.Ledger(float(g.cap), state.llm_spend_by_month, clock=rt.now)
         a = an.Analyst(
             s.analyst, s.budget, s.llm.prices, client, an.ScoreCache(s.analyst.cache_dir), ledger
         )
@@ -278,6 +303,9 @@ def score_todays_text(rt: Runtime, state: State, session: date, notes: list[str]
             notes.append(
                 f"Analyst scored {rep.scored} new items (${rep.spent_usd:.3f}), {rep.failed} failed"
             )
+        heads_up = spendcap.warn_if_due(state, s.budget, rt.now())
+        if heads_up is not None:
+            send_alert(heads_up)
     except Exception as exc:
         notes.append(f"Analyst skipped today ({type(exc).__name__})")
 

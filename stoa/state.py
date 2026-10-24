@@ -99,6 +99,29 @@ class HeldAtClose(BaseModel):
     close: Decimal
 
 
+class CapRaise(BaseModel):
+    """One approved raise of the analyst's cap. It counts for its month only."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    month: str  # YYYY-MM, UTC, like the spend ledger
+    amount: Decimal
+    at: datetime
+    nonce: str
+
+
+class CapAsk(BaseModel):
+    """One request to raise the cap, and how it ended."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    month: str
+    cap: Decimal  # the cap that was reached
+    nonce: str
+    asked_at: datetime
+    outcome: str  # approved | skipped | wrong_nonce | late | no_answer | unavailable | ceiling
+
+
 class Inception(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -142,6 +165,9 @@ class State(BaseModel):
     stop_outs: list[StopOut] = Field(default_factory=list)
     holdings_at_close: dict[str, HeldAtClose] = Field(default_factory=dict)
     last_reference_closes: dict[str, Decimal] = Field(default_factory=dict)
+    cap_raises: list[CapRaise] = Field(default_factory=list)
+    cap_asks: list[CapAsk] = Field(default_factory=list)
+    cap_warned_months: list[str] = Field(default_factory=list)
 
     def add_stop_outs(self, items: list[StopOut]) -> None:
         self.stop_outs = [*self.stop_outs, *items][-STOP_OUTS_KEPT:]

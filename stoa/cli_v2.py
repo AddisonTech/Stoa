@@ -497,13 +497,15 @@ def make_analyst(ctx: Any) -> tuple[Any, StateStore, Any]:
     Returns (analyst, store, state). Save the state afterwards so the spend sticks.
     """
     from stoa import analyst as an
+    from stoa import spendcap
 
     s = ctx.settings
     store = StateStore(s.state.dir)
     state = store.load()
     key = ctx.secrets.llm_api_key
     client = an.make_client(key.get_secret_value()) if key is not None else None
-    ledger = an.Ledger(s.budget.monthly_cap_usd, state.llm_spend_by_month)
+    cap = spendcap.cap_for(state, s.budget, spendcap.month_of(clock.now_utc()))
+    ledger = an.Ledger(float(cap), state.llm_spend_by_month)
     cache = an.ScoreCache(s.analyst.cache_dir)
     return an.Analyst(s.analyst, s.budget, s.llm.prices, client, cache, ledger), store, state
 

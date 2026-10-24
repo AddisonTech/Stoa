@@ -15,7 +15,7 @@ from stoa.cli import main
 from stoa.config import SECRET_ENV, Settings
 from stoa.journal import Journal
 from stoa.models import ClosedTrade, PositionMeta
-from stoa.state import HeldAtClose, State, StateStore, StopOut
+from stoa.state import CapRaise, HeldAtClose, State, StateStore, StopOut
 from stoa.tracking import DailyRecord
 from tests.conftest import ROOT, SMALL_WATCHLIST, make_settings
 
@@ -83,6 +83,10 @@ def write_fixture(s: Settings) -> None:
         ],
     )
     state.track.days = days
+    state.llm_spend_by_month = {"2021-10": D("35.00")}
+    state.cap_raises = [
+        CapRaise(month="2021-10", amount=D(10), at=NOW, nonce="raise-nonce-never-shown")
+    ]
     StateStore(s.state.dir).save(state)
     j = Journal(s.state.dir / "journal")
     for day in SESSIONS:
@@ -182,6 +186,9 @@ def test_builds_from_fixture_state(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     assert page.count('class="decision"') == len(SESSIONS)
     assert "Report 20211001T120000-model" in page and 'class="chart cal"' in page
     assert "success ping sent" in page
+    assert "$35.00 of $35.00 in 2021-10 (raised $10.00 this month)" in page
+    assert "paused at the cap" in page and "raise-nonce-never-shown" not in page
+    assert "raise-nonce-never-shown" not in json.dumps(data)
     # Six records are five graded sessions (returns between closes) against the minimum.
     assert "<span>5 of 42</span>" in page
 
@@ -193,6 +200,7 @@ def test_builds_cleanly_from_empty_state(tmp_path: Path) -> None:
     assert "No decisions yet" in page
     assert "No model report yet" in page
     assert "no check-in recorded yet" in page
+    assert "$0.00 of $25.00 in 2021-10" in page and "paused at the cap" not in page
     assert "<polyline" not in page and 'class="badge b-paper">PAPER<' in page
     assert data["positions"] == [] and data["decisions"] == []
 
