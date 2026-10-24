@@ -8,6 +8,7 @@ exactly one of notional or quantity.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
 from decimal import Decimal
 
@@ -35,13 +36,23 @@ def sell_fees(gross: Decimal, costs: CostConfig) -> Decimal:
     return max(fee, costs.min_sell_fee_usd)
 
 
+Slippage = Callable[[str, date | None], float]  # bps one way, by symbol and session
+
+
 class SimBroker:
     name = "sim"
 
-    def __init__(self, portfolio: Portfolio, costs: CostConfig, universe: Universe) -> None:
+    def __init__(
+        self,
+        portfolio: Portfolio,
+        costs: CostConfig,
+        universe: Universe,
+        slippage: Slippage | None = None,
+    ) -> None:
         self.portfolio = portfolio
         self.costs = costs
         self.universe = universe
+        self.slippage = slippage  # per symbol and session; None means costs.slippage_bps
         self.session: date | None = None
         self.prices: dict[str, Decimal] = {}
         self.tradable_today: frozenset[str] = frozenset()
@@ -118,7 +129,7 @@ class SimBroker:
         qty = self.portfolio.qty(symbol)
         if qty <= 0:
             return None
-        px = sell_fill_price(price, self.costs.slippage_bps)
+        px = sell_fill_price(price, self._slip(symbol))
         fill = Fill(
             symbol=symbol,
             side=Side.SELL,
@@ -133,6 +144,11 @@ class SimBroker:
         if closed is not None:
             self.closed_trades.append(closed)
         return fill
+
+    def _slip(self, symbol: str) -> float:
+        if self.slippage is None:
+            return self.costs.slippage_bps
+        return self.slippage(symbol, self.session)
 
     def _next_id(self) -> str:
         self._seq += 1
@@ -157,7 +173,7 @@ class SimBroker:
         if not info.tradable:
             return self._reject(request, session, "asset not tradable")
         if request.side is Side.BUY:
-            price = buy_fill_price(ref, self.costs.slippage_bps)
+            price = buy_fill_price(ref, self._slip(request.symbol))
             if request.notional is not None:
                 if not info.fractionable:
                     return self._reject(request, session, "asset not fractionable")
@@ -178,7 +194,7 @@ class SimBroker:
                 return self._reject(request, session, "insufficient qty; no shorting")
             if qty != qty.to_integral_value() and not info.fractionable:
                 return self._reject(request, session, "fractional sell of non-fractionable asset")
-            price = sell_fill_price(ref, self.costs.slippage_bps)
+            price = sell_fill_price(ref, self._slip(request.symbol))
             fees = sell_fees(qty * price, self.costs)
         if qty <= 0:
             return self._reject(request, session, "order too small")

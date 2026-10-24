@@ -11,7 +11,7 @@ import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import date
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 
 from stoa import risk
 from stoa.broker.base import Broker, BrokerPosition, OrderRequest, OrderStatus
@@ -80,12 +80,13 @@ def _submit_all(
             )
             submitted.append((o, existing))
             continue
+        by_qty = o.side is Side.SELL or o.notional is None  # whole-share buys carry a qty
         request = OrderRequest(
             symbol=o.symbol,
             side=o.side,
             client_order_id=o.client_order_id,
-            notional=o.notional if o.side is Side.BUY else None,
-            qty=o.qty if o.side is Side.SELL else None,
+            notional=None if by_qty else o.notional,
+            qty=o.qty if by_qty else None,
             reason=o.reason,
         )
         submitted.append((o, broker.submit(request)))
@@ -148,6 +149,36 @@ def update_meta(
         if sym not in held_after:
             del meta[sym]
     state.positions_meta = meta
+
+
+def whole_shares(
+    buys: list[PlannedOrder], prices: Mapping[str, Decimal], universe: Universe
+) -> tuple[list[PlannedOrder], list[Rejection]]:
+    """Turn a notional buy of a non-fractionable stock into whole shares at the live price.
+
+    Rounds down, so the position never costs more than the risk engine allowed.
+    Fewer than one share is a rejection.
+    """
+    out: list[PlannedOrder] = []
+    rej: list[Rejection] = []
+    for o in buys:
+        if not universe.needs_whole_shares(o.symbol) or o.notional is None:
+            out.append(o)
+            continue
+        price = prices.get(o.symbol)
+        qty = (o.notional / price).to_integral_value(rounding=ROUND_DOWN) if price else ZERO
+        if qty < 1:
+            rej.append(
+                Rejection(
+                    symbol=o.symbol,
+                    side=Side.BUY,
+                    reason="whole_shares",
+                    detail=f"{o.notional} buys no whole share at {price}",
+                )
+            )
+            continue
+        out.append(o.model_copy(update={"qty": qty, "notional": None}))
+    return out, rej
 
 
 def execute_plan(
@@ -272,6 +303,8 @@ def execute_plan(
         positions_mid = broker.positions()
         prices = broker.latest_prices(sorted({o.symbol for o in buys}))
         ok, rej = risk.check_buys(buys, prices, context(positions_mid))
+        report.rejections.extend(rej)
+        ok, rej = whole_shares(ok, prices, universe)
         report.rejections.extend(rej)
         _record(report, _submit_all(broker, gated(ok, prices)), basis)
 

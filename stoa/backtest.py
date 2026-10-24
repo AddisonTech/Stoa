@@ -19,7 +19,7 @@ from decimal import Decimal
 
 import pandas as pd
 
-from stoa.broker.sim import SimBroker
+from stoa.broker.sim import SimBroker, Slippage
 from stoa.clock import previous_session, sessions_between
 from stoa.config import Settings
 from stoa.data.base import Bars, DataError
@@ -82,6 +82,7 @@ def run_backtest(
     starting_equity: Decimal | None = None,
     universe: Universe | None = None,
     journal: Journal | None = None,
+    slippage: Slippage | None = None,
 ) -> BacktestResult:
     bench = settings.benchmark
     if bench not in bars:
@@ -106,7 +107,7 @@ def run_backtest(
     universe = universe or Universe.assume_all_fractionable(settings.watchlist, bench)
     features = build_features(bars, bench)
     portfolio = Portfolio(cash=equity0)
-    broker = SimBroker(portfolio, settings.costs, universe)
+    broker = SimBroker(portfolio, settings.costs, universe, slippage)
     state = State(high_water_mark=equity0)
 
     equity_points: dict[pd.Timestamp, float] = {pd.Timestamp(first_decide): float(equity0)}

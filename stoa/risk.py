@@ -380,7 +380,7 @@ def _entry_rule_violation(
 ) -> tuple[str, str] | None:
     if not ctx.universe.is_listed(symbol):
         return "not_in_watchlist", "symbol is not on the watchlist"
-    if not ctx.universe.is_fractionable(symbol):
+    if not ctx.universe.can_buy(symbol):
         return "not_fractionable", "asset is not tradable or not fractionable"
     if symbol in selling:
         return "same_day_round_trip", "symbol is being sold in this plan"
@@ -492,7 +492,7 @@ def check_buys(
         if not ctx.universe.is_listed(sym):
             rejections.append(_reject(sym, Side.BUY, "not_in_watchlist", "not on the watchlist"))
             continue
-        if not ctx.universe.is_fractionable(sym):
+        if not ctx.universe.can_buy(sym):
             rejections.append(_reject(sym, Side.BUY, "not_fractionable", "broker asset flags"))
             continue
         topping_up = fallback_buy and sym in ctx.held

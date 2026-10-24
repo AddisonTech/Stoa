@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -20,6 +21,7 @@ from pydantic import BaseModel, ConfigDict
 from stoa import metrics
 from stoa.backtest import BacktestResult, run_backtest
 from stoa.baselines import BuyAndHold
+from stoa.broker.sim import Slippage
 from stoa.config import DEFAULT_SCOREBOARD_PATH, Secrets, Settings
 from stoa.data.base import Bars, DataError
 from stoa.data.cache import load_cached_bars
@@ -31,6 +33,7 @@ from stoa.experiments import (
     hash_frame_like,
     return_moments,
 )
+from stoa.models import ClosedTrade
 from stoa.planner import Strategy
 from stoa.roles.llm import Budget
 from stoa.strategy import build_strategy
@@ -39,11 +42,20 @@ from stoa.universe import Universe
 
 @dataclass
 class ModelSource:
-    """Everything the scoreboard needs to backtest the model strategy."""
+    """Everything the scoreboard needs to backtest the graded strategy (model or event).
+
+    ``bars`` is what every strategy can trade. The event strategy trades
+    thousands of names, so it brings ``window_bars`` (only the names with a
+    signal near a window) and ``slippage`` (the liquidity-scaled cost model,
+    applied to every strategy in the run).
+    """
 
     strategy: Strategy
     bars: Bars
     universe: Universe | None = None
+    name: str = "model"
+    slippage: Slippage | None = None
+    window_bars: Callable[[date, date], Bars] | None = None
 
 
 STRATEGIES = ("agents", "spy", "sma")  # v1 set, still what the holdout scores
@@ -65,6 +77,7 @@ class Criteria(BaseModel):
     min_trades: int = 30
     max_monthly_api_cost_usd: float = 25.0
     beat_mtum_for_pass: bool = False  # MTUM is always reported; this makes it a hard check
+    sharpe_vs_mtum: bool = False  # trial 8: Sharpe above MTUM's on the evaluation window
 
 
 class ScoreboardConfig(BaseModel):
@@ -93,6 +106,7 @@ class Run:
     kills_by_gate: dict[str, int]
     rejections_by_reason: dict[str, int]
     daily_returns: tuple[float, ...] = ()
+    trades: tuple[ClosedTrade, ...] = ()  # for per-signal diagnostics; not in the report
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -216,6 +230,7 @@ def summarize(result: BacktestResult, settings: Settings, window: str) -> Run:
         kills_by_gate=result.kills_by_gate,
         rejections_by_reason=result.rejections_by_reason,
         daily_returns=tuple(float(x) for x in metrics.daily_returns(result.equity)),
+        trades=tuple(result.trades),
     )
 
 
@@ -231,12 +246,13 @@ def run_one(
     llm: bool = False,
     budget: Budget | None = None,
     universe: Universe | None = None,
+    slippage: Slippage | None = None,
 ) -> Run:
     if isinstance(strategy, str):
         strat = build_strategy(settings, secrets, strategy, llm=llm, budget=budget)
     else:
         strat = strategy
-    result = run_backtest(settings, bars, strat, start, end, universe=universe)
+    result = run_backtest(settings, bars, strat, start, end, universe=universe, slippage=slippage)
     return summarize(result, settings, window)
 
 
@@ -321,6 +337,18 @@ def evaluate(report: Report, board: ScoreboardConfig) -> list[Check]:
     )
     if c.beat_mtum_for_pass and report.has("mtum", ev):
         checks.append(mtum_check(report, g, ev))
+    if c.sharpe_vs_mtum:
+        if report.has("mtum", ev):
+            mt = report.get("mtum", ev).metrics
+            checks.append(
+                Check(
+                    "sharpe_vs_mtum",
+                    me.sharpe > mt.sharpe,
+                    f"{g} {me.sharpe:.2f} vs MTUM {mt.sharpe:.2f} ({ev})",
+                )
+            )
+        else:
+            checks.append(Check("sharpe_vs_mtum", False, "no MTUM bars to compare with"))
     return checks
 
 
@@ -393,7 +421,9 @@ def score_all(
     last_end = max(settings.backtest.windows[w].end for w in windows)
     bars = model.bars if model is not None else load_bars(settings, last_end, synthetic=synthetic)
     created = now or datetime.now(UTC)
-    graded = board.graded if (board.graded != "model" or model is not None) else "agents"
+    graded = (
+        model.name if model is not None else (board.graded if board.graded != "model" else "agents")
+    )
     report = Report(
         run_id=created.strftime("%Y%m%d-%H%M%S")
         + ("-synthetic" if synthetic else "")
@@ -409,7 +439,7 @@ def score_all(
         win = settings.backtest.windows[w]
         strategies: list[tuple[str, str | Strategy, Universe | None]] = [("agents", "agents", None)]
         if model is not None:
-            strategies.append(("model", model.strategy, model.universe))
+            strategies.append((model.name, model.strategy, model.universe))
         strategies += [("spy", "spy", None), ("sma", "sma", None)]
         if mtum is not None:
             ref_universe = Universe.assume_all_fractionable(
@@ -418,10 +448,15 @@ def score_all(
             strategies.append(("mtum", BuyAndHold(mtum, name="mtum"), ref_universe))
         for name, strat, universe in strategies:
             use_llm = llm and name == "agents"
+            graded_bars = (
+                model.window_bars(win.start, win.end)
+                if model is not None and name == model.name and model.window_bars is not None
+                else bars
+            )
             run = run_one(
                 settings,
                 secrets,
-                bars,
+                graded_bars,
                 strat,
                 w,
                 win.start,
@@ -429,6 +464,7 @@ def score_all(
                 llm=use_llm,
                 budget=budget,
                 universe=universe,
+                slippage=model.slippage if model is not None else None,
             )
             report.runs.append(run)
             if name == graded and w == board.evaluation_window:

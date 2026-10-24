@@ -197,16 +197,26 @@ def backtest(
 @click.option("--llm/--no-llm", default=False, help="Use the Claude scout for the v1 agents.")
 @click.option("--synthetic", is_flag=True, help="Use seeded synthetic bars (offline demo).")
 @click.option("--no-model", is_flag=True, help="Skip the model; grade the v1 rule pipeline.")
+@click.option(
+    "--strategy",
+    "graded",
+    type=click.Choice(["model", "event"]),
+    default="model",
+    help="The graded strategy. event is trial 8 (run `stoa events build` first).",
+)
 @click.option("--results", type=click.Path(path_type=Path), default=Path("results"))
 @pass_ctx
 @friendly_errors
-def score(ctx: Ctx, llm: bool, synthetic: bool, no_model: bool, results: Path) -> None:
+def score(ctx: Ctx, llm: bool, synthetic: bool, no_model: bool, graded: str, results: Path) -> None:
     """Every strategy on every window, graded on risk against SPY, the 50/200 rule and MTUM."""
     from stoa import scoreboard
     from stoa.experiments import Registry
 
     s = ctx.settings
     source = None
+    if graded == "event":
+        _score_event(s, ctx.secrets, results)
+        return
     if s.strategy.kind == "model" and not no_model:
         from stoa.pipeline import load_inputs, walkforward_model_source
 
@@ -224,6 +234,48 @@ def score(ctx: Ctx, llm: bool, synthetic: bool, no_model: bool, results: Path) -
     )
     path = scoreboard.write_report(report, results)
     click.echo(scoreboard.render_markdown(report))
+    click.echo(f"Report written to {path}")
+
+
+def _score_event(s: Settings, secrets: Secrets, results: Path) -> None:
+    """Trial 8: the event strategy, graded on the registered bar, logged as one trial."""
+    from stoa import event_run, event_signals, scoreboard
+    from stoa.event_strategy import EventStrategy, diagnostics
+    from stoa.experiments import Registry
+
+    board = scoreboard.load_scoreboard()
+    board = board.model_copy(
+        update={"criteria": board.criteria.model_copy(update={"sharpe_vs_mtum": True})}
+    )
+    end = max(s.backtest.windows[w].end for w in [*board.tune_windows, board.evaluation_window])
+    base = event_run.base_bars(s, end)
+    source = event_run.source(s, base, end)
+    report = scoreboard.score_all(
+        s, secrets, board=board, model=source, registry=Registry(s.registry_path)
+    )
+    path = scoreboard.write_report(report, results)
+    strat = source.strategy
+    assert isinstance(strat, EventStrategy)
+    kinds = (event_signals.INSIDER, event_signals.EARNINGS)
+    lines = ["", "Per-signal diagnostics (never graded or picked between):", ""]
+    lines += [
+        "| Window | Signal | Trades | Beat SPY | Avg excess per trade |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    rows = []
+    for run in report.runs:
+        if run.strategy != source.name:
+            continue
+        for st in diagnostics(strat.entries, list(run.trades), base[s.benchmark], kinds):
+            rows.append({"window": run.window, **st.__dict__})
+            hit = f"{st.hit_rate:.1%}" if st.trades else "n/a"
+            avg = f"{st.avg_excess:+.2%}" if st.trades else "n/a"
+            lines.append(f"| {run.window} | {st.kind} | {st.trades} | {hit} | {avg} |")
+    (path / "diagnostics.json").write_text(json.dumps(rows, indent=2, default=str))
+    with (path / "report.md").open("a", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+    click.echo(scoreboard.render_markdown(report))
+    click.echo("\n".join(lines))
     click.echo(f"Report written to {path}")
 
 

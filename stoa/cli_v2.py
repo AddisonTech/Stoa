@@ -65,6 +65,119 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
             f"Coverage report: {path}"
         )
 
+    @universe.command("wide")
+    @click.option("--start", type=click.DateTime(["%Y-%m-%d"]), default=None)
+    @click.option("--end", type=click.DateTime(["%Y-%m-%d"]), default=None)
+    @click.option("--chunk", type=int, default=100, help="Symbols per bar request.")
+    @pass_ctx
+    @friendly_errors
+    def universe_wide(ctx: Any, start: Any, end: Any, chunk: int) -> None:
+        """Trial 8: bars for every listed US equity at Alpaca, active and delisted."""
+        from stoa import wide
+        from stoa.broker.alpaca import make_trading_client
+        from stoa.data.cache import BarCache
+        from stoa.data.factory import make_provider
+
+        s, sec = ctx.settings, ctx.secrets
+        if not sec.has_paper_keys():
+            raise click.ClickException("ALPACA_PAPER_KEY_ID and ALPACA_PAPER_SECRET are needed")
+        assert sec.alpaca_paper_key_id is not None and sec.alpaca_paper_secret is not None
+        trading = make_trading_client(
+            s.alpaca.paper_url,
+            sec.alpaca_paper_key_id.get_secret_value(),
+            sec.alpaca_paper_secret.get_secret_value(),
+        )
+        assets: dict[str, list[dict[str, Any]]] = {}
+        for status in ("active", "inactive"):
+            resp = trading.get("/v2/assets", params={"status": status, "asset_class": "us_equity"})
+            resp.raise_for_status()
+            assets[status] = list(resp.json())
+        root = s.data.cache_dir / wide.WIDE_NAMESPACE
+        wide.save_assets(root / "_assets.json", assets)
+        cands = wide.candidates(assets)
+        symbols = sorted(cands)
+        begin = start.date() if start else s.data.history_start
+        finish = end.date() if end else clock.last_closed_session(clock.now_utc())
+        prov = make_provider(s, sec)
+        cache = BarCache(s.data.cache_dir, wide.WIDE_NAMESPACE)
+        have = 0
+        for i in range(0, len(symbols), chunk):
+            bars = wide.fetch_robust(
+                lambda syms: prov.fetch(syms, begin, finish), symbols[i : i + chunk]
+            )
+            cache.write(bars)
+            have += len(bars)
+            if (i // chunk) % 10 == 0:
+                click.echo(
+                    f"{min(i + chunk, len(symbols))}/{len(symbols)} symbols, {have} with bars"
+                )
+        n_inactive = sum(1 for c in cands.values() if c["status"] == "inactive")
+        click.echo(
+            f"{have} of {len(symbols)} listed symbols have bars ({len(symbols) - n_inactive} "
+            f"active, {n_inactive} delisted candidates), {begin} to {finish}, in {root}"
+        )
+
+    # ---- events (trial 8) ----------------------------------------------------------------
+
+    @main.group()
+    def events() -> None:
+        """Trial 8 event data: earnings drift and insider clusters."""
+
+    @events.command("build")
+    @click.option(
+        "--end",
+        type=click.DateTime(["%Y-%m-%d"]),
+        default="2026-06-30",
+        help="Last session of data used (the end of the scoreboard windows).",
+    )
+    @pass_ctx
+    @friendly_errors
+    def events_build(ctx: Any, end: Any) -> None:
+        """Point-in-time signals from the wide universe, SEC filings and insider purchases."""
+        from stoa import event_run
+        from stoa.data.sec import make_sec_client
+
+        s = ctx.settings
+        sec = make_sec_client(
+            s.sources.sec_user_agent, s.sources.sec_cache_dir, s.sources.sec_rate_per_second
+        )
+        rep = event_run.build(s, sec, end=end.date(), progress=click.echo)
+        click.echo(json.dumps(rep.__dict__, indent=1))
+
+    # ---- insider ----------------------------------------------------------------------
+
+    @main.group()
+    def insider() -> None:
+        """Insider purchases from the SEC Insider Transactions Data Sets."""
+
+    @insider.command("fetch")
+    @click.option("--first", default="2015q3", help="First quarter, like 2015q3.")
+    @click.option("--last", default="2026q3", help="Last quarter, like 2026q3.")
+    @pass_ctx
+    @friendly_errors
+    def insider_fetch(ctx: Any, first: str, last: str) -> None:
+        """Download each quarter's Form 3/4/5 data set and keep officer and director purchases."""
+        from stoa import insider as ins
+        from stoa.data.sec import make_sec_client
+
+        s = ctx.settings
+        sec = make_sec_client(
+            s.sources.sec_user_agent, s.sources.sec_cache_dir, s.sources.sec_rate_per_second
+        )
+        raw = Path("data/insider")
+        frames = []
+        for q in ins.quarters(first, last):
+            df = ins.parse(ins.download(sec, q, raw))
+            frames.append(df)
+            click.echo(f"{q}: {len(df)} officer and director purchases")
+        allp = ins.combine(frames)
+        out = raw / "purchases.parquet"
+        allp.to_parquet(out)
+        click.echo(
+            f"{len(allp)} purchases after removing repeated amendments, "
+            f"{allp['issuer_cik'].nunique()} issuers, written to {out}"
+        )
+
     # ---- fundamentals ------------------------------------------------------------------
 
     @main.group()
