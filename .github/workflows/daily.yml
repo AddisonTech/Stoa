@@ -91,7 +91,7 @@ jobs:
 
       - name: Check out code
         if: steps.secrets.outputs.ready == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check out state branch
         if: steps.secrets.outputs.ready == 'true'
@@ -99,7 +99,7 @@ jobs:
 
       - name: Set up Python
         if: steps.secrets.outputs.ready == 'true'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
