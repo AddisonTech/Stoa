@@ -1,0 +1,164 @@
+name: daily
+
+# GitHub cron runs in UTC, can start late and ignores daylight saving time.
+# Each job runs in both the EDT and the EST slot. Stoa itself checks New York
+# time and the NYSE calendar and only acts inside its window, once per session.
+on:
+  schedule:
+    - cron: "20 21 * * 1-5" # DECIDE, EDT slot (5:20 pm EDT)
+    - cron: "20 22 * * 1-5" # DECIDE, EST slot (5:20 pm EST)
+    - cron: "50 13 * * 1-5" # EXECUTE, EDT slot (9:50 am EDT)
+    - cron: "50 14 * * 1-5" # EXECUTE, EST slot (9:50 am EST)
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Which job to run"
+        type: choice
+        options:
+          [decide, execute, alert-test, approve-test, money-confirm, kill-switch-reset,
+           fallback-reset]
+        default: decide
+      force:
+        description: "Run even outside the window or again for the same session"
+        type: boolean
+        default: false
+      equity:
+        description: "Equity for money-confirm or kill-switch-reset (blank reads it from Alpaca)"
+        type: string
+        default: ""
+
+# DECIDE and EXECUTE share one group so they never overlap or race on state.
+concurrency:
+  group: stoa-state
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ALPACA_PAPER_KEY_ID: ${{ secrets.ALPACA_PAPER_KEY_ID }}
+      ALPACA_PAPER_SECRET: ${{ secrets.ALPACA_PAPER_SECRET }}
+      ALPACA_LIVE_KEY_ID: ${{ secrets.ALPACA_LIVE_KEY_ID }}
+      ALPACA_LIVE_SECRET: ${{ secrets.ALPACA_LIVE_SECRET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      STOA_NTFY_TOPIC: ${{ secrets.STOA_NTFY_TOPIC }}
+      STOA_NTFY_TOKEN: ${{ secrets.STOA_NTFY_TOKEN }}
+      STOA_LIVE_CONFIRM: ${{ secrets.STOA_LIVE_CONFIRM }}
+      STOA_NTFY_APPROVAL_TOPIC: ${{ secrets.STOA_NTFY_APPROVAL_TOPIC }}
+      STOA_HEALTHCHECK_URL: ${{ secrets.STOA_HEALTHCHECK_URL }}
+      FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+      STOA_MODE: ${{ vars.STOA_MODE }}
+      NTFY_SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      STOA__ALERTS__SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      # Paper and signal keep their state in state/, live in live-state/, so going live
+      # starts a fresh high-water mark and money plan while the paper record stays put.
+      STOA_STATE_DIR: ${{ vars.STOA_MODE == 'live' && 'state-branch/live-state' || 'state-branch/state' }}
+      STOA__EXAM__PAPER_STATE_DIR: state-branch/state
+      STOA__STATE__SHARED_DIR: state-branch/shared
+      STOA__LLM__CACHE_DIR: state-branch/shared/llm_cache
+      STOA__ANALYST__CACHE_DIR: state-branch/shared/analyst_cache
+      JOB_INPUT: ${{ inputs.job }}
+      FORCE_INPUT: ${{ inputs.force }}
+      EQUITY_INPUT: ${{ inputs.equity }}
+      SCHEDULE: ${{ github.event.schedule }}
+    steps:
+      - name: Pick the job
+        id: pick
+        run: |
+          if [ -n "$JOB_INPUT" ]; then
+            job="$JOB_INPUT"
+          elif [ "$SCHEDULE" = "20 21 * * 1-5" ] || [ "$SCHEDULE" = "20 22 * * 1-5" ]; then
+            job="decide"
+          else
+            job="execute"
+          fi
+          echo "job=$job" >> "$GITHUB_OUTPUT"
+          echo "Running $job"
+
+      - name: Check required secrets
+        id: secrets
+        run: |
+          mode="${STOA_MODE:-paper}"
+          missing=""
+          [ -z "$STOA_NTFY_TOPIC" ] && missing="$missing STOA_NTFY_TOPIC"
+          if [ -z "$ALPACA_PAPER_KEY_ID" ] && [ "$mode" != "live" ]; then
+            missing="$missing ALPACA_PAPER_KEY_ID"
+          fi
+          if [ -z "$ALPACA_PAPER_SECRET" ] && [ "$mode" != "live" ]; then
+            missing="$missing ALPACA_PAPER_SECRET"
+          fi
+          if [ -n "$missing" ]; then
+            echo "Stoa is not set up yet. Missing secrets:$missing"
+            echo "See docs/RUNBOOK.md. Exiting without doing anything."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out code
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@v5
+
+      - name: Check out state branch
+        if: steps.secrets.outputs.ready == 'true'
+        run: bash scripts/state-branch.sh checkout state-branch
+
+      - name: Set up Python
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        if: steps.secrets.outputs.ready == 'true'
+        run: pip install ".[yahoo]"
+
+      - name: Run
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          force=()
+          if [ "$FORCE_INPUT" = "true" ]; then force=(--force); fi
+          equity=()
+          if [ -n "$EQUITY_INPUT" ]; then equity=(--equity "$EQUITY_INPUT"); fi
+          case "$JOB" in
+            decide) stoa decide "${force[@]}" ;;
+            execute) stoa execute "${force[@]}" ;;
+            alert-test) stoa alert test ;;
+            approve-test) stoa approve test ;;
+            fallback-reset) stoa fallback reset --yes ;;
+            money-confirm) stoa money confirm-withdrawal --yes "${equity[@]}" ;;
+            kill-switch-reset) stoa kill-switch reset --yes "${equity[@]}" ;;
+            *) echo "unknown job $JOB"; exit 2 ;;
+          esac
+
+      - name: Save state
+        if: always() && steps.secrets.outputs.ready == 'true'
+        run: bash scripts/state-branch.sh commit state-branch "${{ steps.pick.outputs.job }} run ${{ github.run_id }}"
+
+      - name: Alert on failure
+        if: failure() && steps.secrets.outputs.ready == 'true'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          auth=()
+          if [ -n "$STOA_NTFY_TOKEN" ]; then auth=(-H "Authorization: Bearer $STOA_NTFY_TOKEN"); fi
+          curl -sS --max-time 15 --retry 2 \
+            -H "Title: Stoa workflow failed" \
+            -H "Priority: 5" \
+            -H "Tags: warning" \
+            -H "Click: $RUN_URL" \
+            "${auth[@]}" \
+            -d "The $JOB job failed. Tap to open the log." \
+            "${NTFY_SERVER%/}/$STOA_NTFY_TOPIC" || true
+          # Tell the dead man's switch too, so a crash before Stoa starts is not silent.
+          if [ "$JOB" = "decide" ] && [ -n "$STOA_HEALTHCHECK_URL" ]; then
+            curl -fsS --max-time 10 --retry 2 -o /dev/null "${STOA_HEALTHCHECK_URL%/}/fail" || true
+          fi

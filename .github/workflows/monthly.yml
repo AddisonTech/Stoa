@@ -1,0 +1,122 @@
+name: monthly
+
+# Retrain on the newest data with the same walk-forward protocol. A new model
+# is promoted only if it passes the promotion gate against the current one out
+# of sample; otherwise the current model stays and the report says why.
+on:
+  schedule:
+    - cron: "17 11 2 * *" # 11:17 UTC on the 2nd of each month, before the market opens
+  workflow_dispatch:
+    inputs:
+      refresh:
+        description: "Refetch universe bars and fundamentals before training"
+        type: boolean
+        default: true
+
+# Shares the daily group: never runs while DECIDE or EXECUTE touch state.
+concurrency:
+  group: stoa-state
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      ALPACA_PAPER_KEY_ID: ${{ secrets.ALPACA_PAPER_KEY_ID }}
+      ALPACA_PAPER_SECRET: ${{ secrets.ALPACA_PAPER_SECRET }}
+      ALPACA_LIVE_KEY_ID: ${{ secrets.ALPACA_LIVE_KEY_ID }}
+      ALPACA_LIVE_SECRET: ${{ secrets.ALPACA_LIVE_SECRET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      STOA_NTFY_TOPIC: ${{ secrets.STOA_NTFY_TOPIC }}
+      STOA_NTFY_TOKEN: ${{ secrets.STOA_NTFY_TOKEN }}
+      STOA_MODE: ${{ vars.STOA_MODE }}
+      NTFY_SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      STOA__ALERTS__SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      STOA_STATE_DIR: ${{ vars.STOA_MODE == 'live' && 'state-branch/live-state' || 'state-branch/state' }}
+      STOA__EXAM__PAPER_STATE_DIR: state-branch/state
+      STOA__STATE__SHARED_DIR: state-branch/shared
+      STOA__LLM__CACHE_DIR: state-branch/shared/llm_cache
+      STOA__ANALYST__CACHE_DIR: state-branch/shared/analyst_cache
+      STOA__DATA__CACHE_DIR: data/bars
+      REFRESH: ${{ inputs.refresh == '' && 'true' || inputs.refresh }}
+    steps:
+      - name: Check required secrets
+        id: secrets
+        run: |
+          if [ -z "$STOA_NTFY_TOPIC" ] || { [ -z "$ALPACA_PAPER_KEY_ID" ] && [ -z "$ALPACA_LIVE_KEY_ID" ]; }; then
+            echo "Stoa is not set up yet. See docs/RUNBOOK.md. Exiting without doing anything."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out code
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@v5
+
+      - name: Check out state branch
+        if: steps.secrets.outputs.ready == 'true'
+        run: bash scripts/state-branch.sh checkout state-branch
+
+      - name: Set up Python
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        if: steps.secrets.outputs.ready == 'true'
+        run: pip install .
+
+      - name: Restore the data cache
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: stoa-data-${{ github.run_id }}
+          restore-keys: stoa-data-
+
+      - name: Refresh data
+        if: steps.secrets.outputs.ready == 'true' && env.REFRESH == 'true'
+        run: |
+          stoa data fetch
+          stoa universe build
+          stoa fundamentals fetch
+
+      - name: Retrain and gate
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          set -o pipefail
+          stoa model train --results state-branch/shared/results 2>&1 | tee train.log
+          echo "## Monthly retrain" >> "$GITHUB_STEP_SUMMARY"
+          tail -n 8 train.log >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report
+        if: success() && steps.secrets.outputs.ready == 'true'
+        run: |
+          auth=()
+          if [ -n "$STOA_NTFY_TOKEN" ]; then auth=(-H "Authorization: Bearer $STOA_NTFY_TOKEN"); fi
+          body="$(grep -E '^(Out of sample|Deflated|Walk-forward|Model )' train.log | head -c 1500)"
+          curl -sS --max-time 15 --retry 2 -H "Title: Stoa monthly retrain" -H "Priority: 3" \
+            -H "Tags: robot" "${auth[@]}" -d "$body" "${NTFY_SERVER%/}/$STOA_NTFY_TOPIC" || true
+
+      - name: Save state
+        if: always() && steps.secrets.outputs.ready == 'true'
+        run: bash scripts/state-branch.sh commit state-branch "monthly retrain ${{ github.run_id }}"
+
+      - name: Alert on failure
+        if: failure() && steps.secrets.outputs.ready == 'true'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          auth=()
+          if [ -n "$STOA_NTFY_TOKEN" ]; then auth=(-H "Authorization: Bearer $STOA_NTFY_TOKEN"); fi
+          curl -sS --max-time 15 --retry 2 -H "Title: Stoa monthly retrain failed" \
+            -H "Priority: 4" -H "Tags: warning" -H "Click: $RUN_URL" "${auth[@]}" \
+            -d "The monthly retrain failed. The current model stays in use. Tap for the log." \
+            "${NTFY_SERVER%/}/$STOA_NTFY_TOPIC" || true

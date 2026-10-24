@@ -1,0 +1,274 @@
+# Stoa default configuration.
+# Every limit lives here and is validated at load by stoa/config.py.
+# Secrets never go in this file. They come from environment variables only.
+# Any value can be overridden with an environment variable named
+# STOA__<SECTION>__<KEY>, for example STOA__RISK__MAX_POSITIONS=4.
+# STOA_MODE and STOA_STATE_DIR are shortcuts for mode and state.dir.
+
+mode: paper            # backtest | signal | paper | live
+benchmark: SPY
+
+watchlist:
+  - SPY
+  - QQQ
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - GOOGL
+  - META
+  - AVGO
+  - JPM
+  - V
+  - MA
+  - UNH
+  - LLY
+  - JNJ
+  - XOM
+  - CVX
+  - HD
+  - COST
+  - WMT
+  - PG
+  - KO
+  - PEP
+  - CAT
+  - GE
+  - NFLX
+  - AMD
+  - ORCL
+  - CRM
+
+risk:
+  max_position_pct: "0.20"         # of equity, per position
+  max_positions: 5
+  max_gross_exposure_pct: "1.00"   # never above 1.00, Stoa never borrows
+  cash_buffer_pct: "0.02"          # of equity, always kept in cash
+  min_order_usd: "1.00"
+  daily_loss_limit_pct: "0.03"     # no new entries after a day this bad
+  kill_switch_drawdown_pct: "0.25" # flatten and halt at this drawdown from the high-water mark
+  max_orders_per_day: 10
+  price_sanity_pct: "0.08"         # skip a buy if the price moved more than this from the plan
+  block_entries_when_risk_off: true  # the regime filter: no new buys while SPY is under its 200 day average
+  max_sector_pct: "0.40"           # no sector above this share of equity
+  max_pair_correlation: 0.8        # no new position this correlated with one already held
+  correlation_lookback: 60         # sessions of daily returns for the correlation check
+  max_benchmark_pct: "0.98"        # SPY-hold fallback only: how much SPY may be held
+
+quant:
+  min_return_60: 0.0               # 60 day momentum must be above this
+  max_volatility_20: 0.60          # annualized 20 day realized volatility ceiling
+  max_return_5: 0.15               # no buying after a 5 day spike larger than this
+  max_rsi_14: 85.0
+  min_dollar_volume_20: 50000000   # 20 day average dollar volume floor
+
+exits:
+  stop_atr_multiple: 2.5           # initial stop at entry minus this many ATR(14) at entry
+  trailing_enabled: true
+  trailing_atr_multiple: 3.0       # trailing stop sits this many entry ATRs under the highest high
+  take_profit_atr_multiple: null   # optional profit target in entry ATRs, null disables it
+  max_hold_sessions: 30
+  trend_break_sessions: 2          # exit after this many closes in a row below the 50 day average
+
+scout:
+  kind: auto                       # rule | llm | auto (llm when ANTHROPIC_API_KEY is set)
+  max_candidates: 5
+  weight_return_60: 0.6
+  weight_return_120: 0.4
+
+llm:
+  model: claude-haiku-5-5
+  max_tokens: 1500
+  anonymize: true                  # hide tickers and dates from the model
+  feature_decimals: 3
+  monthly_cost_cap_usd: 5.0        # the v1 Claude scout only; budget.monthly_cap_usd caps everything
+  cache_dir: data/llm_cache
+  recent_trades_in_prompt: 10
+  timeout_seconds: 60
+  max_retries: 2
+  prices:                          # USD per million tokens
+    claude-haiku-5-5:
+      input_per_mtok: 0.10
+      output_per_mtok: 0.50
+
+costs:
+  slippage_bps: 5.0                # per side, applied to every simulated fill
+  sell_fee_bps: 0.3                # regulatory sell fees, approximate
+  min_sell_fee_usd: "0.01"         # brokers round regulatory fees up to the next cent
+
+job_windows:
+  decide_after_close_minutes: 30
+  decide_end: "23:59"
+  execute_after_open_minutes: 15
+  execute_window_minutes: 120
+
+backtest:
+  starting_equity: "100"
+  warmup_sessions: 260
+  holdout_start: 2026-07-01
+  windows:
+    tune_a: {start: 2019-01-01, end: 2020-12-31}
+    tune_b: {start: 2021-01-01, end: 2022-12-31}
+    tune_c: {start: 2023-01-01, end: 2024-12-31}
+    validation: {start: 2025-01-01, end: 2026-06-30}
+
+data:
+  provider: alpaca                 # alpaca | yahoo | csv
+  cache_dir: data/bars
+  csv_dir: data/csv
+  history_start: 2016-01-01
+  feed: sip
+  fallback_feed: iex
+  quote_feed: iex                  # feed for live quotes at execution (free plan: iex)
+  live_lookback_days: 450          # calendar days of history fetched fresh for every live run
+  timeout_seconds: 30
+  max_retries: 4
+  min_fresh_fraction: 0.9          # DECIDE fails if fewer symbols than this have today's bar
+
+alpaca:
+  paper_url: https://paper-api.alpaca.markets
+  live_url: https://api.alpaca.markets
+  data_url: https://data.alpaca.markets
+  fill_timeout_seconds: 90
+  poll_interval_seconds: 2.0
+
+alerts:
+  server: https://ntfy.sh
+  click_url: null                  # optional link opened when you tap an alert
+  retries: 2
+  timeout_seconds: 10
+  max_message_bytes: 3500
+
+money:
+  deposit: "100"
+  milestone_multiple: "2"
+  tax_rate: "0.25"
+
+state:
+  dir: state
+  shared_dir: null                 # models, registry, data and exam records; null means state.dir
+
+metrics:
+  risk_free_rate: 0.0
+  bootstrap_samples: 1000
+  bootstrap_block: 20
+  seed: 7
+
+# ---- v0.2: the training plan -------------------------------------------------------
+
+strategy:
+  kind: model                      # model (v0.2) or rule (the v1 pipeline, kept as a baseline)
+  trade_universe: watchlist        # what live trades; training uses model.universe
+
+model:
+  universe: sp500                  # training cross-section: point-in-time S&P 500 members
+  horizon: 10                      # label: beats SPY from the next open to the close 10 sessions later
+  test_horizon: 5                  # second horizon reported by `stoa model report`
+  train_window: expanding          # expanding or rolling
+  rolling_sessions: 756
+  test_sessions: 63                # walk-forward test slice
+  min_train_sessions: 504
+  embargo_sessions: null           # gap between train and test; null means the horizon
+  calibration: isotonic            # isotonic or sigmoid (Platt), fit inside each training fold
+  calibration_fraction: 0.25
+  candidates: [logistic, hgb]      # baseline and challenger; picked by out-of-sample log loss
+  threshold: 0.55                  # minimum calibrated probability to consider a buy
+  max_candidates: 10
+  hold_sessions: null              # exit after this many sessions unless the model still favors it
+  use_quality: true                # SEC fundamentals (stoa fundamentals fetch)
+  use_text: false                  # analyst scores; turn on only if the ablation shows they help
+  text_lookback_days: 10
+  min_price: 5.0
+  min_dollar_volume_20: 20000000
+  gate_folds: 4                    # promotion gate compares the last 4 folds out of sample
+  gate_tolerance: 0.0
+  max_ece: 0.05                    # calibration error ceiling for passing and promotion
+  seed: 7
+
+sizing:
+  method: confidence_vol           # confidence_vol or equal (v1: every entry at the cap)
+  edge: kelly                      # kelly or linear (p - 0.5)
+  kelly_fraction: 0.25
+  vol_measure: realized            # realized (20 day) or atr
+  vol_floor: 0.10
+  portfolio_vol_target: 0.15       # annualized
+  min_edge: 0.0
+
+earnings:
+  enabled: true
+  exit_before: true                # sell at the open before any confirmed release
+  holding_window_sessions: 10      # no new position with a release inside this window
+  unknown_lookahead_sessions: 15
+  unknown_stale_days: 80           # no confirmed date and last report older than this: no entry
+  block_when_unknown: true
+  confirm_lead_sessions: 10        # backtests: a release date counts as known this many sessions ahead
+  upcoming_source: auto            # auto (Finnhub with FINNHUB_API_KEY, else Yahoo), finnhub, yahoo, none
+  heuristic_volume_multiple: 2.5
+
+events:
+  enabled: true
+  size_multiplier: 0.5             # new positions on FOMC and CPI days and the day before
+
+analyst:
+  enabled: true                    # used only when ANTHROPIC_API_KEY is set
+  model: claude-haiku-5-5
+  max_tokens: 400
+  text_chars: 1200
+  max_items_per_symbol_per_day: 3
+  contamination_cutoff: 2026-07-01 # scores for items before this are flagged as possibly contaminated
+  symbols: watchlist               # whose news gets scored: watchlist or universe
+  cache_dir: data/analyst_cache
+  batch_poll_seconds: 60
+  batch_max_requests: 10000
+  cache_ttl: 5m
+  batch_cache_ttl: 1h
+
+budget:
+  monthly_cap_usd: 25.0            # one hard cap for every Claude call
+  batch_discount: 0.5
+  cache_write_multiplier_5m: 1.25
+  cache_write_multiplier_1h: 2.0
+  cache_read_multiplier: 0.1
+
+sources:
+  sec_user_agent: "Stoa research stalor54@yahoo.com"
+  sec_rate_per_second: 8.0         # SEC allows 10
+  sec_cache_dir: data/sec
+  news_cache_dir: data/news
+  reference_symbols: [MTUM]
+
+approval:
+  mode: auto                       # auto (live, first 30 days), always (test on paper), never
+  live_days: 30
+  wait_minutes: 5                  # EXECUTE keeps polling this long for missing answers
+  poll_interval_seconds: 30
+  exempt_reasons: [kill_switch]    # never wait for a tap to flatten
+
+crosscheck:
+  enabled: true
+  source: auto                     # auto (Finnhub with FINNHUB_API_KEY, else Yahoo), finnhub, yahoo
+  tolerance_pct: 0.01
+  on_unavailable: skip             # skip or proceed
+  timeout_seconds: 10
+
+healthcheck:
+  enabled: true                    # pings only when STOA_HEALTHCHECK_URL is set
+  timeout_seconds: 10
+  retries: 2
+
+fallback:
+  enabled: true
+  sharpe_window: 63
+  quit_after_sessions: 126         # about six months of paper plus live
+  min_history_sessions: 63
+
+exam:
+  paper_min_sessions: 42
+  paper_target_sessions: 63
+  paper_min_trades: 20
+  paper_state_dir: null            # live: where the paper record lives (see the runbook)
+  require_walkforward_pass: true
+  enforce_live: true
+
+demo:
+  signal: 0.0                      # synthetic data only: planted momentum edge (0 is pure noise)

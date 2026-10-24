@@ -1,0 +1,164 @@
+"""Durable state: kill switch, high-water mark, executions, pending plan.
+
+In paper and live modes the broker owns positions and cash. Local state only
+holds what the broker cannot: entry metadata for exits, the high-water mark,
+the kill switch, the money plan flags, which sessions already ran, and the plan
+waiting for the next open. Backtests use the same model in memory.
+"""
+
+from __future__ import annotations
+
+import os
+import tempfile
+from datetime import date, datetime
+from decimal import Decimal
+from pathlib import Path
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from stoa.models import ZERO, ClosedTrade, PlannedOrder, PositionMeta
+from stoa.tracking import Track
+
+STATE_VERSION = 1
+SESSION_HISTORY = 60
+RECENT_TRADES = 20
+
+
+class KillSwitch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    active: bool = False
+    tripped_session: date | None = None
+    reason: str = ""
+
+
+class Plan(BaseModel):
+    """Orders decided after one close, to be executed after the next open."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    plan_id: str
+    strategy: str
+    mode: str
+    decided_session: date
+    execute_session: date
+    created_at: datetime
+    orders: tuple[PlannedOrder, ...]
+    equity_at_decide: Decimal
+    kill_switch: bool = False
+
+
+class OpenOrder(BaseModel):
+    """An order still working at the broker when EXECUTE stopped waiting."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    client_order_id: str
+    symbol: str
+    side: str
+    session: date
+    basis: Decimal | None = None  # cost basis per share for a sell, for realized P&L
+    entry_atr: Decimal | None = None  # ATR at decision for a buy, for its stop
+    ref_price: Decimal | None = None  # the decision close the ATR was measured against
+
+
+class Inception(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    session: date
+    equity: Decimal
+    benchmark_close: Decimal
+
+
+class State(BaseModel):
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+
+    version: int = STATE_VERSION
+    high_water_mark: Decimal | None = None
+    kill_switch: KillSwitch = Field(default_factory=KillSwitch)
+    principal_withdrawn: bool = False
+    milestone_alerted: bool = False
+    inception: Inception | None = None
+    last_close_session: date | None = None
+    last_close_equity: Decimal | None = None
+    last_benchmark_close: Decimal | None = None  # adjusted close at last_close_session
+    decided_sessions: list[date] = Field(default_factory=list)
+    executed_sessions: list[date] = Field(default_factory=list)
+    pending_plan: Plan | None = None
+    positions_meta: dict[str, PositionMeta] = Field(default_factory=dict)
+    realized_by_year: dict[str, Decimal] = Field(default_factory=dict)
+    llm_spend_by_month: dict[str, Decimal] = Field(default_factory=dict)
+    processed_activity_ids: list[str] = Field(default_factory=list)
+    net_flows: Decimal = ZERO  # deposits minus withdrawals since inception
+    flows_since_close: Decimal = ZERO  # flows applied after last_close_session's DECIDE
+    withdrawn_since_milestone: Decimal = ZERO
+    principal_flow_pending: bool = False  # confirmed by hand, not yet seen in activities
+    recent_trades: list[ClosedTrade] = Field(default_factory=list)
+    open_orders: list[OpenOrder] = Field(default_factory=list)
+    sim_cash: Decimal | None = None
+    sim_positions: dict[str, Decimal] = Field(default_factory=dict)
+    sim_avg_cost: dict[str, Decimal] = Field(default_factory=dict)
+    track: Track = Field(default_factory=Track)
+    approval_nonce: str | None = None  # for the pending plan only
+    approval_required: bool = False
+
+    def mark_decided(self, session: date) -> None:
+        self.decided_sessions = _push(self.decided_sessions, session)
+
+    def mark_executed(self, session: date) -> None:
+        self.executed_sessions = _push(self.executed_sessions, session)
+
+    def add_trades(self, trades: list[ClosedTrade]) -> None:
+        self.recent_trades = [*self.recent_trades, *trades][-RECENT_TRADES:]
+
+    def realized_for_year(self, year: int) -> Decimal:
+        return self.realized_by_year.get(str(year), ZERO)
+
+    def add_realized(self, year: int, amount: Decimal) -> None:
+        key = str(year)
+        self.realized_by_year = {
+            **self.realized_by_year,
+            key: self.realized_for_year(year) + amount,
+        }
+
+
+def _push(items: list[date], day: date) -> list[date]:
+    out = [d for d in items if d != day] + [day]
+    return sorted(out)[-SESSION_HISTORY:]
+
+
+class StateStore:
+    """state.json on disk, written atomically. Plans are also archived under plans/."""
+
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        self.path = root / "state.json"
+        self.plans_dir = root / "plans"
+
+    def load(self) -> State:
+        if not self.path.exists():
+            return State()
+        return State.model_validate_json(self.path.read_text(encoding="utf-8"))
+
+    def save(self, state: State) -> None:
+        self.root.mkdir(parents=True, exist_ok=True)
+        _atomic_write(self.path, state.model_dump_json(indent=2) + "\n")
+
+    def archive_plan(self, plan: Plan) -> Path:
+        self.plans_dir.mkdir(parents=True, exist_ok=True)
+        path = self.plans_dir / f"{plan.decided_session.isoformat()}-{plan.plan_id}.json"
+        _atomic_write(path, plan.model_dump_json(indent=2) + "\n")
+        return path
+
+
+def _atomic_write(path: Path, text: str) -> None:
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=path.name, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+            fh.flush()
+            os.fsync(fh.fileno())
+        Path(tmp).replace(path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise

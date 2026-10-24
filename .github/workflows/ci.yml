@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+    branches-ignore: [stoa-state]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: No em dashes in tracked files
+        run: python scripts/check_text.py files
+
+      - name: No co-author or sign-off lines in commit messages
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            range="HEAD"
+          else
+            range="$BASE_SHA..HEAD"
+          fi
+          python scripts/check_text.py commits "$range"
+
+      - name: Ruff
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Mypy
+        run: mypy stoa
+
+      - name: Tests
+        run: pytest
