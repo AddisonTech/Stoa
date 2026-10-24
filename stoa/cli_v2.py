@@ -36,7 +36,7 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
     def universe_build(ctx: Any, start: Any, end: Any) -> None:
         """Fetch bars for every index member since history_start, dead names included."""
         from stoa.data.factory import make_provider
-        from stoa.membership import default_membership
+        from stoa.membership import default_membership, fetch_renamed
         from stoa.pipeline import coverage_report, universe_cache, write_coverage
 
         s = ctx.settings
@@ -49,7 +49,8 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
         have: set[str] = set()
         for i in range(0, len(symbols), 100):
             chunk = symbols[i : i + 100]
-            bars = prov.fetch(chunk, begin, finish)
+            # A renamed company's history is under its current ticker (BK under BNY).
+            bars = fetch_renamed(lambda tickers: prov.fetch(tickers, begin, finish), chunk)
             cache.write(bars)
             have |= set(bars)
             click.echo(
@@ -77,7 +78,7 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
     def fundamentals_fetch(ctx: Any, refresh: bool, watchlist_only: bool) -> None:
         """Quality features and 8-K item 2.02 earnings times, stamped point in time."""
         from stoa.data.sec import fetch_fundamentals, make_sec_client
-        from stoa.membership import default_membership
+        from stoa.membership import default_membership, ticker_aliases
 
         s = ctx.settings
         if watchlist_only or s.model.universe == "watchlist":
@@ -90,7 +91,7 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
         sec = make_sec_client(
             s.sources.sec_user_agent, s.sources.sec_cache_dir, s.sources.sec_rate_per_second
         )
-        q, e, problems = fetch_fundamentals(sec, symbols, refresh=refresh)
+        q, e, problems = fetch_fundamentals(sec, symbols, refresh=refresh, aliases=ticker_aliases())
         s.fundamentals_path.parent.mkdir(parents=True, exist_ok=True)
         q.to_parquet(s.fundamentals_path)
         e.to_parquet(s.earnings_path)

@@ -307,6 +307,25 @@ def test_sec_client_caches_throttles_and_sends_user_agent(tmp_path: Path) -> Non
         sec.make_sec_client("no email here", None, 8)
 
 
+def test_fundamentals_follow_a_renamed_ticker(tmp_path: Path) -> None:
+    def h(req: httpx.Request) -> httpx.Response:
+        if req.url.path.endswith("company_tickers.json"):
+            return httpx.Response(200, json={"0": {"cik_str": 1390777, "ticker": "BNY"}})
+        if "submissions" in req.url.path:
+            return httpx.Response(200, json=SUBMISSIONS)
+        if "companyfacts" in req.url.path:
+            return httpx.Response(200, json=COMPANYFACTS)
+        return httpx.Response(404)
+
+    client = httpx.Client(transport=httpx.MockTransport(h))
+    limiter = sec.RateLimiter(10, clock=lambda: 0.0, sleep=lambda _s: None)
+    sc = sec.SECClient(client, tmp_path, limiter, sleep=lambda _s: None)
+    q, _, problems = sec.fetch_fundamentals(sc, ["BK"])
+    assert q.empty and "BK" in problems  # the SEC only knows the new ticker
+    q, e, problems = sec.fetch_fundamentals(sc, ["BK"], aliases={"BK": "BNY"})
+    assert problems == {} and set(q["symbol"]) == {"BK"} and set(e["symbol"]) == {"BK"}
+
+
 # ---- news ------------------------------------------------------------------------------------
 
 

@@ -8,7 +8,14 @@ import pandas as pd
 import pytest
 
 from stoa import clock, events, pit
-from stoa.membership import Interval, Membership, default_membership, sector_of
+from stoa.membership import (
+    Interval,
+    Membership,
+    default_membership,
+    fetch_renamed,
+    sector_of,
+    ticker_aliases,
+)
 
 
 def test_decision_cutoff_is_the_official_close() -> None:
@@ -84,6 +91,28 @@ def test_survivorship_delisted_name_in_universe_before_and_not_after() -> None:
     assert m.left_between(date(2020, 1, 1), date(2020, 12, 31)) == {"GONE"}
     assert m.left_between(date(2014, 1, 1), date(2019, 1, 1)) == set()  # BACK came back
     assert m.ever_members(date(2019, 1, 1), date(2021, 1, 1)) == {"LIVE", "GONE", "BACK"}
+
+
+def test_renamed_tickers_fetch_under_the_current_ticker() -> None:
+    aliases = ticker_aliases()
+    assert aliases == {"BK": "BNY", "FI": "FISV", "JEC": "J", "WLTW": "WTW"}
+    m = default_membership()
+    for old, new in aliases.items():
+        # The new ticker is a member right after the old one leaves.
+        last_old = max(i.end for i in m.intervals if i.symbol == old and i.end is not None)
+        assert m.is_member(new, last_old), (old, new)
+    assert "CCE" not in aliases  # merged into a different company: stays delisted
+
+    asked: list[list[str]] = []
+
+    def fake_fetch(tickers: list[str]) -> dict[str, str]:
+        asked.append(tickers)
+        have = {"BNY": "bny bars", "FISV": "fisv bars", "KO": "ko bars"}
+        return {t: have[t] for t in tickers if t in have}
+
+    got = fetch_renamed(fake_fetch, ["BK", "FI", "FISV", "KO", "CCE"])
+    assert asked == [["BNY", "CCE", "FISV", "KO"]]  # one request, each ticker once
+    assert got == {"BK": "bny bars", "FI": "fisv bars", "FISV": "fisv bars", "KO": "ko bars"}
 
 
 def test_vendored_membership_has_real_delistings() -> None:

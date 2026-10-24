@@ -12,6 +12,7 @@ symbol is a member on t when ``start <= t < end``.
 from __future__ import annotations
 
 import csv
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
@@ -72,6 +73,32 @@ class Membership:
             if not self.is_member(sym, end):
                 out.add(sym)
         return out
+
+
+def parse_aliases(text: str) -> dict[str, str]:
+    rows = csv.DictReader(line for line in text.splitlines() if not line.startswith("#"))
+    return {r["symbol"].strip().upper(): r["fetch_as"].strip().upper() for r in rows}
+
+
+@lru_cache(maxsize=1)
+def ticker_aliases() -> dict[str, str]:
+    """Membership symbol to the ticker the bar provider and the SEC file its history under."""
+    text = resources.files("stoa.reference").joinpath("ticker_aliases.csv").read_text("utf-8")
+    return parse_aliases(text)
+
+
+def fetch_symbol(symbol: str) -> str:
+    """The ticker to fetch ``symbol``'s bars or filings under (itself unless renamed)."""
+    return ticker_aliases().get(symbol.upper(), symbol)
+
+
+def fetch_renamed[T](
+    fetch: Callable[[list[str]], dict[str, T]], symbols: list[str]
+) -> dict[str, T]:
+    """Fetch under each symbol's current ticker and key the results by the membership symbol."""
+    tickers = {sym: fetch_symbol(sym) for sym in symbols}
+    got = fetch(sorted(set(tickers.values())))
+    return {sym: got[t] for sym, t in tickers.items() if t in got}
 
 
 @lru_cache(maxsize=1)

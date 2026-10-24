@@ -32,7 +32,7 @@ import json
 import logging
 import threading
 import time
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -422,16 +422,22 @@ def fetch_fundamentals(
     *,
     refresh: bool = False,
     progress: Callable[[str], None] | None = None,
+    aliases: Mapping[str, str] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, str]]:
     """Quality features and earnings releases for every symbol the SEC knows.
 
-    Returns (quality, earnings, problems by symbol).
+    ``aliases`` maps a renamed membership symbol to its current ticker. The
+    rows stay keyed by the membership symbol. Returns (quality, earnings,
+    problems by symbol).
     """
+    aliases = {k.upper(): v.upper() for k, v in (aliases or {}).items()}
     ciks = sec.tickers(refresh)
     quality, earnings = [], []
     problems: dict[str, str] = {}
     for sym in symbols:
         cik = ciks.get(sym.upper()) or ciks.get(sym.upper().replace(".", "-"))
+        if cik is None and sym.upper() in aliases:
+            cik = ciks.get(aliases[sym.upper()])  # renamed: the SEC lists the current ticker
         if cik is None:
             problems[sym] = "no CIK (ETF, delisted before the mapping, or renamed)"
             continue

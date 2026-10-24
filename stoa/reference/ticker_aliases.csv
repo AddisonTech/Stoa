@@ -1,0 +1,11 @@
+# Membership symbols whose history the bar provider and the SEC file under another ticker.
+# Same company, new ticker: bars and filings are fetched under fetch_as and stored under the
+# membership symbol, so each membership period uses the right series. A company that merged
+# into a different one (CCE into CCEP in 2016) is not listed here: it stays delisted.
+# Checked against Alpaca daily bars on 2026-10-24: the old tickers return nothing and the
+# new ones carry the full history from 2016.
+symbol,fetch_as,note
+BK,BNY,Bank of New York Mellon changed its ticker to BNY on 2026-05-21
+FI,FISV,Fiserv traded as FI from 2023-06-07 to 2025-11-10 and went back to FISV
+JEC,J,Jacobs Engineering became Jacobs Solutions (J) on 2019-12-10
+WLTW,WTW,Willis Towers Watson changed its ticker to WTW on 2022-01-10
