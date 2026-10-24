@@ -8,6 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 from stoa.data.base import Bars, DataError, validate_bars
+from stoa.files import replace_file
 
 DEFAULT_NAMESPACE = "default"
 
@@ -24,7 +25,7 @@ class BarCache:
         for sym, df in bars.items():
             tmp = self.path(sym).with_suffix(".tmp")
             df.to_parquet(tmp)
-            tmp.replace(self.path(sym))
+            replace_file(tmp, self.path(sym))
 
     def read(self, symbols: list[str], start: date, end: date) -> Bars:
         out: Bars = {}

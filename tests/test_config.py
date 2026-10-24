@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -31,7 +32,7 @@ def test_state_dir_shortcut() -> None:
     from stoa.config import load_settings
 
     s = load_settings(ROOT / "config" / "default.yaml", env={"STOA_STATE_DIR": "/tmp/x"})
-    assert str(s.state.dir) == "/tmp/x"
+    assert s.state.dir == Path("/tmp/x")
 
 
 @pytest.mark.parametrize(

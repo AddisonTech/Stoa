@@ -16,6 +16,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from stoa.files import replace_file
 from stoa.models import ZERO, ClosedTrade, PlannedOrder, PositionMeta
 from stoa.tracking import Track
 
@@ -158,7 +159,7 @@ def _atomic_write(path: Path, text: str) -> None:
             fh.write(text)
             fh.flush()
             os.fsync(fh.fileno())
-        Path(tmp).replace(path)
+        replace_file(Path(tmp), path)
     except BaseException:
         Path(tmp).unlink(missing_ok=True)
         raise

@@ -28,6 +28,7 @@ import httpx
 import pandas as pd
 
 from stoa.data.base import DataError
+from stoa.files import replace_file
 from stoa.net import request_with_retry
 
 log = logging.getLogger(__name__)
@@ -170,5 +171,5 @@ class NewsStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(".tmp")
         both.reset_index(drop=True).to_parquet(tmp)
-        tmp.replace(self.path)
+        replace_file(tmp, self.path)
         return both

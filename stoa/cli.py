@@ -367,6 +367,9 @@ def status(ctx: Ctx) -> None:
         )
     )
     click.echo(f"high-water mark {state.high_water_mark or 'not set'}")
+    has_keys = sec.has_live_keys() if s.mode == "live" else sec.has_paper_keys()
+    if has_keys:
+        _echo_account(ctx)
     click.echo(
         f"last decided    {state.decided_sessions[-1] if state.decided_sessions else 'never'}"
     )
@@ -393,6 +396,22 @@ def status(ctx: Ctx) -> None:
     from stoa.model import ModelStore
 
     click.echo(f"live model      {ModelStore(s.artifact_dir).current_version() or 'none'}")
+
+
+def _echo_account(ctx: Ctx) -> None:
+    """Equity, cash and buying power from the broker's read-only account call."""
+    from stoa.jobs import make_broker
+
+    try:
+        acct = make_broker(runtime(ctx)).account()
+    except Exception as exc:
+        reason = redact.redact(str(exc)).strip().splitlines()
+        click.echo(f"account         unavailable: {reason[0] if reason else type(exc).__name__}")
+        return
+    click.echo(f"equity          {alerts.money(acct.equity)}")
+    click.echo(f"cash            {alerts.money(acct.cash)}")
+    bp = acct.buying_power
+    click.echo(f"buying power    {alerts.money(bp) if bp is not None else 'not reported'}")
 
 
 # ---- alerts --------------------------------------------------------------------------------

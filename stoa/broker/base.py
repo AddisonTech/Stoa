@@ -27,6 +27,7 @@ class _Model(BaseModel):
 class Account(_Model):
     equity: Decimal
     cash: Decimal
+    buying_power: Decimal | None = None
     last_equity: Decimal | None = None
     status: str = "ACTIVE"
     trading_blocked: bool = False

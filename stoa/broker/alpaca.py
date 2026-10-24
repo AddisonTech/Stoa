@@ -124,6 +124,7 @@ class AlpacaBroker:
         return Account(
             equity=_d(body.get("equity")),
             cash=_d(body.get("cash")),
+            buying_power=_d(body.get("buying_power")) if body.get("buying_power") else None,
             last_equity=_d(body.get("last_equity")) if body.get("last_equity") else None,
             status=str(body.get("status", "")),
             trading_blocked=bool(body.get("trading_blocked") or body.get("account_blocked")),
