@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "stoa"
-version = "1.0.0"
+version = "0.2.0"
 description = "Daily-cadence AI equity trading system with a rule-based risk engine and honest grading."
 readme = "README.md"
 license = "MIT"
@@ -67,6 +67,23 @@ module = [
     "stoa.journal",
     "stoa.holdout",
     "stoa.broker.*",
+    "stoa.adjust",
+    "stoa.analyst",
+    "stoa.approvals",
+    "stoa.calibration",
+    "stoa.crosscheck",
+    "stoa.events",
+    "stoa.exam",
+    "stoa.experiments",
+    "stoa.healthcheck",
+    "stoa.membership",
+    "stoa.model",
+    "stoa.pit",
+    "stoa.redact",
+    "stoa.retrain",
+    "stoa.sizing",
+    "stoa.tracking",
+    "stoa.walkforward",
 ]
 strict = true
 

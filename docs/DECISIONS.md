@@ -277,3 +277,11 @@ Figures below come from `analyst.estimate_cost`, the same estimator the backfill
 - The SEC endpoints were not reachable from the build machine; the parser was built from the documented format and tested on fixtures.
 - ntfy action buttons on a real phone, and healthchecks.io's ntfy integration.
 - Anthropic batch and caching behavior against the live API (built against the installed SDK's types and the official docs; tested with fakes).
+
+## Version number
+
+The owner calls this release v0.2, so the package version is 0.2.0. v1's internal 1.0.0 was the label of the last build stage, not a published release; nothing depends on the number.
+
+## Strict typing
+
+mypy strict covers every module that handles money, sizing, approvals, the model or secrets: the v1 list plus `adjust`, `analyst`, `approvals`, `calibration`, `crosscheck`, `events`, `exam`, `experiments`, `healthcheck`, `membership`, `model`, `pit`, `redact`, `retrain`, `sizing`, `tracking` and `walkforward`. scikit-learn ships no type information, so its imports are untyped and the classifier is reached through a small `Classifier` protocol.
