@@ -216,7 +216,21 @@ def exit_signals(
         if sym in exempt:
             continue
         v = cal.view(sym, session)
-        if v.next_safe is None or v.next_safe > nxt:
+        if v.next_safe is None:
+            # No confirmed date. If the last report is old enough that the next
+            # one could be close, leave rather than risk holding through it.
+            if cfg.block_when_unknown and v.last_report is not None:
+                age = (pit.decision_cutoff(session) - v.last_report).days
+                if age > cfg.unknown_stale_days:
+                    out.append(
+                        ExitSignal(
+                            symbol=sym,
+                            reason="earnings_unknown",
+                            detail=f"last report {age} days ago and no confirmed next date",
+                        )
+                    )
+            continue
+        if v.next_safe > nxt:
             continue
         assert v.next_event is not None
         when = clock.to_ny(v.next_event).strftime("%Y-%m-%d %H:%M ET")

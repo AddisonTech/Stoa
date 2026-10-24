@@ -1,12 +1,15 @@
 # The pass bar. Locked by `stoa holdout seal` before the holdout is scored.
+# Graded on risk, not raw return: less drawdown and more return per unit of risk than SPY.
 evaluation_window: validation
 tune_windows: [tune_a, tune_b, tune_c]
+graded: model                      # the strategy the bar applies to (model, or agents for v1)
 criteria:
-  beat_spy: true                   # total return above SPY buy-and-hold after costs
-  beat_sma: true                   # total return above the 50/200 rule after costs
-  max_drawdown_vs_spy: true        # max drawdown no worse than SPY's over the same window
-  max_drawdown_cap: 0.25           # and never past this
-  min_profit_factor: 1.2
-  min_tune_windows_beating_spy: 2
-  min_trades: 30
-  max_monthly_api_cost_usd: 5.0
+  max_drawdown_vs_spy: true        # max drawdown strictly lower than SPY's, after costs
+  sharpe_vs_spy: true              # Sharpe strictly higher than SPY's
+  sortino_vs_spy: true             # Sortino strictly higher than SPY's
+  min_deflated_sharpe: 0.95        # deflated Sharpe, penalized for every trial in the registry
+  max_drawdown_cap: 0.25           # never past this in any window
+  min_tune_windows_beating_spy: 2  # Sharpe above SPY in at least this many tune windows
+  min_trades: 30                   # closed trades across all windows
+  max_monthly_api_cost_usd: 25.0   # Claude spend in any month
+  beat_mtum_for_pass: false        # MTUM is always reported; true makes beating it a hard check

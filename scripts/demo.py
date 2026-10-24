@@ -66,7 +66,13 @@ def main(out: Path) -> int:
     with tempfile.TemporaryDirectory() as tmp:
         s = load_settings(
             Path("config/default.yaml"),
-            env={"STOA_STATE_DIR": tmp, "STOA__SCOUT__KIND": "rule", "STOA__DATA__PROVIDER": "csv"},
+            env={
+                "STOA_STATE_DIR": tmp,
+                "STOA__SCOUT__KIND": "rule",
+                "STOA__STRATEGY__KIND": "rule",
+                "STOA__CROSSCHECK__ENABLED": "false",
+                "STOA__DATA__PROVIDER": "csv",
+            },
         )
         bars = synthetic_bars(list(s.watchlist), date(2016, 1, 4), date(2021, 12, 31), seed=11)
         universe = Universe.assume_all_fractionable(s.watchlist, s.benchmark)

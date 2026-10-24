@@ -109,6 +109,31 @@ class SimBroker:
     def orders_for_session(self, session: date) -> list[OrderStatus]:
         return [o for o in self.orders.values() if o.session == session]
 
+    def force_close(self, symbol: str, price: Decimal, session: date, reason: str) -> Fill | None:
+        """Close a position in a symbol that no longer trades, at its last close less slippage.
+
+        Models a delisting or a cash takeover in backtests: the money comes back
+        at the last traded price. Returns the fill, or None when not held.
+        """
+        qty = self.portfolio.qty(symbol)
+        if qty <= 0:
+            return None
+        px = sell_fill_price(price, self.costs.slippage_bps)
+        fill = Fill(
+            symbol=symbol,
+            side=Side.SELL,
+            qty=qty,
+            price=px,
+            fees=sell_fees(qty * px, self.costs),
+            session=session,
+            client_order_id=f"delist-{symbol}-{session:%Y%m%d}",
+        )
+        closed = self.portfolio.apply_fill(fill, reason)
+        self.fills.append(fill)
+        if closed is not None:
+            self.closed_trades.append(closed)
+        return fill
+
     def _next_id(self) -> str:
         self._seq += 1
         return f"sim-{self._seq}"

@@ -387,3 +387,13 @@ def test_finnhub_stale_or_bad_quote_is_unavailable() -> None:
         transport=httpx.MockTransport(lambda r: httpx.Response(200, content=json.dumps({"c": 0}))),
     )
     assert FinnhubClient("t", c3, now=lambda: now).price("AAPL") is None
+
+
+def test_unknown_date_exit_after_stale_days() -> None:
+    c = cal(("AAPL", at("2024-04-30", 16, 5), at("2024-04-01", 12, 0)))
+    assert exit_signals(c, ["AAPL"], date(2024, 7, 15), CFG) == []  # 76 days
+    sigs = exit_signals(c, ["AAPL"], date(2024, 7, 22), CFG)  # 83 days
+    assert [s.reason for s in sigs] == ["earnings_unknown"]
+    assert (
+        exit_signals(c, ["AAPL"], date(2024, 7, 22), EarningsConfig(block_when_unknown=False)) == []
+    )

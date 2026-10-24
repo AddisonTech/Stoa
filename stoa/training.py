@@ -160,7 +160,10 @@ def run_walkforward(
     end: date | None = None,
     dataset: Dataset | None = None,
     progress: Callable[[str], None] | None = None,
+    select_before: date | None = None,
 ) -> WalkForwardResult:
+    """Walk-forward over every candidate. ``select_before`` limits model choice to folds
+    that end before that date, so a later window (validation) never influences the pick."""
     m = settings.model
     ds = dataset or dataset_for(settings, inputs, features, horizon)
     folds = folds_for(settings, ds, end)
@@ -189,6 +192,11 @@ def run_walkforward(
                 {"p": mdl.predict(te), "y": te["y"], "fwd_excess": te["fwd_excess"]},
                 index=te.index,
             )
+            if end is not None:
+                # A test label that finishes after ``end`` would use prices past the
+                # cutoff (the sealed holdout, before it is scored). Never score it.
+                late = te["label_end"].isna() | (te["label_end"] > pd.Timestamp(end))
+                pred.loc[late.to_numpy(), ["y", "fwd_excess"]] = np.nan
             results[k].append(FoldResult(fold, k, mdl, pred, _score_or_none(pred)))
         if progress:
             progress(f"fold {fold.number}: test {fold.test_start} to {fold.test_end}")
@@ -205,8 +213,16 @@ def run_walkforward(
         s = wf.scored(k)
         if len(s) and s["y"].nunique() == 2:
             wf.pooled[k] = cal.score(s["p"].to_numpy(), s["y"].to_numpy())
-    if wf.pooled:
-        wf.chosen = min(wf.pooled, key=lambda k: (wf.pooled[k].log_loss, wf.pooled[k].brier))
+    select = wf.pooled
+    if select_before is not None:
+        select = {}
+        for k in kinds:
+            sc = wf.scored(k)
+            sc = sc.loc[sc.index.get_level_values("date") < pd.Timestamp(select_before)]
+            if len(sc) and sc["y"].nunique() == 2:
+                select[k] = cal.score(sc["p"].to_numpy(), sc["y"].to_numpy())
+    if select:
+        wf.chosen = min(select, key=lambda k: (select[k].log_loss, select[k].brier))
     return wf
 
 
@@ -230,23 +246,36 @@ def fit_final(settings: Settings, ds: Dataset, kind: str, cutoff: date) -> Train
 
 
 def long_short_returns(oos: pd.DataFrame, top: int, threshold: float) -> pd.Series:
-    """Daily excess return of an equal-weight basket of the top-ranked names, per decision day.
+    """Non-overlapping excess returns of an equal-weight basket of the top-ranked names.
 
-    A simple, cost-free summary of whether the ranking has edge, used for the
-    registry's Sharpe and the DSR. The trading backtest (with every risk rule,
-    cost and the real calendar) is in the scoreboard.
+    Every ``horizon``-th decision day, take the names above ``threshold`` (at
+    most ``top``) and record their average excess return over the next
+    ``horizon`` sessions. Consecutive values never overlap, so the series has
+    honest volatility and an honest observation count. (Averaging overlapping
+    10 day returns every day would shrink the volatility by about the square
+    root of 10 and inflate the Sharpe by the same factor.)
+
+    A cost-free summary of whether the ranking has edge, used for the
+    registry's Sharpe and the DSR. The trading backtest, with every rule and
+    cost, is in the scoreboard. The series carries ``attrs["period"]``, the
+    number of sessions each value spans.
     """
+    h = max(1, int(oos.attrs.get("horizon", 1)))
     s = oos.loc[oos["fwd_excess"].notna()]
     if s.empty:
-        return pd.Series(dtype=float)
+        out = pd.Series(dtype=float)
+        out.attrs["period"] = h
+        return out
+    days = sorted(set(s.index.get_level_values("date")))[::h]
+    s = s.loc[s.index.get_level_values("date").isin(days)]
 
     def day(g: pd.DataFrame) -> float:
         pick = g.loc[g["p"] > threshold].nlargest(top, "p")
         return float(pick["fwd_excess"].mean()) if len(pick) else 0.0
 
-    per_day = s.groupby(level="date").apply(day)
-    h = max(1, int(oos.attrs.get("horizon", 1)))
-    return per_day / h
+    out = s.groupby(level="date").apply(day).astype(float)
+    out.attrs["period"] = h
+    return out
 
 
 # ---- registry -----------------------------------------------------------------------------
@@ -266,7 +295,9 @@ def log_trials(
         o = wf.scored(k)
         o.attrs["horizon"] = wf.horizon
         rets = long_short_returns(o, settings.model.max_candidates, settings.model.threshold)
-        sr = float(rets.mean() / rets.std(ddof=1)) if len(rets) > 2 and rets.std() > 0 else 0.0
+        period = int(rets.attrs.get("period", 1))
+        sr_p = float(rets.mean() / rets.std(ddof=1)) if len(rets) > 2 and rets.std() > 0 else 0.0
+        sr = sr_p / math.sqrt(period)  # stored per session so every trial is comparable
         pooled = wf.pooled.get(k)
         metrics: dict[str, Any] = {"sharpe_daily": sr, "folds": len(wf.folds)}
         if pooled is not None:

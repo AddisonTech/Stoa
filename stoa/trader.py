@@ -8,6 +8,7 @@ carries a deterministic client order id and is looked up before submission.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
@@ -21,6 +22,10 @@ from stoa.state import KillSwitch, Plan, State
 from stoa.universe import Universe
 
 log = logging.getLogger(__name__)
+
+Gate = Callable[
+    [list[PlannedOrder], Mapping[str, Decimal]], tuple[list[PlannedOrder], list[Rejection]]
+]
 
 BROKER_MIN_NOTIONAL = Decimal("1.00")
 
@@ -152,11 +157,21 @@ def execute_plan(
     universe: Universe,
     session: date,
     prev_equity: Decimal | None,
+    *,
+    gate: Gate | None = None,
+    sectors: Mapping[str, str] | None = None,
+    halt_reason: str | None = None,
+    fallback_active: bool = False,
 ) -> ExecutionReport:
     """Run one plan. Safe to call again for the same session after a crash.
 
     Orders that already exist at the broker (same client order id) are adopted,
     not resubmitted, and skip the pre-trade checks they already passed.
+
+    ``gate`` runs on each order that passed the risk checks, just before it is
+    sent, and returns the ones allowed through plus rejections. EXECUTE uses
+    it for the hand approval and the price cross-check. Sells pass the gate
+    first so exits are decided before buys.
     """
     report = ExecutionReport(session=session)
     positions = broker.positions()
@@ -221,7 +236,18 @@ def execute_plan(
             traded_today=traded_sides(today),
             universe=universe,
             limits=settings.risk,
+            position_values={s: p.market_value for s, p in positions_now.items() if p.qty > 0},
+            sectors=sectors or {},
+            halt_reason=halt_reason,
+            fallback_active=fallback_active,
         )
+
+    def gated(orders: list[PlannedOrder], prices: Mapping[str, Decimal]) -> list[PlannedOrder]:
+        if gate is None or not orders:
+            return orders
+        ok_, rej_ = gate(orders, prices)
+        report.rejections.extend(rej_)
+        return ok_
 
     sells = [o for o in fresh if o.side is Side.SELL]
     buys = [o for o in fresh if o.side is Side.BUY]
@@ -230,14 +256,14 @@ def execute_plan(
             sells, {s: p.qty for s, p in positions.items()}, context(positions)
         )
         report.rejections.extend(rej)
-        _record(report, _submit_all(broker, ok), basis)
+        _record(report, _submit_all(broker, gated(ok, {})), basis)
 
     if buys:
         positions_mid = broker.positions()
         prices = broker.latest_prices(sorted({o.symbol for o in buys}))
         ok, rej = risk.check_buys(buys, prices, context(positions_mid))
         report.rejections.extend(rej)
-        _record(report, _submit_all(broker, ok), basis)
+        _record(report, _submit_all(broker, gated(ok, prices)), basis)
 
     update_meta(state, report, broker.positions())
     return report

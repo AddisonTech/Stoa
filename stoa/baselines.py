@@ -45,9 +45,9 @@ class BuyAndHold:
 
     risk_managed = False
 
-    def __init__(self, symbol: str = "SPY") -> None:
+    def __init__(self, symbol: str = "SPY", name: str = "spy") -> None:
         self.symbol = symbol
-        self.name = "spy"
+        self.name = name
 
     def decide(self, inp: DecisionInput) -> Decision:
         if self.symbol in inp.holdings:

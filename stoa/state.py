@@ -17,6 +17,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
 from stoa.models import ZERO, ClosedTrade, PlannedOrder, PositionMeta
+from stoa.tracking import Track
 
 STATE_VERSION = 1
 SESSION_HISTORY = 60
@@ -97,6 +98,9 @@ class State(BaseModel):
     sim_cash: Decimal | None = None
     sim_positions: dict[str, Decimal] = Field(default_factory=dict)
     sim_avg_cost: dict[str, Decimal] = Field(default_factory=dict)
+    track: Track = Field(default_factory=Track)
+    approval_nonce: str | None = None  # for the pending plan only
+    approval_required: bool = False
 
     def mark_decided(self, session: date) -> None:
         self.decided_sessions = _push(self.decided_sessions, session)

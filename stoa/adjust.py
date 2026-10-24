@@ -74,14 +74,19 @@ def apply_adjustments(state: State, bars: Bars, *, shadow: bool) -> list[str]:
 
 
 def adjust_benchmark(state: State, bars: Bars, benchmark: str) -> None:
-    """Keep the inception benchmark close on today's scale, so 'vs SPY' is total return."""
-    if state.inception is None:
+    """Keep stored benchmark closes on today's scale, so every 'vs SPY' is total return."""
+    if state.inception is None and not state.track.days:
         return
     f = factor(bars, benchmark, state.last_close_session, state.last_benchmark_close)
-    if f != 1:
+    if f != 1 and state.inception is not None:
         state.inception = state.inception.model_copy(
             update={"benchmark_close": state.inception.benchmark_close * f}
         )
+    if f != 1:
+        state.track.days = [
+            d.model_copy(update={"benchmark_close": d.benchmark_close * f})
+            for d in state.track.days
+        ]
 
 
 def anchor(state: State, bars: Bars, session: date, benchmark: str) -> None:

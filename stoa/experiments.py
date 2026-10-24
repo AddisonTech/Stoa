@@ -124,7 +124,10 @@ def pbo(trial_returns: np.ndarray, blocks: int = 8) -> float:
 # ---- registry --------------------------------------------------------------------------
 
 
-def code_sha(repo: Path = Path(".")) -> str:
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+
+
+def code_sha(repo: Path = PACKAGE_ROOT) -> str:
     try:
         out = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -247,11 +250,38 @@ class Registry:
     def trials(self, kinds: tuple[str, ...] = ("train", "backtest")) -> list[Experiment]:
         return [e for e in self.load() if e.kind in kinds]
 
-    def penalty_inputs(self) -> tuple[int, float]:
-        """(number of trials, variance of their daily Sharpe ratios)."""
-        srs = [e.sharpe_daily for e in self.trials()]
-        vals = [s for s in srs if s is not None]
-        n = max(1, len(self.trials()))
+    @staticmethod
+    def config_key(e: Experiment) -> str:
+        """A trial is a configuration: the effective config plus the run's parameters.
+
+        Re-running the same configuration (a monthly retrain on new data, or the
+        same `stoa score` twice) is not a new try, so it does not add to the
+        count. Changing anything that changes decisions is.
+        """
+        return json.dumps([e.config_hash, e.params], sort_keys=True, default=str)
+
+    def unique_trials(self, kinds: tuple[str, ...] = ("train", "backtest")) -> list[Experiment]:
+        latest: dict[str, Experiment] = {}
+        for e in self.trials(kinds):
+            latest[self.config_key(e)] = e
+        return list(latest.values())
+
+    def penalty_inputs(self, variance_kind: str = "train") -> tuple[int, float]:
+        """(number of distinct configurations tried, variance of their daily Sharpe ratios).
+
+        The count spans every kind of trial. The variance comes from trials of
+        ``variance_kind`` only, so Sharpe ratios measured the same way are compared.
+        """
+        n = max(1, len(self.unique_trials()))
+        vals = [
+            s
+            for s in (e.sharpe_daily for e in self.unique_trials((variance_kind,)))
+            if s is not None
+        ]
+        if len(vals) < 2:
+            # Too few trials of this kind to measure their spread: use every trial's
+            # per-session Sharpe, so the penalty never quietly drops to zero.
+            vals = [s for s in (e.sharpe_daily for e in self.unique_trials()) if s is not None]
         var = float(np.var(vals, ddof=1)) if len(vals) >= 2 else 0.0
         return n, var
 
@@ -260,7 +290,7 @@ class Registry:
         import pandas as pd
 
         cols = {}
-        for e in self.trials():
+        for e in self.unique_trials(("train",)):
             if not e.returns_path:
                 continue
             p = self.path.parent / e.returns_path
@@ -272,18 +302,32 @@ class Registry:
         return df.to_numpy() if len(df) else None
 
 
-def deflate(registry: Registry, returns: Sequence[float]) -> dict[str, float]:
-    """DSR of a return series given every trial in the registry so far."""
+def deflate(
+    registry: Registry,
+    returns: Sequence[float],
+    variance_kind: str = "train",
+    period: int = 1,
+) -> dict[str, float]:
+    """DSR of a return series given every trial in the registry so far.
+
+    ``period`` is how many sessions each return spans (1 for daily equity
+    returns, H for non-overlapping H-session returns). The registry stores
+    Sharpe ratios per session, so their variance is scaled to the series'
+    period before computing the luck threshold.
+    """
     sr, n, sk, ku = return_moments(returns)
-    trials, var = registry.penalty_inputs()
-    dsr, sr0 = deflated_sharpe(sr, trials, var, n, sk, ku)
-    m = registry.trial_matrix()
+    trials, var = registry.penalty_inputs(variance_kind)
+    dsr, sr0 = deflated_sharpe(sr, trials, var * period, n, sk, ku)
+    m = registry.trial_matrix() if period == 1 or variance_kind == "train" else None
+    per_session = sr / math.sqrt(period)
     return {
-        "sharpe_daily": sr,
-        "sharpe_annual": sr * math.sqrt(PERIODS_PER_YEAR),
+        "sharpe_daily": per_session,
+        "sharpe_annual": per_session * math.sqrt(PERIODS_PER_YEAR),
+        "period": float(period),
+        "observations": float(n),
         "trials": float(trials),
         "trial_sharpe_variance": var,
-        "sr0_daily": sr0,
+        "sr0_daily": sr0 / math.sqrt(period),
         "dsr": dsr,
         "psr": probabilistic_sharpe(sr, 0.0, n, sk, ku),
         "pbo": pbo(m) if m is not None else math.nan,

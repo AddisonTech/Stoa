@@ -25,7 +25,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Protocol
+from typing import Any, Protocol
 
 import pandas as pd
 
@@ -144,9 +144,10 @@ class ModelStrategy:
         )
         exits = self._exits(inp, probs)
         held_syms = set(inp.holdings) | {e.symbol for e in exits}
+        likely = set(probs[probs > s.model.threshold].index) if len(probs) else set()
         returns = daily_returns(
             inp.features,
-            sorted(set(snap.index)),
+            sorted((held_syms | likely) & set(snap.index)),
             s.risk.correlation_lookback,
             inp.session,
         )
@@ -161,7 +162,7 @@ class ModelStrategy:
             regime_bull=bull,
             universe=inp.universe,
             limits=s.risk,
-            sectors=self._sector_map(set(snap.index) | held_syms),
+            sectors=self._sector_map(held_syms | likely | {bench}),
             returns=returns,
             halt_reason=inp.halt_reason,
             fallback_active=inp.fallback_active,
@@ -369,3 +370,27 @@ class ModelStrategy:
                 max_weight=target,
             )
         ]
+
+
+@dataclass
+class ModelPredictor:
+    """Probabilities from one fixed, already trained model (live DECIDE and the holdout).
+
+    ``dataset`` holds the standardized features. Each session is predicted on
+    its own cross-section, using only that session's feature rows, which were
+    built from data up to that close.
+    """
+
+    model: Any
+    dataset: Any
+    name: str = "model"
+
+    def probabilities(self, session: date) -> pd.Series:
+        rows = self.dataset.on(session)
+        if rows.empty:
+            return pd.Series(dtype=float)
+        p = self.model.predict(rows)
+        return pd.Series(p, index=rows.index.get_level_values("symbol"), dtype=float)
+
+    def payoff_ratio(self, session: date) -> float:
+        return float(self.model.payoff_ratio)

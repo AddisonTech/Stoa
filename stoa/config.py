@@ -229,8 +229,15 @@ class MoneyConfig(_Frozen):
         return self
 
 
+class DemoConfig(_Frozen):
+    """Synthetic data only (tests and the offline demo). Never used for grading real data."""
+
+    signal: float = Field(default=0.0, ge=0)  # planted momentum edge; 0 is pure noise
+
+
 class StateConfig(_Frozen):
     dir: Path = Path("state")
+    shared_dir: Path | None = None  # models, registry, data shared by paper and live
 
 
 class MetricsConfig(_Frozen):
@@ -290,6 +297,7 @@ class ModelConfig(_Frozen):
     threshold: float = Field(default=0.55, gt=0.5, lt=1)
     max_candidates: int = Field(default=10, ge=1)
     hold_sessions: int | None = None  # None means equal to the horizon
+    universe: Literal["sp500", "watchlist"] = "sp500"  # training cross-section
     use_quality: bool = True
     use_text: bool = False
     text_lookback_days: int = Field(default=10, ge=1)
@@ -329,6 +337,7 @@ class AnalystConfig(_Frozen):
     filing_chars: int = Field(default=6000, ge=500)
     max_items_per_symbol_per_day: int = Field(default=3, ge=1)
     contamination_cutoff: date = date(2026, 7, 1)
+    symbols: Literal["watchlist", "universe"] = "watchlist"  # whose news is scored
     cache_dir: Path = Path("data/analyst_cache")
     batch_poll_seconds: float = Field(default=60.0, gt=0)
     batch_max_requests: int = Field(default=10000, ge=1, le=100000)
@@ -361,9 +370,9 @@ class DataSourcesConfig(_Frozen):
 class ApprovalConfig(_Frozen):
     mode: Literal["auto", "always", "never"] = "auto"
     live_days: int = Field(default=30, ge=0)
-    wait_minutes: float = Field(default=0.0, ge=0, le=60)
-    poll_interval_seconds: float = Field(default=20.0, gt=0)
-    exempt_reasons: tuple[str, ...] = ()
+    wait_minutes: float = Field(default=5.0, ge=0, le=20)
+    poll_interval_seconds: float = Field(default=30.0, gt=0)
+    exempt_reasons: tuple[str, ...] = ("kill_switch",)
 
 
 class CrossCheckConfig(_Frozen):
@@ -391,8 +400,9 @@ class ExamConfig(_Frozen):
     paper_min_sessions: int = Field(default=42, ge=1)
     paper_target_sessions: int = Field(default=63, ge=1)
     paper_min_trades: int = Field(default=20, ge=0)
-    paper_state_dir: Path | None = None  # where live mode reads the paper record
+    paper_state_dir: Path | None = None  # where live mode reads the paper record from
     require_walkforward_pass: bool = True
+    enforce_live: bool = True  # refuse live mode until the exams pass
 
 
 class Settings(_Frozen):
@@ -426,6 +436,7 @@ class Settings(_Frozen):
     healthcheck: HealthcheckConfig = HealthcheckConfig()
     fallback: FallbackConfig = FallbackConfig()
     exam: ExamConfig = ExamConfig()
+    demo: DemoConfig = DemoConfig()
 
     @field_validator("watchlist", mode="before")
     @classmethod
@@ -451,24 +462,37 @@ class Settings(_Frozen):
         return self
 
     @property
+    def shared_dir(self) -> Path:
+        """Where everything paper and live share lives: models, registry, data, exam records."""
+        return self.state.shared_dir or self.state.dir
+
+    @property
     def artifact_dir(self) -> Path:
-        return self.model.artifact_dir or self.state.dir / "models"
+        return self.model.artifact_dir or self.shared_dir / "models"
 
     @property
     def registry_path(self) -> Path:
-        return self.model.registry_path or self.state.dir / "experiments" / "registry.jsonl"
+        return self.model.registry_path or self.shared_dir / "experiments" / "registry.jsonl"
 
     @property
     def fundamentals_path(self) -> Path:
-        return self.sources.fundamentals_path or self.state.dir / "fundamentals.parquet"
+        return self.sources.fundamentals_path or self.shared_dir / "fundamentals.parquet"
 
     @property
     def earnings_path(self) -> Path:
-        return self.sources.earnings_path or self.state.dir / "earnings.parquet"
+        return self.sources.earnings_path or self.shared_dir / "earnings.parquet"
+
+    @property
+    def news_path(self) -> Path:
+        return self.sources.news_cache_dir / "news.parquet"
 
     @property
     def analyst_scores_path(self) -> Path:
-        return self.state.dir / "analyst_scores.parquet"
+        return self.shared_dir / "analyst_scores.parquet"
+
+    @property
+    def analyst_cache_dir(self) -> Path:
+        return self.analyst.cache_dir
 
     def strategy_hash(self) -> str:
         """Hash of every setting that changes trading decisions or grading."""

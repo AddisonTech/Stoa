@@ -177,8 +177,16 @@ def run_backtest(
 
     pending = decide(first_decide, window[0], equity0)
 
+    last_bar = {sym: df.index[-1] for sym, df in bars.items() if len(df)}
     for i, day in enumerate(window):
         ts = pd.Timestamp(day)
+        for sym in sorted(portfolio.positions):
+            df = bars.get(sym)
+            if df is not None and ts not in df.index and last_bar.get(sym, ts) < ts:
+                # The stock stopped trading while held: settle at its last close.
+                last = last_bar[sym]
+                broker.force_close(sym, dec(cell(df, last, "close")), day, "delisted")
+                state.positions_meta = {k: v for k, v in state.positions_meta.items() if k != sym}
         broker.begin_session(day, _prices(bars, ts, "open"))
         due = pending is not None and (
             pending.orders or (strategy.risk_managed and portfolio.positions)

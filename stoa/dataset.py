@@ -117,8 +117,16 @@ def labels(bars: Bars, benchmark: str, horizon: int) -> pd.DataFrame:
     idx = bars[benchmark].index
     opens = _wide(bars, "open").reindex(idx)
     close = _wide(bars, "close").reindex(idx)
+    # A stock that stops trading (delisted, acquired, bankrupt) inside the horizon
+    # is exited at its last close. Without this, the final weeks of every dead
+    # stock would have no label and drop out of training: survivorship bias.
+    alive_until = close.apply(lambda c: c.last_valid_index())
+    dead_fill = close.ffill()
+    for sym, last in alive_until.items():
+        if last is not None:
+            dead_fill.loc[dead_fill.index > last, sym] = close.at[last, sym]
     entry = opens.shift(-1)
-    exit_ = close.shift(-horizon)
+    exit_ = dead_fill.shift(-horizon)
     ret = exit_ / entry - 1.0
     excess = ret.sub(ret[benchmark], axis=0)
     end = pd.Series(idx, index=idx).shift(-horizon)

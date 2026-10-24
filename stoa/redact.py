@@ -61,8 +61,17 @@ class RedactingFilter(logging.Filter):
         return True
 
 
+QUIET_LOGGERS = ("httpx", "httpcore", "anthropic")
+
+
 def install(logger: logging.Logger | None = None) -> None:
-    """Attach the filter to every handler of ``logger`` (the root logger by default)."""
+    """Attach the filter to every handler of ``logger`` (the root logger by default).
+
+    Also caps the HTTP client loggers at WARNING: httpx logs every request URL
+    at INFO, and some URLs (the healthcheck ping) are secrets themselves.
+    """
+    for name in QUIET_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
     target = logger or logging.getLogger()
     for handler in target.handlers:
         if not any(isinstance(f, RedactingFilter) for f in handler.filters):
