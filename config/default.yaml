@@ -1,0 +1,149 @@
+# Stoa default configuration.
+# Every limit lives here and is validated at load by stoa/config.py.
+# Secrets never go in this file. They come from environment variables only.
+# Any value can be overridden with an environment variable named
+# STOA__<SECTION>__<KEY>, for example STOA__RISK__MAX_POSITIONS=4.
+# STOA_MODE and STOA_STATE_DIR are shortcuts for mode and state.dir.
+
+mode: paper            # backtest | signal | paper | live
+benchmark: SPY
+
+watchlist:
+  - SPY
+  - QQQ
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - GOOGL
+  - META
+  - AVGO
+  - JPM
+  - V
+  - MA
+  - UNH
+  - LLY
+  - JNJ
+  - XOM
+  - CVX
+  - HD
+  - COST
+  - WMT
+  - PG
+  - KO
+  - PEP
+  - CAT
+  - GE
+  - NFLX
+  - AMD
+  - ORCL
+  - CRM
+
+risk:
+  max_position_pct: "0.20"         # of equity, per position
+  max_positions: 5
+  max_gross_exposure_pct: "1.00"   # never above 1.00, Stoa never borrows
+  cash_buffer_pct: "0.02"          # of equity, always kept in cash
+  min_order_usd: "1.00"
+  daily_loss_limit_pct: "0.03"     # no new entries after a day this bad
+  kill_switch_drawdown_pct: "0.25" # flatten and halt at this drawdown from the high-water mark
+  max_orders_per_day: 10
+  price_sanity_pct: "0.08"         # skip a buy if the price moved more than this from the plan
+  block_entries_when_risk_off: true
+
+quant:
+  min_return_60: 0.0               # 60 day momentum must be above this
+  max_volatility_20: 0.60          # annualized 20 day realized volatility ceiling
+  max_return_5: 0.15               # no buying after a 5 day spike larger than this
+  max_rsi_14: 85.0
+  min_dollar_volume_20: 50000000   # 20 day average dollar volume floor
+
+exits:
+  stop_atr_multiple: 2.5           # initial stop at entry minus this many ATR(14) at entry
+  trailing_enabled: true
+  trailing_atr_multiple: 3.0       # trailing stop sits this many entry ATRs under the highest high
+  take_profit_atr_multiple: null   # optional profit target in entry ATRs, null disables it
+  max_hold_sessions: 30
+  trend_break_sessions: 2          # exit after this many closes in a row below the 50 day average
+
+scout:
+  kind: auto                       # rule | llm | auto (llm when ANTHROPIC_API_KEY is set)
+  max_candidates: 5
+  weight_return_60: 0.6
+  weight_return_120: 0.4
+
+llm:
+  model: claude-haiku-5-5
+  max_tokens: 1500
+  anonymize: true                  # hide tickers and dates from the model
+  feature_decimals: 3
+  monthly_cost_cap_usd: 5.0
+  cache_dir: data/llm_cache
+  recent_trades_in_prompt: 10
+  timeout_seconds: 60
+  max_retries: 2
+  prices:                          # USD per million tokens
+    claude-haiku-5-5:
+      input_per_mtok: 0.10
+      output_per_mtok: 0.50
+
+costs:
+  slippage_bps: 5.0                # per side, applied to every simulated fill
+  sell_fee_bps: 0.3                # regulatory sell fees, approximate
+  min_sell_fee_usd: "0.01"         # brokers round regulatory fees up to the next cent
+
+job_windows:
+  decide_after_close_minutes: 30
+  decide_end: "23:59"
+  execute_after_open_minutes: 15
+  execute_window_minutes: 120
+
+backtest:
+  starting_equity: "100"
+  warmup_sessions: 260
+  holdout_start: 2026-07-01
+  windows:
+    tune_a: {start: 2019-01-01, end: 2020-12-31}
+    tune_b: {start: 2021-01-01, end: 2022-12-31}
+    tune_c: {start: 2023-01-01, end: 2024-12-31}
+    validation: {start: 2025-01-01, end: 2026-06-30}
+
+data:
+  provider: alpaca                 # alpaca | yahoo | csv
+  cache_dir: data/bars
+  csv_dir: data/csv
+  history_start: 2016-01-01
+  feed: sip
+  fallback_feed: iex
+  quote_feed: iex                  # feed for live quotes at execution (free plan: iex)
+  live_lookback_days: 450          # calendar days of history fetched fresh for every live run
+  timeout_seconds: 30
+  max_retries: 4
+
+alpaca:
+  paper_url: https://paper-api.alpaca.markets
+  live_url: https://api.alpaca.markets
+  data_url: https://data.alpaca.markets
+  fill_timeout_seconds: 90
+  poll_interval_seconds: 2.0
+
+alerts:
+  server: https://ntfy.sh
+  click_url: null                  # optional link opened when you tap an alert
+  retries: 2
+  timeout_seconds: 10
+  max_message_bytes: 3500
+
+money:
+  deposit: "100"
+  milestone_multiple: "2"
+  tax_rate: "0.25"
+
+state:
+  dir: state
+
+metrics:
+  risk_free_rate: 0.0
+  bootstrap_samples: 1000
+  bootstrap_block: 20
+  seed: 7

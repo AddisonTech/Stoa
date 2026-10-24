@@ -1,0 +1,12 @@
+# The pass bar. Locked by `stoa holdout seal` before the holdout is scored.
+evaluation_window: validation
+tune_windows: [tune_a, tune_b, tune_c]
+criteria:
+  beat_spy: true                   # total return above SPY buy-and-hold after costs
+  beat_sma: true                   # total return above the 50/200 rule after costs
+  max_drawdown_vs_spy: true        # max drawdown no worse than SPY's over the same window
+  max_drawdown_cap: 0.25           # and never past this
+  min_profit_factor: 1.2
+  min_tune_windows_beating_spy: 2
+  min_trades: 30
+  max_monthly_api_cost_usd: 5.0
