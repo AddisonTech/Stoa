@@ -81,7 +81,7 @@ def gate(
     *,
     now: Callable[[], datetime],
     sleep: Callable[[float], None],
-    send: Callable[[alerts.Alert], None],
+    send: Callable[[alerts.Alert], object],
     client: ApprovalClient | None,
     server: str,
     approval_topic: str | None,
@@ -177,7 +177,7 @@ def _record_ask(
     ][-60:]
 
 
-def _send(out: Gate, send: Callable[[alerts.Alert], None], alert: alerts.Alert) -> None:
+def _send(out: Gate, send: Callable[[alerts.Alert], object], alert: alerts.Alert) -> None:
     send(alert)
     out.sent.append(alert.title)
 

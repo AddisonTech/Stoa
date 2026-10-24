@@ -928,6 +928,9 @@ def _summary(
     ]
     realized = state.realized_for_year(now.year)
     extra = list(notes)
+    from stoa import shadow
+
+    extra.append(shadow.summary_line(s, state, now))
     if book.unmanaged:
         extra.append("Not managed by Stoa: " + ", ".join(book.unmanaged))
     if book.settled is not None and book.settled.fills:

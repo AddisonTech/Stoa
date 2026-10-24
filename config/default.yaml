@@ -222,6 +222,8 @@ analyst:
   text_chars: 1200
   max_items_per_symbol_per_day: 3
   contamination_cutoff: 2026-07-01 # scores for items before this are flagged as possibly contaminated
+  shadow_start: 2026-10-26         # trial 7 forward test: only news from here on (DECISIONS.md)
+  shadow_sessions: 210             # trial 7 is evaluated once after this many scored sessions
   symbols: watchlist               # whose news gets scored: watchlist or universe
   cache_dir: data/analyst_cache
   batch_poll_seconds: 60

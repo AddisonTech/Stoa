@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 from collections.abc import Callable
 from datetime import date, timedelta
 from decimal import Decimal
@@ -180,6 +181,88 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
         click.echo(
             f"Scored {rep.scored}, cached {rep.cached}, failed {rep.failed}, "
             f"spent ${rep.spent_usd:.2f}. {len(rows)} scores in {s.analyst_scores_path}."
+        )
+
+    @analyst.command("shadow")
+    @pass_ctx
+    @friendly_errors
+    def analyst_shadow(ctx: Any) -> None:
+        """Trial 7: score the last session's news in shadow mode. Never used for trading."""
+        import time
+
+        from stoa import analyst as an
+        from stoa import shadow
+        from stoa.approvals import ApprovalClient
+        from stoa.cli import make_notifier
+        from stoa.data.factory import alpaca_data_client
+        from stoa.data.news import AlpacaNewsClient
+        from stoa.membership import default_membership
+
+        s, sec = ctx.settings, ctx.secrets
+        key = sec.llm_api_key
+        if key is None:
+            raise click.ClickException("ANTHROPIC_API_KEY is not set")
+        state = StateStore(s.state.dir).load()  # read only: the shadow job never saves it
+        ledger = shadow.load_ledger(s)
+        notifier = make_notifier(s, sec)
+        topic = sec.ntfy_approval_topic
+        token = sec.ntfy_token.get_secret_value() if sec.ntfy_token else None
+        approvals = (
+            ApprovalClient(s.alerts.server, topic.get_secret_value(), token=token)
+            if topic is not None
+            else None
+        )
+        try:
+            run = shadow.run_session(
+                s,
+                state,
+                ledger,
+                now=clock.now_utc,
+                sleep=time.sleep,
+                send=lambda a: alerts.safe_send(notifier, a),
+                news=AlpacaNewsClient(alpaca_data_client(s, sec)),
+                client=an.make_client(key.get_secret_value()),
+                approvals=approvals,
+                approval_topic=topic.get_secret_value() if topic is not None else None,
+                members=default_membership().members,
+                progress=click.echo,
+            )
+        finally:
+            shadow.save_ledger(s, ledger)  # spend is kept even if scoring stopped part way
+        click.echo(
+            f"Session {run.session}: {run.status}. {run.items} items, {run.scored} scored, "
+            f"{run.failed} failed, ${run.spent_usd:.3f}. {run.note}".rstrip()
+        )
+        click.echo(
+            f"{len(ledger.sessions)} of {s.analyst.shadow_sessions} sessions scored "
+            f"since {s.analyst.shadow_start}."
+        )
+        if run.status in ("incomplete", "over_budget"):
+            sys.exit(1)
+
+    @analyst.command("evaluate")
+    @click.option("--repo", type=click.Path(path_type=Path), default=Path("."))
+    @pass_ctx
+    def analyst_evaluate(ctx: Any, repo: Path) -> None:
+        """Trial 7: the pre-registered comparison, once, after every shadow session is scored."""
+        from stoa import shadow
+
+        try:
+            out = shadow.evaluate(ctx.settings, repo, clock.now_utc())
+        except shadow.ShadowError as exc:
+            raise click.ClickException(str(exc)) from exc
+        w, wo = out["with_text"] or {}, out["without_text"] or {}
+        click.echo(
+            f"Trial 7 on {out['sessions']} sessions ({out['first_session']} to "
+            f"{out['last_session']}): log loss with text {w.get('log_loss', math.nan):.4f}, "
+            f"without {wo.get('log_loss', math.nan):.4f}, base rate "
+            f"{out['base_rate_log_loss']:.4f}; calibration error {w.get('ece', math.nan):.3f}; "
+            f"deflated Sharpe {out['deflated'].get('dsr', math.nan):.3f}."
+        )
+        for name, ok in out["checks"].items():
+            click.echo(f"  {name}: {'pass' if ok else 'FAIL'}")
+        click.echo(
+            f"Result: {'PASS' if out['passed'] else 'FAIL'}. Recorded once; it will not rerun."
         )
 
     # ---- model ------------------------------------------------------------------------------

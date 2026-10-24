@@ -32,7 +32,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from stoa import __version__, clock, exam, holdout, redact, spendcap
+from stoa import __version__, clock, exam, holdout, redact, shadow, spendcap
 from stoa.config import SECRET_ENV, Settings
 from stoa.journal import read_journal
 from stoa.state import State, StateStore
@@ -271,6 +271,10 @@ def collect(
     state = StateStore(state_dir).load()
     records = read_journal(state_dir / "journal")
     built = now or clock.now_utc()
+    try:
+        ledger = shadow.load_ledger(settings)
+    except (OSError, ValueError):
+        ledger = shadow.ShadowLedger()
     track = state.track
     mode = track.days[-1].mode if track.days else settings.mode
     equity = track.days[-1] if track.days else None
@@ -314,7 +318,12 @@ def collect(
             ),
         },
         "fallback": {"active": track.fallback_active, "reason": track.fallback_reason},
-        "analyst": analyst_spend(state, settings, built),
+        "analyst": analyst_spend(shadow.merged_view(state, ledger), settings, built),
+        "shadow": {
+            k: v
+            for k, v in shadow.progress(settings, state, ledger, built).items()
+            if k in ("start", "sessions", "needed", "last", "skipped", "evaluated")
+        },
     }
 
 
@@ -693,6 +702,12 @@ def render_health(data: dict[str, Any]) -> str:
     ks = data["kill_switch"]
     fb = data["fallback"]
     an = data["analyst"]
+    sh = data["shadow"]
+    shadow_line = (
+        f"{sh['sessions']} of {sh['needed']} sessions scored since {_e(sh['start'])}"
+        + (f", last {_e(sh['last'])}" if sh["last"] else "")
+        + (" (evaluated)" if sh["evaluated"] else ", shadow only, never traded")
+    )
     spend = f"{_money(an['spent'])} of {_money(an['cap'])} in {_e(an['month'])}"
     if an["raises"]:
         spend += f" (raised {_money(sum(r['amount'] for r in an['raises']))} this month)"
@@ -708,6 +723,7 @@ def render_health(data: dict[str, Any]) -> str:
             f'<span class="bad">ON since {_e(ks["since"])}</span>' if ks["active"] else "off",
         ),
         ("Analyst spend", spend),
+        ("Analyst forward test", shadow_line),
         (
             "SPY fallback",
             f'<span class="warn">ON: {_e(fb["reason"])}</span>' if fb["active"] else "off",

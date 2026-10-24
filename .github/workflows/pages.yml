@@ -5,7 +5,7 @@ name: pages
 # secrets are passed to this workflow, and the build makes no network calls.
 on:
   workflow_run:
-    workflows: [daily]
+    workflows: [daily, analyst]
     types: [completed]
   workflow_dispatch:
 

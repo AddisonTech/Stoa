@@ -95,6 +95,7 @@ All times are New York time.
 - **The 2nd of each month, early morning**: the monthly retrain. New data, the same walk-forward, and a new model only if it is no worse than the current one. You get a short summary.
   **Currently off** (disabled on 2026-10-24 with `gh workflow disable monthly`). It stays off until a design passes walk-forward: none has (trials 1 to 6 failed, see DECISIONS.md), and retraining a failed design only adds trials to the registry. Turn it back on with `gh workflow enable monthly` or the Actions tab once a model is promoted.
 - **About 9:50 am**: EXECUTE. Stoa places last night's orders and sends one alert per fill, then places a stop order at Alpaca for every position held from a prior day (see docs/RISK.md, Stops at the broker). If a stop fills during the day, DECIDE records it that evening and alerts you.
+- **About 7:45 pm (6:45 pm in winter)**: the analyst workflow (trial 7, the analyst forward test in DECISIONS.md). It scores the session's news for the point-in-time S&P 500 through the Batch API in shadow mode and commits the scores to `shared/shadow/` on the state branch. Shadow scores never reach a trade. It has its own concurrency group, so it never holds up DECIDE or EXECUTE. The daily summary and the dashboard show how many of the 210 sessions are scored. After 210, run `stoa analyst evaluate` once.
 - **After each daily run**: the pages workflow rebuilds the read-only dashboard at https://addisontech.github.io/Stoa/ from the committed state. It gets no secrets and has no buttons; approvals stay on your phone. To rebuild by hand: Actions, pages, Run workflow. One-time setup: Settings, Pages, Source: GitHub Actions.
 
 GitHub runs each job twice an hour apart (because it ignores daylight saving time). The second run sees the first already did the work and does nothing. Weekends and market holidays are skipped. On early close days (like the day after Thanksgiving) DECIDE runs earlier on its own.
@@ -134,6 +135,9 @@ A guard said no. The message says which: missing keys, live mode locked, or the 
 
 **"Stop place failed", "Stop replace failed", "Stop cancel failed" or "Stop check failed" (priority 5)**
 Stoa could not place, cancel or check a protective stop at Alpaca. The rest of the run carried on. Open the Alpaca app and look at the position and its open orders. A missing stop is placed again at the next EXECUTE; the close rules still apply in the meantime.
+
+**"Stoa analyst shadow failed" (priority 4)**
+The trial 7 shadow scoring did not finish. Trading is not affected. That session is not counted; the forward test simply needs one more session. If it keeps failing, open the log. To retry the same evening: Actions, analyst, Run workflow.
 
 **"Analyst spend at 80% of the cap" (priority 3)**
 The Claude analyst has used 80% of this month's cap. Once a month at most. Nothing to do.

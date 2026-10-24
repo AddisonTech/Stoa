@@ -1,0 +1,95 @@
+name: analyst
+
+# Trial 7, the analyst forward test (docs/DECISIONS.md). After the daily DECIDE,
+# score the session's news in shadow mode and commit the scores to the state
+# branch. Shadow scores never reach DECIDE, EXECUTE or an order.
+#
+# It has its own concurrency group, so it never waits for DECIDE or EXECUTE and
+# they never wait for it. It runs after both DECIDE slots (21:20 and 22:20 UTC)
+# and writes only shared/shadow/ on the state branch, never state.json.
+on:
+  schedule:
+    - cron: "45 23 * * 1-5" # after DECIDE in both the EDT and the EST slot
+  workflow_dispatch:
+
+concurrency:
+  group: stoa-analyst
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360 # the Batch API can take a while; trading does not wait for it
+    env:
+      ALPACA_PAPER_KEY_ID: ${{ secrets.ALPACA_PAPER_KEY_ID }}
+      ALPACA_PAPER_SECRET: ${{ secrets.ALPACA_PAPER_SECRET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      STOA_NTFY_TOPIC: ${{ secrets.STOA_NTFY_TOPIC }}
+      STOA_NTFY_TOKEN: ${{ secrets.STOA_NTFY_TOKEN }}
+      STOA_NTFY_APPROVAL_TOPIC: ${{ secrets.STOA_NTFY_APPROVAL_TOPIC }}
+      STOA_MODE: ${{ vars.STOA_MODE }}
+      NTFY_SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      STOA__ALERTS__SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      STOA_STATE_DIR: ${{ vars.STOA_MODE == 'live' && 'state-branch/live-state' || 'state-branch/state' }}
+      STOA__STATE__SHARED_DIR: state-branch/shared
+      STOA__ANALYST__CACHE_DIR: analyst_cache # runner-local; the scores themselves are committed
+    steps:
+      - name: Check required secrets
+        id: secrets
+        run: |
+          missing=""
+          [ -z "$ANTHROPIC_API_KEY" ] && missing="$missing ANTHROPIC_API_KEY"
+          [ -z "$ALPACA_PAPER_KEY_ID" ] && missing="$missing ALPACA_PAPER_KEY_ID"
+          [ -z "$STOA_NTFY_TOPIC" ] && missing="$missing STOA_NTFY_TOPIC"
+          if [ -n "$missing" ]; then
+            echo "Analyst shadow is not set up. Missing secrets:$missing. Exiting."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out code
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@v5
+
+      - name: Check out state branch
+        if: steps.secrets.outputs.ready == 'true'
+        run: bash scripts/state-branch.sh checkout state-branch
+
+      - name: Set up Python
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        if: steps.secrets.outputs.ready == 'true'
+        run: pip install .
+
+      - name: Score the session in shadow mode
+        if: steps.secrets.outputs.ready == 'true'
+        run: stoa analyst shadow
+
+      - name: Save shadow scores
+        if: always() && steps.secrets.outputs.ready == 'true'
+        run: bash scripts/state-branch.sh commit state-branch "analyst shadow ${{ github.run_id }}"
+
+      - name: Alert on failure
+        if: failure() && steps.secrets.outputs.ready == 'true'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          auth=()
+          if [ -n "$STOA_NTFY_TOKEN" ]; then auth=(-H "Authorization: Bearer $STOA_NTFY_TOKEN"); fi
+          curl -sS --max-time 15 --retry 2 \
+            -H "Title: Stoa analyst shadow failed" \
+            -H "Priority: 4" \
+            -H "Tags: warning" \
+            -H "Click: $RUN_URL" \
+            "${auth[@]}" \
+            -d "The trial 7 shadow scoring failed. Trading is not affected. Tap for the log." \
+            "${NTFY_SERVER%/}/$STOA_NTFY_TOPIC" || true

@@ -355,6 +355,8 @@ class AnalystConfig(_Frozen):
     filing_chars: int = Field(default=6000, ge=500)
     max_items_per_symbol_per_day: int = Field(default=3, ge=1)
     contamination_cutoff: date = date(2026, 7, 1)
+    shadow_start: date = date(2026, 10, 26)  # trial 7: only news published from here is scored
+    shadow_sessions: int = Field(default=210, ge=1)  # trial 7 evaluates after this many
     symbols: Literal["watchlist", "universe"] = "watchlist"  # whose news is scored
     cache_dir: Path = Path("data/analyst_cache")
     batch_poll_seconds: float = Field(default=60.0, gt=0)

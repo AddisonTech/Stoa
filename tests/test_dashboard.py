@@ -201,6 +201,7 @@ def test_builds_cleanly_from_empty_state(tmp_path: Path) -> None:
     assert "No model report yet" in page
     assert "no check-in recorded yet" in page
     assert "$0.00 of $25.00 in 2021-10" in page and "paused at the cap" not in page
+    assert "0 of 210 sessions scored since 2026-10-26, shadow only, never traded" in page
     assert "<polyline" not in page and 'class="badge b-paper">PAPER<' in page
     assert data["positions"] == [] and data["decisions"] == []
 
