@@ -17,7 +17,7 @@ from stoa.broker.base import Broker, BrokerPosition, OrderRequest, OrderStatus
 from stoa.config import Settings
 from stoa.models import ZERO, PlannedOrder, PositionMeta, Rejection, Side, cents_down
 from stoa.planner import client_order_id
-from stoa.state import Plan, State
+from stoa.state import KillSwitch, Plan, State
 from stoa.universe import Universe
 
 log = logging.getLogger(__name__)
@@ -39,10 +39,7 @@ class ExecutionReport:
     unfilled: list[FillReport] = field(default_factory=list)
     rejections: list[Rejection] = field(default_factory=list)
     flattened: bool = False
-
-    @property
-    def realized(self) -> Decimal:
-        return sum((f.realized_pnl for f in self.fills if f.realized_pnl is not None), ZERO)
+    kill_switch_tripped: bool = False
 
 
 def traded_sides(orders: list[OrderStatus]) -> dict[str, frozenset[Side]]:
@@ -150,8 +147,21 @@ def execute_plan(
     positions = broker.positions()
     basis = cost_basis(positions, state)
 
+    equity = broker.account().equity
+    hwm = state.high_water_mark or equity
+    if not state.kill_switch.active and risk.kill_switch_breached(equity, hwm, settings.risk):
+        state.kill_switch = KillSwitch(
+            active=True, tripped_session=session, reason="drawdown at the open"
+        )
+        report.kill_switch_tripped = True
+
     if state.kill_switch.active:
-        held = {s: risk.HeldPosition(s, p.qty, p.current_price) for s, p in positions.items()}
+        # Only symbols Stoa manages are flattened; anything else in the account is left alone.
+        held = {
+            s: risk.HeldPosition(s, p.qty, p.current_price)
+            for s, p in positions.items()
+            if s in settings.watchlist
+        }
         flatten = [
             o.model_copy(
                 update={

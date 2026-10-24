@@ -73,9 +73,3 @@ def require_fresh(bars: Bars, symbols: list[str], session: date) -> None:
             stale.append(f"{sym}={last}")
     if stale:
         raise DataError(f"stale data for session {session}: {', '.join(stale)}")
-
-
-def slice_until(bars: Bars, day: date) -> Bars:
-    """Bars with session <= day. The only way backtests hand data to decisions."""
-    cutoff = pd.Timestamp(day)
-    return {sym: df.loc[:cutoff] for sym, df in bars.items()}

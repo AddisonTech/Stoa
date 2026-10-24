@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "stoa"
-version = "0.5.0"
+version = "1.0.0"
 description = "Daily-cadence AI equity trading system with a rule-based risk engine and honest grading."
 readme = "README.md"
 license = "MIT"

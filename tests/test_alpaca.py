@@ -127,7 +127,7 @@ def test_submit_notional_order_body() -> None:
     assert st.status == "accepted" and st.filled_avg_price is None
 
 
-def test_submit_qty_sell_has_nine_decimals_and_no_notional() -> None:
+def test_submit_qty_sell_rounds_down_to_nine_decimals() -> None:
     bodies: list[dict[str, object]] = []
 
     def h(req: httpx.Request) -> httpx.Response:
@@ -137,7 +137,7 @@ def test_submit_qty_sell_has_nine_decimals_and_no_notional() -> None:
         return httpx.Response(200, json={**ORDER, "side": "sell"})
 
     broker(h).submit(
-        OrderRequest(symbol="NVDA", side=Side.SELL, client_order_id="c", qty=D("0.1234567891"))
+        OrderRequest(symbol="NVDA", side=Side.SELL, client_order_id="c", qty=D("0.1234567899"))
     )
     assert bodies[0]["qty"] == "0.123456789" and "notional" not in bodies[0]
 

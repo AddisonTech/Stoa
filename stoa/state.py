@@ -8,7 +8,6 @@ waiting for the next open. Backtests use the same model in memory.
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 from datetime import date, datetime
@@ -156,7 +155,3 @@ def _atomic_write(path: Path, text: str) -> None:
     except BaseException:
         Path(tmp).unlink(missing_ok=True)
         raise
-
-
-def dump_json(obj: object) -> str:
-    return json.dumps(obj, sort_keys=True, default=str)

@@ -23,6 +23,7 @@ from stoa.config import DEFAULT_SCOREBOARD_PATH, Secrets, Settings
 from stoa.data.base import Bars
 from stoa.data.cache import load_cached_bars
 from stoa.data.synthetic import synthetic_bars
+from stoa.roles.llm import Budget
 from stoa.strategy import build_strategy
 
 STRATEGIES = ("agents", "spy", "sma")
@@ -172,8 +173,9 @@ def run_one(
     end: date,
     *,
     llm: bool = False,
+    budget: Budget | None = None,
 ) -> Run:
-    strat = build_strategy(settings, secrets, strategy, llm=llm)
+    strat = build_strategy(settings, secrets, strategy, llm=llm, budget=budget)
     return summarize(run_backtest(settings, bars, strat, start, end), settings, window)
 
 
@@ -277,21 +279,15 @@ def score_all(
         data_source="synthetic" if synthetic else f"cache:{settings.data.cache_dir}",
         strategy_hash=settings.strategy_hash(),
     )
+    budget = Budget(settings.llm.monthly_cost_cap_usd)  # one real-money cap for the whole run
     for w in windows:
         win = settings.backtest.windows[w]
         for strat in STRATEGIES:
-            report.runs.append(
-                run_one(
-                    settings,
-                    secrets,
-                    bars,
-                    strat,
-                    w,
-                    win.start,
-                    win.end,
-                    llm=llm and strat == "agents",
-                )
+            use_llm = llm and strat == "agents"
+            run = run_one(
+                settings, secrets, bars, strat, w, win.start, win.end, llm=use_llm, budget=budget
             )
+            report.runs.append(run)
     report.checks = evaluate(report, board)
     return report
 
@@ -321,7 +317,10 @@ def render_markdown(report: Report) -> str:
     ]
     for r in report.runs:
         m = r.metrics
-        pf = "inf" if math.isinf(m.profit_factor) else f"{m.profit_factor:.2f}"
+        if m.trade_count == 0:
+            pf = "n/a"
+        else:
+            pf = "inf" if math.isinf(m.profit_factor) else f"{m.profit_factor:.2f}"
         lines.append(
             f"| {r.window} | {r.strategy} | {_pct(m.total_return)} | {_pct(m.cagr)} "
             f"| {m.max_drawdown:.2%} | {m.sharpe:.2f} "
@@ -332,6 +331,9 @@ def render_markdown(report: Report) -> str:
         if r.strategy == "agents":
             b = r.bootstrap_mdd
             lines.append(f"- {r.window}: {b['p05']:.1%} / {b['p50']:.1%} / {b['p95']:.1%}")
+    fallbacks = sum(r.llm_fallbacks for r in report.runs if r.strategy == "agents")
+    if fallbacks:
+        lines += ["", f"The LLM scout fell back to the rule scout on {fallbacks} decisions."]
     return "\n".join(lines) + "\n"
 
 

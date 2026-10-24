@@ -24,7 +24,7 @@ def test_milestone_alert_fires_once() -> None:
     s = started()
     assert money.check_milestone(s, D("199.99"), CFG) is None
     a = money.check_milestone(s, D("200"), CFG)
-    assert a is not None and a.title == "Withdraw $100.00 now" and a.priority == 4
+    assert a is not None and a.title == "Withdraw $100 now" and a.priority == 4
     assert "confirm-withdrawal" in a.message
     assert money.check_milestone(s, D("250"), CFG) is None
     assert s.milestone_alerted
@@ -136,3 +136,31 @@ def test_realized_tracked_by_year() -> None:
     s.add_realized(2026, D("-2.5"))
     s.add_realized(2027, D("1"))
     assert s.realized_for_year(2026) == D(10) and s.realized_for_year(2027) == D(1)
+
+
+def test_trans_mirroring_csw_counted_once() -> None:
+    acts = [
+        {"id": "t1", "activity_type": "TRANS", "net_amount": "-100", "date": "2026-09-02"},
+        {"id": "w1", "activity_type": "CSW", "net_amount": "-100", "date": "2026-09-02"},
+        {"id": "t2", "activity_type": "TRANS", "net_amount": "25", "date": "2026-09-03"},
+    ]
+    flows = money.parse_flows(acts)
+    assert [f.activity_id for f in flows] == ["w1", "t2"]
+
+
+def test_inception_day_flow_is_part_of_start() -> None:
+    s = started()
+    flows = money.parse_flows(
+        [{"id": "d0", "activity_type": "CSD", "net_amount": "100", "date": "2026-07-01"}]
+    )
+    assert money.apply_flows(s, flows, date(2026, 7, 1)) == []
+
+
+def test_signal_mode_withdraw_shadow() -> None:
+    s = started()
+    s.sim_cash = D(150)
+    s.last_close_equity = D(205)
+    assert money.withdraw_shadow(s, D(100)) == D(105)
+    assert s.sim_cash == D(50) and s.net_flows == D(-100)
+    with pytest.raises(ValueError, match="below"):
+        money.withdraw_shadow(s, D(100))

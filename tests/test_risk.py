@@ -285,7 +285,9 @@ def test_execution_max_positions_and_orders() -> None:
     assert got == [] and rej[0].reason == "max_orders"
 
 
-def test_sells_ignore_price_sanity_and_clip_to_held() -> None:
+def test_sells_close_whatever_is_held_now() -> None:
     got, rej = risk.check_sells([sell("AAPL", "2"), sell("KO")], {"AAPL": D("0.5")}, exec_ctx())
     assert [(o.symbol, o.qty) for o in got] == [("AAPL", D("0.5"))]
+    split, _ = risk.check_sells([sell("NVDA", "0.1")], {"NVDA": D("1.0")}, exec_ctx())
+    assert split[0].qty == D("1.0")
     assert rej[0].reason == "no_position"

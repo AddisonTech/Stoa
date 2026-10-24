@@ -20,6 +20,8 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Literal
 
+import pandas as pd
+
 from stoa import alerts, clock, money, risk
 from stoa.broker.alpaca import AlpacaBroker, make_trading_client
 from stoa.broker.base import Broker, BrokerPosition, OrderStatus
@@ -142,7 +144,7 @@ def make_scout(rt: Runtime, state: State) -> Scout:
         return rt.scout
     s = rt.settings
     use_llm = s.scout.kind == "llm" or (
-        s.scout.kind == "auto" and rt.secrets.anthropic_api_key is not None
+        s.scout.kind == "auto" and rt.secrets.llm_api_key is not None
     )
     budget = Budget(s.llm.monthly_cost_cap_usd, state.llm_spend_by_month, clock=rt.now)
     return build_scout(s, rt.secrets, llm=use_llm, budget=budget)
@@ -219,6 +221,18 @@ def settle_open_orders(state: State, broker: Broker) -> list[ClosedTrade | str]:
     return notes
 
 
+def prev_close_equity(state: State, session: date, broker_value: Decimal | None) -> Decimal | None:
+    """Equity at the close before ``session``, the daily loss limit's baseline.
+
+    Stoa's own record of that close wins; the broker's last_equity is the fallback.
+    """
+    if state.last_close_equity is not None and state.last_close_session == clock.previous_session(
+        session
+    ):
+        return state.last_close_equity
+    return broker_value
+
+
 # ---- shadow portfolio for signal mode ------------------------------------------
 
 
@@ -239,8 +253,6 @@ def save_shadow(state: State, p: Portfolio) -> None:
 
 
 def _prices(bars: Bars, day: date, column: str) -> dict[str, Decimal]:
-    import pandas as pd
-
     ts = pd.Timestamp(day)
     return {s: dec(cell(df, ts, column)) for s, df in bars.items() if ts in df.index}
 
@@ -297,8 +309,20 @@ def _book_signal(rt: Runtime, state: State, bars: Bars, session: date) -> Book:
     )
 
 
+def close_equity(
+    cash: Decimal, positions: dict[str, BrokerPosition], closes: dict[str, Decimal]
+) -> Decimal:
+    """Equity marked at the official close, like the backtest.
+
+    The broker marks positions at the latest trade, which after 4 pm can be an
+    after-hours print. Positions with a session close use it instead.
+    """
+    marks = (p.qty * closes.get(sym, p.current_price) for sym, p in positions.items())
+    return cash + sum(marks, ZERO)
+
+
 def _book_broker(
-    rt: Runtime, state: State, session: date, atr: dict[str, float]
+    rt: Runtime, state: State, session: date, atr: dict[str, float], closes: dict[str, Decimal]
 ) -> tuple[Book, list[str]]:
     s = rt.settings
     broker = make_broker(rt)
@@ -317,19 +341,18 @@ def _book_broker(
         for sym, p in managed.items()
     }
     if isinstance(broker, AlpacaBroker):
+        since = state.inception.session if state.inception else session
         flows = money.apply_flows(
-            state,
-            money.parse_flows(broker.transfer_activities()),
-            state.inception.session if state.inception else session,
+            state, money.parse_flows(broker.transfer_activities(after=since)), since
         )
         flow_alert = money.flows_alert(flows, state.principal_withdrawn)
         if flow_alert is not None:
             alerts.safe_send(rt.notifier, flow_alert)
     book = Book(
-        equity=account.equity,
+        equity=close_equity(account.cash, positions, closes),
         cash=account.cash,
         positions=holdings,
-        prev_equity=account.last_equity or state.last_close_equity,
+        prev_equity=prev_close_equity(state, session, account.last_equity),
         universe=universe,
         unmanaged=sorted(set(positions) - set(managed)),
     )
@@ -375,7 +398,7 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
     if s.mode == "signal":
         book = _book_signal(rt, state, bars, session)
     else:
-        book, notes = _book_broker(rt, state, session, atr)
+        book, notes = _book_broker(rt, state, session, atr, _prices(bars, session, "close"))
 
     if state.inception is None:
         state.inception = Inception(
@@ -444,11 +467,11 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
         created_at=now,
         equity=book.equity,
     )
-    if state.pending_plan is not None and state.pending_plan.execute_session <= session:
-        notes.append(
-            f"plan for {state.pending_plan.execute_session} was never executed and is dropped"
-        )
-    state.pending_plan = plan if plan.orders else None
+    stale = state.pending_plan
+    if stale is not None and stale.orders and stale.execute_session <= session:
+        notes.append(f"plan for {stale.execute_session} was never executed and is dropped")
+    # An empty plan is kept too, so EXECUTE still checks the kill switch at the open.
+    state.pending_plan = plan
     if plan.orders:
         store.archive_plan(plan)
     journal.write(now, "decide", session, "plan", plan=plan.model_dump(mode="json"))
@@ -472,15 +495,12 @@ def _summary(
     rt: Runtime,
     state: State,
     book: Book,
-    snap: object,
+    snap: pd.DataFrame,
     plan: Plan,
     notes: list[str],
     now: datetime,
 ) -> alerts.Summary:
-    import pandas as pd
-
     s = rt.settings
-    assert isinstance(snap, pd.DataFrame)
     day_change = None
     if book.prev_equity and book.prev_equity > 0:
         day_change = float(book.equity / book.prev_equity - 1)
@@ -575,6 +595,9 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         if plan.execute_session < session:
             state.pending_plan = None
             store.save(state)
+            if not plan.orders:
+                result.status = "stale_plan"
+                return result
             send(
                 rt,
                 result,
@@ -597,27 +620,22 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
     account = broker.account()
     if account.trading_blocked:
         raise Refusal(f"Alpaca says trading is blocked on this account (status {account.status})")
-    hwm = risk.next_high_water_mark(state.high_water_mark, account.equity)
-    state.high_water_mark = hwm
-    if not state.kill_switch.active and risk.kill_switch_breached(account.equity, hwm, s.risk):
-        state.kill_switch = KillSwitch(
-            active=True, tripped_session=session, reason="drawdown at execution"
-        )
-        send(
-            rt,
-            result,
-            alerts.kill_switch_alert(
-                account.equity, hwm, float(risk.drawdown(account.equity, hwm))
-            ),
-        )
+    if isinstance(broker, AlpacaBroker) and not broker.market_is_open():
+        raise Refusal("Alpaca says the market is closed right now; orders would queue blind")
+    # The high-water mark only moves on closes, as in backtests. execute_plan checks it.
+    hwm = state.high_water_mark or account.equity
 
     buy_symbols = sorted({o.symbol for o in plan.orders if o.side is Side.BUY})
     assets = {sym: broker.asset(sym) for sym in buy_symbols}
     universe = Universe(watchlist=s.watchlist, benchmark=s.benchmark, assets=assets)
     before = broker.positions()
     meta_before = dict(state.positions_meta)
-    report = execute_plan(plan, broker, state, s, universe, session, account.last_equity)
+    prev = prev_close_equity(state, session, account.last_equity)
+    report = execute_plan(plan, broker, state, s, universe, session, prev)
     state.add_trades(closed_trades(report, meta_before))
+    if report.kill_switch_tripped:
+        dd = float(risk.drawdown(account.equity, hwm))
+        send(rt, result, alerts.kill_switch_alert(account.equity, hwm, dd))
 
     journal = rt.journal
     journal.write(

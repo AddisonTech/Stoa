@@ -12,7 +12,7 @@ import logging
 import time
 from collections.abc import Callable
 from datetime import UTC, date, datetime
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 from typing import Any
 
 import httpx
@@ -37,8 +37,9 @@ def _d(value: Any) -> Decimal:
 
 
 def _fmt(value: Decimal, places: int) -> str:
+    """Round toward zero so a sell can never ask for more than is held."""
     q = Decimal(1).scaleb(-places)
-    return format(value.quantize(q), "f")
+    return format(value.quantize(q, rounding=ROUND_DOWN), "f")
 
 
 def _session_of(stamp: str | None) -> date | None:
@@ -168,16 +169,9 @@ class AlpacaBroker:
             log.warning("no latest trade for %s", missing)
         return out
 
-    def clock(self) -> dict[str, Any]:
-        body: dict[str, Any] = self._json(self._call("GET", "/v2/clock"), "clock")
-        return body
-
-    def calendar(self, start: date, end: date) -> list[dict[str, Any]]:
-        params = {"start": start.isoformat(), "end": end.isoformat()}
-        body: list[dict[str, Any]] = self._json(
-            self._call("GET", "/v2/calendar", params=params), "calendar"
-        )
-        return body
+    def market_is_open(self) -> bool:
+        body = self._json(self._call("GET", "/v2/clock"), "clock")
+        return bool(body.get("is_open"))
 
     def transfer_activities(self, after: date | None = None) -> list[dict[str, Any]]:
         """Cash deposits and withdrawals, used to cross-check the money plan."""
@@ -232,9 +226,6 @@ class AlpacaBroker:
                 detail=f"HTTP {resp.status_code}: {_error_text(resp)}",
             )
         return parse_order(self._json(resp, f"submit {request.client_order_id}"))
-
-    def get_order(self, broker_order_id: str) -> OrderStatus:
-        return parse_order(self._json(self._call("GET", f"/v2/orders/{broker_order_id}"), "order"))
 
     def await_terminal(self, client_order_ids: list[str]) -> list[OrderStatus]:
         deadline = self.monotonic() + self.fill_timeout

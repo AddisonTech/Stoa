@@ -35,6 +35,6 @@ class FakeMessages:
         return self.responder
 
 
-class FakeAnthropic:
+class FakeLLMClient:
     def __init__(self, responder: Any) -> None:
         self.messages = FakeMessages(responder)

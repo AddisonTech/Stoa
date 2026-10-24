@@ -180,9 +180,13 @@ def run_backtest(
     for i, day in enumerate(window):
         ts = pd.Timestamp(day)
         broker.begin_session(day, _prices(bars, ts, "open"))
-        if pending is not None and pending.orders:
+        due = pending is not None and (
+            pending.orders or (strategy.risk_managed and portfolio.positions)
+        )
+        if pending is not None and due:
             if strategy.risk_managed:
-                execute_plan(pending, broker, state, settings, universe, day, prev_equity)
+                report = execute_plan(pending, broker, state, settings, universe, day, prev_equity)
+                trips += int(report.kill_switch_tripped)
             else:
                 execute_baseline(pending, broker, state, day)
         broker.mark(_prices(bars, ts, "close"))

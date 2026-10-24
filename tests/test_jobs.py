@@ -281,7 +281,7 @@ def test_milestone_alert_sent_from_decide_once(tmp_path: Path, bars: Bars) -> No
     broker = sim(s, bars)
     rt, rec = runtime(s, bars, PAPER, DECIDE_AT, broker)
     jobs.decide(rt)
-    assert "Withdraw $100.00 now" not in rec.titles()
+    assert "Withdraw $100 now" not in rec.titles()
     # Equity doubles; the next session's DECIDE sends the withdraw alert once.
     broker.portfolio.cash = Decimal(210)
     broker.portfolio.positions.clear()
@@ -292,7 +292,32 @@ def test_milestone_alert_sent_from_decide_once(tmp_path: Path, bars: Bars) -> No
     state.positions_meta = {}
     store.save(state)
     jobs.decide(rt2)
-    assert rec2.titles().count("Withdraw $100.00 now") == 1
+    assert rec2.titles().count("Withdraw $100 now") == 1
     rt3, rec3 = runtime(s, bars, PAPER, datetime(2021, 10, 14, 22, 20, tzinfo=UTC), broker)
     jobs.decide(rt3)
-    assert "Withdraw $100.00 now" not in rec3.titles()
+    assert "Withdraw $100 now" not in rec3.titles()
+
+
+def test_llm_budget_ledger_is_the_state_ledger(tmp_path: Path, bars: Bars) -> None:
+    """Spend recorded by the LLM scout must land in the state that DECIDE saves."""
+    from stoa.roles.scout import LLMScout
+
+    s = make_settings(
+        watchlist=",".join(SMALL_WATCHLIST), state__dir=str(tmp_path / "s"), scout__kind="llm"
+    )
+    state = StateStore(s.state.dir).load()
+    rt, _ = runtime(s, bars, {**PAPER, "ANTHROPIC_API_KEY": "sk-test"}, DECIDE_AT)
+    scout = jobs.make_scout(rt, state)
+    assert isinstance(scout, LLMScout)
+    scout.client.budget.record(0.25)
+    assert state.llm_spend_by_month["2021-10"] == Decimal("0.25")
+
+
+def test_rule_scout_when_no_key(tmp_path: Path, bars: Bars) -> None:
+    from stoa.roles.scout import RuleScout
+
+    s = make_settings(
+        watchlist=",".join(SMALL_WATCHLIST), state__dir=str(tmp_path / "s"), scout__kind="auto"
+    )
+    rt, _ = runtime(s, bars, PAPER, DECIDE_AT)
+    assert isinstance(jobs.make_scout(rt, StateStore(s.state.dir).load()), RuleScout)

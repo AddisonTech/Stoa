@@ -12,7 +12,7 @@ from stoa.exits import evaluate_exits, initial_stop
 from stoa.features import cell, regime_is_bull, snapshot
 from stoa.models import Candidate, QuantKill, dec
 from stoa.planner import Decision, DecisionInput, ScoutRun, Strategy
-from stoa.roles.llm import Budget, LLMClient, ReplayCache, make_anthropic_client
+from stoa.roles.llm import Budget, LLMClient, ReplayCache, make_llm_client
 from stoa.roles.quant import apply_gates
 from stoa.roles.scout import LLMScout, RuleScout, Scout, ScoutInput
 
@@ -105,10 +105,8 @@ def build_scout(
     """The rule scout, or the LLM scout (replay cache first) when ``llm`` is set."""
     if not llm:
         return RuleScout(settings.scout)
-    key = secrets.anthropic_api_key
-    client = (
-        make_anthropic_client(key.get_secret_value(), settings.llm) if key is not None else None
-    )
+    key = secrets.llm_api_key
+    client = make_llm_client(key.get_secret_value(), settings.llm) if key is not None else None
     llm_client = LLMClient(
         settings.llm,
         client,
@@ -119,12 +117,17 @@ def build_scout(
 
 
 def build_strategy(
-    settings: Settings, secrets: Secrets, name: str, *, llm: bool = False
+    settings: Settings,
+    secrets: Secrets,
+    name: str,
+    *,
+    llm: bool = False,
+    budget: Budget | None = None,
 ) -> Strategy:
     if name == "spy":
         return BuyAndHold(settings.benchmark)
     if name == "sma":
         return SMACrossover(settings.benchmark)
     if name == "agents":
-        return AgentStrategy(settings, build_scout(settings, secrets, llm=llm))
+        return AgentStrategy(settings, build_scout(settings, secrets, llm=llm, budget=budget))
     raise ValueError(f"unknown strategy {name!r}")

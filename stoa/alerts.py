@@ -123,7 +123,6 @@ class ConsoleNotifier:
     """Default when no topic is set: prints alerts to the log."""
 
     def send(self, alert: Alert) -> bool:
-        log.info("ALERT p%d %s\n%s", alert.priority, alert.title, alert.message)
         print(f"[alert p{alert.priority}] {alert.title}\n{alert.message}\n")
         return True
 

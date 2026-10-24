@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from stoa.data.base import Bars, DataError, require_fresh, slice_until, validate_bars
-from stoa.data.cache import BarCache, CachedProvider
+from stoa.data.base import Bars, DataError, require_fresh, validate_bars
+from stoa.data.cache import BarCache, load_cached_bars
 from stoa.data.csv import CSVProvider
 from stoa.data.synthetic import SyntheticProvider, synthetic_bars
 
@@ -50,16 +50,10 @@ def test_require_fresh(bars: Bars) -> None:
         require_fresh(bars, ["ZZZ"], last)
 
 
-def test_slice_until(bars: Bars) -> None:
-    day = bars["SPY"].index[100].date()
-    sliced = slice_until(bars, day)
-    assert all(df.index[-1] <= pd.Timestamp(day) for df in sliced.values())
-
-
 def test_cache_round_trip(tmp_path: Path, bars: Bars) -> None:
-    cache = BarCache(tmp_path, "sip")
+    cache = BarCache(tmp_path, "default")
     cache.write({"SPY": bars["SPY"]})
-    got = CachedProvider(cache).fetch(["SPY"], date(2017, 1, 1), date(2017, 12, 31))
+    got = load_cached_bars(tmp_path, ["SPY"], date(2017, 1, 1), date(2017, 12, 31))
     assert got["SPY"].index[0] >= pd.Timestamp("2017-01-01")
     assert got["SPY"].index[-1] <= pd.Timestamp("2017-12-31")
     with pytest.raises(DataError, match="not in cache"):

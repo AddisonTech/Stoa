@@ -38,8 +38,8 @@ class MessagesAPI(Protocol):
     def parse(self, **kwargs: Any) -> Any: ...
 
 
-class AnthropicLike(Protocol):
-    """The slice of ``anthropic.Anthropic`` Stoa uses, so tests can pass a fake."""
+class MessagesClient(Protocol):
+    """The slice of the SDK client Stoa uses, so tests can pass a fake."""
 
     @property
     def messages(self) -> MessagesAPI: ...
@@ -132,7 +132,7 @@ class LLMClient:
     def __init__(
         self,
         cfg: LLMConfig,
-        client: AnthropicLike | None,
+        client: MessagesClient | None,
         cache: ReplayCache,
         budget: Budget,
     ) -> None:
@@ -219,10 +219,10 @@ class LLMClient:
         return self.budget.cap_usd
 
 
-def make_anthropic_client(api_key: str, cfg: LLMConfig) -> AnthropicLike:
+def make_llm_client(api_key: str, cfg: LLMConfig) -> MessagesClient:
     import anthropic
 
     client = anthropic.Anthropic(
         api_key=api_key, timeout=cfg.timeout_seconds, max_retries=cfg.max_retries
     )
-    return cast(AnthropicLike, client)
+    return cast(MessagesClient, client)

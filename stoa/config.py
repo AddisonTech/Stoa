@@ -287,7 +287,7 @@ class Secrets(BaseModel):
     alpaca_paper_secret: SecretStr | None = None
     alpaca_live_key_id: SecretStr | None = None
     alpaca_live_secret: SecretStr | None = None
-    anthropic_api_key: SecretStr | None = None
+    llm_api_key: SecretStr | None = None
     ntfy_topic: SecretStr | None = None
     ntfy_token: SecretStr | None = None
     live_confirm: SecretStr | None = None
@@ -305,7 +305,7 @@ class Secrets(BaseModel):
             alpaca_paper_secret=get("ALPACA_PAPER_SECRET"),
             alpaca_live_key_id=get("ALPACA_LIVE_KEY_ID"),
             alpaca_live_secret=get("ALPACA_LIVE_SECRET"),
-            anthropic_api_key=get("ANTHROPIC_API_KEY"),
+            llm_api_key=get("ANTHROPIC_API_KEY"),
             ntfy_topic=get("STOA_NTFY_TOPIC"),
             ntfy_token=get("STOA_NTFY_TOKEN"),
             live_confirm=get("STOA_LIVE_CONFIRM"),

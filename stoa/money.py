@@ -33,8 +33,12 @@ def milestone_reached(equity: Decimal, cfg: MoneyConfig) -> bool:
     return equity >= milestone(cfg)
 
 
+def whole_dollars(value: Decimal) -> str:
+    return f"${value:,.0f}" if value == value.to_integral_value() else money(value)
+
+
 def withdraw_alert(equity: Decimal, cfg: MoneyConfig) -> Alert:
-    amount = money(cfg.deposit)
+    amount = whole_dollars(cfg.deposit)
     steps = (
         f"Equity is {money(equity)}, at least {cfg.milestone_multiple}x your {amount} deposit.\n"
         f"1. Open the Alpaca app or site and go to Banking, then Withdraw.\n"
@@ -83,6 +87,18 @@ def confirm_withdrawal(state: State, equity_now: Decimal, deposit: Decimal) -> D
     return old
 
 
+def withdraw_shadow(state: State, amount: Decimal) -> Decimal:
+    """Signal mode: take the deposit out of the paper portfolio. Returns equity after."""
+    if state.sim_cash is None or state.last_close_equity is None:
+        raise ValueError("signal mode has not run yet")
+    if state.sim_cash < amount:
+        raise ValueError(f"paper cash {state.sim_cash} is below {amount}; wait for a sell")
+    state.sim_cash = state.sim_cash - amount
+    state.net_flows = state.net_flows - amount
+    state.last_close_equity = state.last_close_equity - amount
+    return state.last_close_equity
+
+
 def reset_kill_switch(state: State, equity_now: Decimal) -> Decimal:
     """Clear the kill switch and rebase the high-water mark so it does not trip again at once."""
     if not state.kill_switch.active:
@@ -111,7 +127,9 @@ class CashFlow:
 
 
 def parse_flows(activities: Iterable[Mapping[str, Any]]) -> list[CashFlow]:
-    out = []
+    """Cash flows from Alpaca activities. A TRANS entry that mirrors a CSD or CSW
+    entry (same date and amount) is dropped so one transfer never counts twice."""
+    flows = []
     for a in activities:
         aid = str(a.get("id") or "")
         raw = a.get("net_amount")
@@ -119,15 +137,17 @@ def parse_flows(activities: Iterable[Mapping[str, Any]]) -> list[CashFlow]:
             continue
         day_raw = a.get("date")
         day = date.fromisoformat(str(day_raw)[:10]) if day_raw else None
-        out.append(CashFlow(aid, day, Decimal(str(raw)), str(a.get("activity_type", ""))))
-    return out
+        flows.append(CashFlow(aid, day, Decimal(str(raw)), str(a.get("activity_type", ""))))
+    specific = {(f.day, f.amount) for f in flows if f.kind in ("CSD", "CSW")}
+    return [f for f in flows if not (f.kind == "TRANS" and (f.day, f.amount) in specific)]
 
 
 def apply_flows(state: State, flows: Iterable[CashFlow], since: date | None) -> list[CashFlow]:
     """Apply new cash flows to the high-water mark and net flow total.
 
-    Flows dated before ``since`` (the inception session) are marked seen without
-    effect, because they funded the starting equity. Returns the flows applied.
+    Flows dated on or before ``since`` (the inception session) are marked seen
+    without effect, because they are already part of the starting equity.
+    Returns the flows applied.
     """
     seen = set(state.processed_activity_ids)
     applied = []
@@ -139,7 +159,7 @@ def apply_flows(state: State, flows: Iterable[CashFlow], since: date | None) -> 
         state.processed_activity_ids = [*state.processed_activity_ids, f.activity_id][
             -MAX_ACTIVITY_IDS:
         ]
-        if since is not None and f.day is not None and f.day < since:
+        if since is not None and f.day is not None and f.day <= since:
             continue
         state.net_flows = state.net_flows + f.amount
         applied.append(f)

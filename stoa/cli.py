@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import functools
 import json
 import logging
 import sys
+from collections.abc import Callable
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
+from typing import Any, cast
 
 import click
 
@@ -59,6 +62,23 @@ def runtime(ctx: Ctx) -> Runtime:
 pass_ctx = click.make_pass_decorator(Ctx)
 
 
+def friendly_errors[F: Callable[..., Any]](func: F) -> F:
+    """Show expected failures (missing data, holdout refusals) as one clear line."""
+
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        from stoa.broker.base import BrokerError
+        from stoa.data.base import DataError
+        from stoa.holdout import HoldoutError
+
+        try:
+            return func(*args, **kwargs)
+        except (DataError, HoldoutError, BrokerError, ValueError) as exc:
+            raise click.ClickException(str(exc)) from exc
+
+    return cast(F, wrapper)
+
+
 @click.group()
 @click.version_option(__version__, prog_name="stoa")
 @click.option(
@@ -89,9 +109,10 @@ def data() -> None:
 @click.option("--end", type=click.DateTime(["%Y-%m-%d"]), default=None)
 @click.option("--provider", type=click.Choice(["alpaca", "yahoo", "csv"]), default=None)
 @pass_ctx
+@friendly_errors
 def data_fetch(ctx: Ctx, start: object, end: object, provider: str | None) -> None:
     """Download daily bars for the watchlist into the local cache."""
-    from stoa.data.cache import BarCache
+    from stoa.data.cache import DEFAULT_NAMESPACE, BarCache
     from stoa.data.factory import make_provider
 
     s = ctx.settings
@@ -101,12 +122,11 @@ def data_fetch(ctx: Ctx, start: object, end: object, provider: str | None) -> No
     finish = end.date() if end else clock.last_closed_session(clock.now_utc())  # type: ignore[attr-defined]
     prov = make_provider(s, ctx.secrets)
     bars = prov.fetch(list(s.watchlist), begin, finish)
-    namespace = getattr(prov, "last_feed_used", None) or s.data.provider
-    BarCache(s.data.cache_dir, str(namespace)).write(bars)
-    BarCache(s.data.cache_dir, "default").write(bars)
+    BarCache(s.data.cache_dir, DEFAULT_NAMESPACE).write(bars)
     for sym, df in sorted(bars.items()):
         click.echo(f"{sym:6s} {len(df):5d} bars {df.index[0].date()} to {df.index[-1].date()}")
-    click.echo(f"Saved to {s.data.cache_dir}/default (source {namespace}).")
+    source = getattr(prov, "last_feed_used", None) or s.data.provider
+    click.echo(f"Saved to {s.data.cache_dir / DEFAULT_NAMESPACE} (source {source}).")
 
 
 # ---- backtests and grading ---------------------------------------------------------
@@ -128,6 +148,7 @@ def _window_dates(s: Settings, window: str) -> tuple[date, date]:
 @click.option("--synthetic", is_flag=True, help="Use seeded synthetic bars (offline demo).")
 @click.option("--out", type=click.Path(path_type=Path), default=None, help="Write results here.")
 @pass_ctx
+@friendly_errors
 def backtest(
     ctx: Ctx, strategy: str, window: str, llm: bool, synthetic: bool, out: Path | None
 ) -> None:
@@ -139,7 +160,7 @@ def backtest(
     bars = scoreboard.load_bars(s, end, synthetic=synthetic)
     run = scoreboard.run_one(s, ctx.secrets, bars, strategy, window, start, end, llm=llm)
     m = run.metrics
-    click.echo(f"{strategy} {window} {m.start} to {m.end}")
+    click.echo(f"{strategy} {window} {start} to {end} (equity curve starts at the prior close)")
     for key in (
         "final_equity",
         "total_return",
@@ -154,6 +175,8 @@ def backtest(
             if isinstance(getattr(m, key), float)
             else f"  {key:15s} {getattr(m, key)}"
         )
+    if llm and strategy == "agents":
+        click.echo(f"  llm fallbacks   {run.llm_fallbacks} of {run.metrics.sessions + 1} decisions")
     if out:
         out.mkdir(parents=True, exist_ok=True)
         (out / f"{strategy}-{window}.json").write_text(json.dumps(run.to_dict(), indent=2))
@@ -164,6 +187,7 @@ def backtest(
 @click.option("--synthetic", is_flag=True, help="Use seeded synthetic bars (offline demo).")
 @click.option("--results", type=click.Path(path_type=Path), default=Path("results"))
 @pass_ctx
+@friendly_errors
 def score(ctx: Ctx, llm: bool, synthetic: bool, results: Path) -> None:
     """Run all three strategies on every window and grade against the pass bar."""
     from stoa import scoreboard
@@ -185,6 +209,7 @@ def holdout() -> None:
 @holdout.command("seal")
 @click.option("--repo", type=click.Path(path_type=Path), default=Path("."))
 @pass_ctx
+@friendly_errors
 def holdout_seal(ctx: Ctx, repo: Path) -> None:
     """Lock code, config and the pass bar before the holdout is ever scored."""
     from stoa import holdout as h
@@ -206,6 +231,7 @@ def holdout_seal(ctx: Ctx, repo: Path) -> None:
 @click.option("--llm/--no-llm", default=False)
 @click.option("--synthetic", is_flag=True, help="Synthetic bars, for demos only.")
 @pass_ctx
+@friendly_errors
 def holdout_score(ctx: Ctx, repo: Path, llm: bool, synthetic: bool) -> None:
     """Score the holdout exactly once. Refuses on a dirty tree or changed code or config."""
     from stoa import holdout as h
@@ -251,7 +277,7 @@ def status(ctx: Ctx) -> None:
     click.echo(f"mode            {s.mode}")
     click.echo(f"paper keys      {'set' if sec.has_paper_keys() else 'missing'}")
     click.echo(f"live keys       {'set' if sec.has_live_keys() else 'missing'}")
-    click.echo(f"anthropic key   {'set' if sec.anthropic_api_key else 'missing (rule scout)'}")
+    click.echo(f"claude api key  {'set' if sec.llm_api_key else 'missing (rule scout)'}")
     click.echo(f"ntfy topic      {'set' if sec.ntfy_topic else 'missing (console alerts)'}")
     problems = live_lock_problems(s, sec)
     click.echo(
@@ -345,6 +371,7 @@ def _current_equity(ctx: Ctx, equity: str | None) -> Decimal:
 @click.option("--equity", default=None, help="Current equity, if the broker cannot be reached.")
 @click.option("--yes", is_flag=True, help="Skip the confirmation prompt.")
 @pass_ctx
+@friendly_errors
 def kill_switch_reset(ctx: Ctx, equity: str | None, yes: bool) -> None:
     """Clear the kill switch and rebase the high-water mark to current equity."""
     from stoa import money
@@ -406,6 +433,7 @@ def money_status(ctx: Ctx) -> None:
 )
 @click.option("--yes", is_flag=True)
 @pass_ctx
+@friendly_errors
 def money_confirm(ctx: Ctx, equity: str | None, yes: bool) -> None:
     """Mark the deposit as withdrawn and rebase the high-water mark."""
     from stoa import money
@@ -415,9 +443,15 @@ def money_confirm(ctx: Ctx, equity: str | None, yes: bool) -> None:
     if state.principal_withdrawn:
         click.echo("The withdrawal is already confirmed.")
         return
-    eq = _current_equity(ctx, equity)
+    deposit = ctx.settings.money.deposit
+    if ctx.settings.mode == "signal":
+        eq = money.withdraw_shadow(state, deposit)
+        click.echo(f"Signal mode: took {alerts.money(deposit)} out of the paper portfolio.")
+    else:
+        eq = _current_equity(ctx, equity)
     if not yes:
         click.confirm(f"Confirm you withdrew the deposit and equity is now {eq}?", abort=True)
-    old = money.confirm_withdrawal(state, eq, ctx.settings.money.deposit)
+    old = money.confirm_withdrawal(state, eq, deposit)
+    state.principal_flow_pending = state.principal_flow_pending and ctx.settings.mode != "signal"
     store.save(state)
     click.echo(f"Withdrawal confirmed. High-water mark {old} -> {eq}. Stoa now trades house money.")

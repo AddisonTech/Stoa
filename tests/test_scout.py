@@ -14,7 +14,7 @@ from stoa.models import Holding, PositionMeta
 from stoa.roles.llm import Budget, LLMClient, ReplayCache
 from stoa.roles.prompts import ScoutPick, ScoutResponse, build_anon_map, build_user_prompt
 from stoa.roles.scout import LLMScout, RuleScout, ScoutInput, passes_trend_filter, validate_picks
-from tests.fakes import FakeAnthropic, FakeResponse
+from tests.fakes import FakeLLMClient, FakeResponse
 
 
 def bull_day(bars: Bars) -> date:
@@ -85,8 +85,8 @@ def test_rule_scout_skips_holdings(small_settings: Settings, bars: Bars) -> None
 
 def make_llm(
     settings: Settings, responder: object, tmp: Path | None, spent: float = 0.0
-) -> tuple[LLMScout, FakeAnthropic]:
-    fake = FakeAnthropic(responder)
+) -> tuple[LLMScout, FakeLLMClient]:
+    fake = FakeLLMClient(responder)
     ledger = {}
     budget = Budget(settings.llm.monthly_cost_cap_usd, ledger)
     if spent:

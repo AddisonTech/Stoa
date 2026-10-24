@@ -309,8 +309,10 @@ def check_sells(
 ) -> tuple[list[PlannedOrder], list[Rejection]]:
     """Sells run unless they would round-trip or the symbol is no longer held.
 
-    Price sanity does not apply to sells: skipping a stop after a gap down would
-    keep the account in the position it is trying to leave.
+    Every Stoa exit closes the whole position, so the quantity is whatever is
+    held right now (a split overnight changes it). Price sanity does not apply
+    to sells: skipping a stop after a gap down would keep the account in the
+    position it is trying to leave.
     """
     out: list[PlannedOrder] = []
     rejections: list[Rejection] = []
@@ -327,7 +329,7 @@ def check_sells(
             rejections.append(_reject(o.symbol, Side.SELL, "max_orders", "per-day order limit"))
             continue
         count += 1
-        out.append(o.model_copy(update={"qty": min(qty, o.qty or qty)}))
+        out.append(o.model_copy(update={"qty": qty}))
     return out, rejections
 
 

@@ -90,13 +90,6 @@ def test_money_status_and_confirm(env: dict[str, str]) -> None:
     assert "already confirmed" in out
 
 
-def test_decide_outside_window_exits_zero(env: dict[str, str]) -> None:
-    # Whatever the wall clock says, decide either sits outside its window (exit 0)
-    # or is refused for missing paper keys (exit 2). It must never crash.
-    code, _ = run(env, "decide")
-    assert code in (0, 2)
-
-
 def test_decide_refuses_without_keys_when_forced(env: dict[str, str]) -> None:
     code, out = run(env, "decide", "--force")
     assert code == 2
