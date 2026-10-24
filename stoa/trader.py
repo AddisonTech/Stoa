@@ -8,6 +8,7 @@ carries a deterministic client order id and is looked up before submission.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
@@ -21,6 +22,10 @@ from stoa.state import KillSwitch, Plan, State
 from stoa.universe import Universe
 
 log = logging.getLogger(__name__)
+
+Gate = Callable[
+    [list[PlannedOrder], Mapping[str, Decimal]], tuple[list[PlannedOrder], list[Rejection]]
+]
 
 BROKER_MIN_NOTIONAL = Decimal("1.00")
 
@@ -111,6 +116,19 @@ def cost_basis(positions: dict[str, BrokerPosition], state: State) -> dict[str, 
     return out
 
 
+def scaled_atr(atr: Decimal | None, ref_price: Decimal | None, fill: Decimal) -> Decimal:
+    """ATR from the decision close carried to the fill's price scale.
+
+    The plan's ATR is measured on the bars as adjusted at DECIDE. If a split or
+    dividend takes effect at the next open, the fill is on the new scale. Keeping
+    the ATR as a fraction of the reference close and applying it to the fill
+    price keeps stop and entry on the same scale.
+    """
+    if atr is None or ref_price is None or ref_price <= 0:
+        return atr if atr is not None else ZERO
+    return atr / ref_price * fill
+
+
 def update_meta(
     state: State, report: ExecutionReport, held_after: dict[str, BrokerPosition]
 ) -> None:
@@ -119,9 +137,11 @@ def update_meta(
     for f in report.fills:
         sym = f.order.symbol
         if f.order.side is Side.BUY and sym not in meta and f.status.filled_avg_price is not None:
-            atr = f.order.entry_atr if f.order.entry_atr is not None else ZERO
+            fill = f.status.filled_avg_price
             meta[sym] = PositionMeta(
-                entry_session=report.session, entry_price=f.status.filled_avg_price, entry_atr=atr
+                entry_session=report.session,
+                entry_price=fill,
+                entry_atr=scaled_atr(f.order.entry_atr, f.order.ref_price, fill),
             )
     for sym in list(meta):
         if sym not in held_after:
@@ -137,11 +157,21 @@ def execute_plan(
     universe: Universe,
     session: date,
     prev_equity: Decimal | None,
+    *,
+    gate: Gate | None = None,
+    sectors: Mapping[str, str] | None = None,
+    halt_reason: str | None = None,
+    fallback_active: bool = False,
 ) -> ExecutionReport:
     """Run one plan. Safe to call again for the same session after a crash.
 
     Orders that already exist at the broker (same client order id) are adopted,
     not resubmitted, and skip the pre-trade checks they already passed.
+
+    ``gate`` runs on each order that passed the risk checks, just before it is
+    sent, and returns the ones allowed through plus rejections. EXECUTE uses
+    it for the hand approval and the price cross-check. Sells pass the gate
+    first so exits are decided before buys.
     """
     report = ExecutionReport(session=session)
     positions = broker.positions()
@@ -206,7 +236,18 @@ def execute_plan(
             traded_today=traded_sides(today),
             universe=universe,
             limits=settings.risk,
+            position_values={s: p.market_value for s, p in positions_now.items() if p.qty > 0},
+            sectors=sectors or {},
+            halt_reason=halt_reason,
+            fallback_active=fallback_active,
         )
+
+    def gated(orders: list[PlannedOrder], prices: Mapping[str, Decimal]) -> list[PlannedOrder]:
+        if gate is None or not orders:
+            return orders
+        ok_, rej_ = gate(orders, prices)
+        report.rejections.extend(rej_)
+        return ok_
 
     sells = [o for o in fresh if o.side is Side.SELL]
     buys = [o for o in fresh if o.side is Side.BUY]
@@ -215,14 +256,14 @@ def execute_plan(
             sells, {s: p.qty for s, p in positions.items()}, context(positions)
         )
         report.rejections.extend(rej)
-        _record(report, _submit_all(broker, ok), basis)
+        _record(report, _submit_all(broker, gated(ok, {})), basis)
 
     if buys:
         positions_mid = broker.positions()
         prices = broker.latest_prices(sorted({o.symbol for o in buys}))
         ok, rej = risk.check_buys(buys, prices, context(positions_mid))
         report.rejections.extend(rej)
-        _record(report, _submit_all(broker, ok), basis)
+        _record(report, _submit_all(broker, gated(ok, prices)), basis)
 
     update_meta(state, report, broker.positions())
     return report

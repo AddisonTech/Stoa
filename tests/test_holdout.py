@@ -9,12 +9,27 @@ import pytest
 
 from stoa import holdout
 from stoa.config import Secrets, load_settings
+from stoa.exam import WalkForwardRecord, write_walkforward
 from tests.conftest import ROOT, SMALL_WATCHLIST
 
 CFG = Path("config/default.yaml")
 BOARD = Path("config/scoreboard.yaml")
 NOW = datetime(2026, 10, 20, 22, 0, tzinfo=UTC)
-ENV = {"STOA__WATCHLIST": ",".join(SMALL_WATCHLIST)}
+ENV: dict[str, str] = {"STOA__WATCHLIST": ",".join(SMALL_WATCHLIST)}
+
+
+def passed_walkforward(state_dir: Path, passed: bool = True) -> None:
+    write_walkforward(
+        state_dir,
+        WalkForwardRecord(
+            created="2026-10-01T00:00:00+00:00",
+            passed=passed,
+            reasons=[] if passed else ["deflated Sharpe 0.400 under 0.95"],
+            checks={},
+            report_path="",
+            model_version="v1",
+        ),
+    )
 
 
 def git(repo: Path, *args: str) -> None:
@@ -30,8 +45,11 @@ def repo(tmp_path: Path) -> Path:
     git(r, "config", "user.name", "AddisonTech")
     git(r, "config", "user.email", "stalor54@yahoo.com")
     git(r, "config", "commit.gpgsign", "false")
+    (r / ".gitignore").write_text("/state/\n")
     git(r, "add", ".")
     git(r, "commit", "-q", "-m", "init")
+    ENV["STOA_STATE_DIR"] = str(tmp_path / "state")
+    passed_walkforward(tmp_path / "state")
     return r
 
 
@@ -71,7 +89,7 @@ def test_seal_refuses_dirty_tree(repo: Path) -> None:
 def test_score_is_one_shot(repo: Path) -> None:
     holdout.seal(repo, CFG, BOARD, NOW, settings(repo))
     result = score(repo)
-    assert set(result["metrics"]) == {"agents", "spy", "sma"}
+    assert set(result["metrics"]) == {"agents", "spy", "sma", "mtum"}
     assert result["window"]["start"] == "2026-07-01"
     lock = holdout.read_lock(repo)
     assert lock is not None and lock.scored_at == NOW and lock.score == result
@@ -112,7 +130,7 @@ def test_score_refuses_changed_config(repo: Path) -> None:
 def test_score_refuses_changed_scoreboard(repo: Path) -> None:
     holdout.seal(repo, CFG, BOARD, NOW, settings(repo))
     b = repo / BOARD
-    b.write_text(b.read_text().replace("min_profit_factor: 1.2", "min_profit_factor: 1.0"))
+    b.write_text(b.read_text().replace("min_trades: 30", "min_trades: 10"))
     git(repo, "commit", "-qam", "tweak")
     with pytest.raises(holdout.HoldoutError, match="scoreboard"):
         score(repo)
@@ -132,3 +150,28 @@ def test_score_refuses_env_override_of_strategy(repo: Path) -> None:
             synthetic=True,
             end=date(2026, 10, 16),
         )
+
+
+def test_seal_requires_walkforward_results(repo: Path, tmp_path: Path) -> None:
+    (tmp_path / "state" / "exam" / "walkforward.json").unlink()
+    with pytest.raises(holdout.HoldoutError, match="model train"):
+        holdout.seal(repo, CFG, BOARD, NOW, settings(repo))
+
+
+def test_seal_refuses_failed_walkforward(repo: Path, tmp_path: Path) -> None:
+    passed_walkforward(tmp_path / "state", passed=False)
+    with pytest.raises(holdout.HoldoutError, match="did not pass"):
+        holdout.seal(repo, CFG, BOARD, NOW, settings(repo))
+
+
+def test_holdout_graded_on_risk_with_mtum_verdict(repo: Path) -> None:
+    holdout.seal(repo, CFG, BOARD, NOW, settings(repo))
+    result = score(repo)
+    assert set(result["checks"]) == {
+        "drawdown_vs_spy",
+        "sharpe_vs_spy",
+        "sortino_vs_spy",
+        "drawdown_cap",
+        "api_cost",
+    }
+    assert "mtum" in result["metrics"] and result["verdict"]

@@ -44,6 +44,8 @@ def settings_for(tmp: Path, mode: str = "paper", **extra: str) -> Settings:
         mode=mode,
         state__dir=str(tmp / "state"),
         scout__kind="rule",
+        strategy__kind="rule",
+        crosscheck__enabled="false",
         data__provider="csv",
         **extra,
     )
@@ -78,6 +80,8 @@ def runtime(
         now=lambda: now,
         provider=FixedProvider(bars),
         broker=broker,
+        use_external=False,
+        sleep=lambda _s: None,
     )
     return rt, rec
 
@@ -198,7 +202,7 @@ def test_live_lock_wrong_phrase_refuses(tmp_path: Path, bars: Bars) -> None:
 
 
 def test_live_unlocked_runs(tmp_path: Path, bars: Bars) -> None:
-    s = settings_for(tmp_path, mode="live")
+    s = settings_for(tmp_path, mode="live", exam__enforce_live="false")
     assert jobs.live_lock_problems(s, Secrets.from_env(LIVE)) == []
     rt, _ = runtime(s, bars, LIVE, DECIDE_AT, sim(s, bars))
     assert jobs.decide(rt).code == 0

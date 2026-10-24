@@ -7,14 +7,14 @@ import json
 import logging
 import sys
 from collections.abc import Callable
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
 
 import click
 
-from stoa import __version__, alerts, clock
+from stoa import __version__, alerts, cli_v2, clock, redact
 from stoa.config import Secrets, Settings, load_settings
 from stoa.jobs import EXIT_OK, Runtime, live_lock_problems
 from stoa.jobs import decide as run_decide
@@ -93,6 +93,9 @@ def main(click_ctx: click.Context, config: Path | None, verbose: bool) -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    redact.install()
+    Secrets.from_env()  # registers every secret value with the redacting log filter
     click_ctx.obj = Ctx(config)
 
 
@@ -112,6 +115,7 @@ def data() -> None:
 @friendly_errors
 def data_fetch(ctx: Ctx, start: object, end: object, provider: str | None) -> None:
     """Download daily bars for the watchlist into the local cache."""
+    from stoa.data.base import DataError
     from stoa.data.cache import DEFAULT_NAMESPACE, BarCache
     from stoa.data.factory import make_provider
 
@@ -121,7 +125,14 @@ def data_fetch(ctx: Ctx, start: object, end: object, provider: str | None) -> No
     begin = start.date() if start else s.data.history_start  # type: ignore[attr-defined]
     finish = end.date() if end else clock.last_closed_session(clock.now_utc())  # type: ignore[attr-defined]
     prov = make_provider(s, ctx.secrets)
-    bars = prov.fetch(list(s.watchlist), begin, finish)
+    refs = [r for r in s.sources.reference_symbols if r not in s.watchlist]
+    bars = prov.fetch([*s.watchlist, *refs], begin, finish)
+    missing = sorted(set(s.watchlist) - set(bars))
+    if missing:
+        raise DataError(f"no bars for watchlist symbols {missing}")
+    for r in refs:
+        if r not in bars:
+            click.echo(f"{r}: no bars; that baseline will be missing from the scoreboard")
     BarCache(s.data.cache_dir, DEFAULT_NAMESPACE).write(bars)
     for sym, df in sorted(bars.items()):
         click.echo(f"{sym:6s} {len(df):5d} bars {df.index[0].date()} to {df.index[-1].date()}")
@@ -183,16 +194,34 @@ def backtest(
 
 
 @main.command()
-@click.option("--llm/--no-llm", default=False, help="Use the Claude scout for the agents.")
+@click.option("--llm/--no-llm", default=False, help="Use the Claude scout for the v1 agents.")
 @click.option("--synthetic", is_flag=True, help="Use seeded synthetic bars (offline demo).")
+@click.option("--no-model", is_flag=True, help="Skip the model; grade the v1 rule pipeline.")
 @click.option("--results", type=click.Path(path_type=Path), default=Path("results"))
 @pass_ctx
 @friendly_errors
-def score(ctx: Ctx, llm: bool, synthetic: bool, results: Path) -> None:
-    """Run all three strategies on every window and grade against the pass bar."""
+def score(ctx: Ctx, llm: bool, synthetic: bool, no_model: bool, results: Path) -> None:
+    """Every strategy on every window, graded on risk against SPY, the 50/200 rule and MTUM."""
     from stoa import scoreboard
+    from stoa.experiments import Registry
 
-    report = scoreboard.score_all(ctx.settings, ctx.secrets, llm=llm, synthetic=synthetic)
+    s = ctx.settings
+    source = None
+    if s.strategy.kind == "model" and not no_model:
+        from stoa.pipeline import load_inputs, walkforward_model_source
+
+        board = scoreboard.load_scoreboard()
+        end = max(s.backtest.windows[w].end for w in [*board.tune_windows, board.evaluation_window])
+        inputs = load_inputs(s, end, synthetic=synthetic)
+        source, _ = walkforward_model_source(s, inputs, end)
+    report = scoreboard.score_all(
+        s,
+        ctx.secrets,
+        llm=llm,
+        synthetic=synthetic,
+        model=source,
+        registry=Registry(s.registry_path),
+    )
     path = scoreboard.write_report(report, results)
     click.echo(scoreboard.render_markdown(report))
     click.echo(f"Report written to {path}")
@@ -236,17 +265,63 @@ def holdout_score(ctx: Ctx, repo: Path, llm: bool, synthetic: bool) -> None:
     """Score the holdout exactly once. Refuses on a dirty tree or changed code or config."""
     from stoa import holdout as h
 
+    now = clock.now_utc()
+    source = holdout_model_source(ctx.settings, repo, now, synthetic)
     result = h.score(
         repo,
         ctx.config or Path("config/default.yaml"),
         Path("config/scoreboard.yaml"),
         ctx.settings,
         ctx.secrets,
-        clock.now_utc(),
+        now,
         llm=llm,
         synthetic=synthetic,
+        model=source,
     )
     click.echo(json.dumps(result, indent=2))
+
+
+def holdout_model_source(settings: Settings, repo: Path, now: object, synthetic: bool) -> object:
+    """The model sealed with the holdout, predicting each holdout session on its own data."""
+    from stoa import holdout as h
+    from stoa.dataset import FeatureSet, build_dataset
+    from stoa.model import ModelStore
+    from stoa.model_strategy import ModelPredictor, ModelStrategy
+    from stoa.pipeline import load_inputs
+    from stoa.scoreboard import ModelSource
+    from stoa.universe import Universe
+
+    lock = h.read_lock(repo)
+    if settings.strategy.kind != "model" or lock is None or not lock.model_version:
+        return None
+    model, _ = ModelStore(settings.artifact_dir).load(lock.model_version)
+    end = clock.last_closed_session(now)  # type: ignore[arg-type]
+    inputs = load_inputs(settings, end, synthetic=synthetic)
+    t = inputs.training
+    fs = FeatureSet(quality="q_roe" in model.features, text="t_sentiment" in model.features)
+    ds = build_dataset(
+        t.bars,
+        settings.benchmark,
+        model.horizon,
+        membership=t.membership,
+        extra_symbols=t.extra_symbols,
+        exclude=t.exclude,
+        fundamentals=t.fundamentals,
+        text_scores=t.text_scores,
+        features=fs,
+        min_price=settings.model.min_price,
+        min_dollar_volume=settings.model.min_dollar_volume_20,
+        start=settings.backtest.holdout_start - timedelta(days=10),
+    )
+    strategy = ModelStrategy(
+        settings, ModelPredictor(model, ds), inputs.calendar, tradable=inputs.tradable
+    )
+    tradable = tuple(sorted(inputs.tradable | {settings.benchmark}))
+    return ModelSource(
+        strategy=strategy,
+        bars=t.bars,
+        universe=Universe.assume_all_fractionable(tradable, settings.benchmark),
+    )
 
 
 # ---- daily jobs --------------------------------------------------------------------------
@@ -308,6 +383,16 @@ def status(ctx: Ctx) -> None:
         click.echo("pending plan    none")
     if state.open_orders:
         click.echo(f"open orders     {', '.join(o.client_order_id for o in state.open_orders)}")
+    t = state.track
+    click.echo(
+        "fallback        "
+        + (f"ACTIVE since {t.fallback_since}: {t.fallback_reason}" if t.fallback_active else "off")
+    )
+    click.echo(f"approval topic  {'set' if sec.ntfy_approval_topic else 'missing'}")
+    click.echo(f"healthcheck     {'set' if sec.healthcheck_url else 'missing'}")
+    from stoa.model import ModelStore
+
+    click.echo(f"live model      {ModelStore(s.artifact_dir).current_version() or 'none'}")
 
 
 # ---- alerts --------------------------------------------------------------------------------
@@ -455,3 +540,6 @@ def money_confirm(ctx: Ctx, equity: str | None, yes: bool) -> None:
     state.principal_flow_pending = state.principal_flow_pending and ctx.settings.mode != "signal"
     store.save(state)
     click.echo(f"Withdrawal confirmed. High-water mark {old} -> {eq}. Stoa now trades house money.")
+
+
+cli_v2.register(main, pass_ctx, friendly_errors)

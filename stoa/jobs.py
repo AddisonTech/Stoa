@@ -13,32 +13,49 @@ through the same execution code as paper, live and backtests.
 from __future__ import annotations
 
 import logging
+import time
 import traceback
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 
-from stoa import alerts, clock, money, risk
+from stoa import adjust, alerts, approvals, clock, exam, money, risk, tracking
+from stoa.approvals import ApprovalClient
 from stoa.broker.alpaca import AlpacaBroker, make_trading_client
 from stoa.broker.base import Broker, BrokerPosition, OrderStatus
 from stoa.broker.sim import SimBroker
 from stoa.config import Secrets, Settings
-from stoa.data.base import BarProvider, Bars, DataError, require_fresh
+from stoa.crosscheck import check_prices
+from stoa.data.base import BarProvider, Bars, DataError, fresh_subset
+from stoa.data.external import EarningsSource, PriceSource, pick_source
 from stoa.data.factory import alpaca_data_client, make_provider
 from stoa.features import build_features, cell, slice_features, snapshot
+from stoa.healthcheck import HealthcheckPinger, NullPinger, Pinger, safe_ping
 from stoa.journal import Journal, hash_obj
-from stoa.models import ZERO, ClosedTrade, Holding, PositionMeta, Side, dec
-from stoa.planner import Decision, DecisionInput, make_plan
+from stoa.live import build_live_model, live_calendar
+from stoa.membership import sector_of
+from stoa.model_strategy import ModelStrategy, PanelPredictor
+from stoa.models import (
+    ZERO,
+    ClosedTrade,
+    Holding,
+    PlannedOrder,
+    PositionMeta,
+    Rejection,
+    Side,
+    dec,
+)
+from stoa.planner import Decision, DecisionInput, Strategy, make_plan
 from stoa.portfolio import Lot, Portfolio
 from stoa.roles.llm import Budget
 from stoa.roles.scout import Scout
 from stoa.state import Inception, KillSwitch, OpenOrder, Plan, State, StateStore
 from stoa.strategy import AgentStrategy, build_scout
-from stoa.trader import ExecutionReport, execute_plan
+from stoa.trader import ExecutionReport, execute_plan, scaled_atr
 from stoa.universe import AssetInfo, Universe
 
 log = logging.getLogger(__name__)
@@ -65,6 +82,15 @@ class Runtime:
     provider: BarProvider | None = None
     broker: Broker | None = None
     scout: Scout | None = None
+    strategy: Strategy | None = None  # injected for tests; otherwise built from config
+    pinger: Pinger | None = None
+    approvals: ApprovalClient | None = None
+    price_source: PriceSource | None = None
+    earnings_source: EarningsSource | None = None
+    sleep: Callable[[float], None] = time.sleep
+    use_external: bool = True  # build real HTTP clients for missing sources
+    news_client: Any = None  # stoa.data.news.AlpacaNewsClient, injectable
+    analyst_client: Any = None  # anthropic client, injectable
 
     @property
     def store(self) -> StateStore:
@@ -108,6 +134,14 @@ def check_mode(settings: Settings, secrets: Secrets) -> None:
             raise Refusal(
                 "Live trading is locked: " + "; ".join(problems) + ". Nothing was traded."
             )
+        if settings.exam.enforce_live:
+            exam_problems = exam.live_problems(settings)
+            if exam_problems:
+                raise Refusal(
+                    "Live trading is blocked by the exam order: "
+                    + "; ".join(exam_problems)
+                    + ". Run `stoa exam status`. Nothing was traded."
+                )
     if mode == "paper" and not secrets.has_paper_keys():
         raise Refusal("paper mode needs ALPACA_PAPER_KEY_ID and ALPACA_PAPER_SECRET")
     if mode in ("paper", "live") and settings.data.provider == "synthetic":
@@ -146,8 +180,134 @@ def make_scout(rt: Runtime, state: State) -> Scout:
     use_llm = s.scout.kind == "llm" or (
         s.scout.kind == "auto" and rt.secrets.llm_api_key is not None
     )
-    budget = Budget(s.llm.monthly_cost_cap_usd, state.llm_spend_by_month, clock=rt.now)
+    # The scout's own cap, never above the overall monthly cap; both share one ledger.
+    cap = min(s.llm.monthly_cost_cap_usd, s.budget.monthly_cap_usd)
+    budget = Budget(cap, state.llm_spend_by_month, clock=rt.now)
     return build_scout(s, rt.secrets, llm=use_llm, budget=budget)
+
+
+def make_pinger(rt: Runtime) -> Pinger:
+    if rt.pinger is not None:
+        return rt.pinger
+    url = rt.secrets.healthcheck_url
+    if url is None or not rt.settings.healthcheck.enabled or not rt.use_external:
+        rt.pinger = NullPinger()
+    else:
+        h = rt.settings.healthcheck
+        rt.pinger = HealthcheckPinger(
+            url.get_secret_value(), timeout=h.timeout_seconds, retries=h.retries
+        )
+    return rt.pinger
+
+
+def make_approvals(rt: Runtime) -> ApprovalClient | None:
+    if rt.approvals is not None:
+        return rt.approvals
+    topic = rt.secrets.ntfy_approval_topic
+    if topic is None or not rt.use_external:
+        return None
+    tok = rt.secrets.ntfy_token
+    rt.approvals = ApprovalClient(
+        rt.settings.alerts.server,
+        topic.get_secret_value(),
+        token=tok.get_secret_value() if tok else None,
+    )
+    return rt.approvals
+
+
+def make_price_source(rt: Runtime) -> PriceSource | None:
+    if rt.price_source is not None or not rt.use_external:
+        return rt.price_source
+    key = rt.secrets.finnhub_key
+    rt.price_source = pick_source(
+        rt.settings.crosscheck.source, key.get_secret_value() if key else None
+    )
+    return rt.price_source
+
+
+def make_earnings_source(rt: Runtime) -> EarningsSource | None:
+    if rt.earnings_source is not None or not rt.use_external:
+        return rt.earnings_source
+    kind = rt.settings.earnings.upcoming_source
+    if kind == "none":
+        return None
+    key = rt.secrets.finnhub_key
+    rt.earnings_source = pick_source(kind, key.get_secret_value() if key else None)
+    return rt.earnings_source
+
+
+def score_todays_text(rt: Runtime, state: State, session: date, notes: list[str]) -> None:
+    """When text features are on: fetch the last two days of watchlist news and score it.
+
+    Runs one call per new item with the cached system prompt, charges the
+    shared monthly ledger, and never fails DECIDE (text is optional).
+    """
+    from stoa import analyst as an
+    from stoa.data.news import AlpacaNewsClient, NewsStore
+
+    s = rt.settings
+    key = rt.secrets.llm_api_key
+    if not (s.model.use_text and s.analyst.enabled and key is not None):
+        return
+    try:
+        news = rt.news_client
+        if news is None:
+            news = AlpacaNewsClient(alpaca_data_client(s, rt.secrets))
+        symbols = sorted(set(s.watchlist) - {s.benchmark})
+        df = news.fetch(symbols, session - timedelta(days=2), session)
+        NewsStore(s.news_path).merge(df)
+        items = an.items_from_news(df, s.analyst.text_chars, s.analyst.max_items_per_symbol_per_day)
+        client = rt.analyst_client or an.make_client(key.get_secret_value())
+        ledger = an.Ledger(s.budget.monthly_cap_usd, state.llm_spend_by_month, clock=rt.now)
+        a = an.Analyst(
+            s.analyst, s.budget, s.llm.prices, client, an.ScoreCache(s.analyst.cache_dir), ledger
+        )
+        rep = a.score_now(items)
+        an.merge_scores(s.analyst_scores_path, a.rows(items))
+        if rep.scored or rep.failed:
+            notes.append(
+                f"Analyst scored {rep.scored} new items (${rep.spent_usd:.3f}), {rep.failed} failed"
+            )
+    except Exception as exc:
+        notes.append(f"Analyst skipped today ({type(exc).__name__})")
+
+
+def build_strategy_for(
+    rt: Runtime, state: State, bars: Bars, session: date, notes: list[str]
+) -> Strategy:
+    """The model strategy when configured and a model is promoted; otherwise v1's pipeline."""
+    if rt.strategy is not None:
+        return rt.strategy
+    s = rt.settings
+    if state.track.fallback_active:
+        # SPY-hold: no model view needed. The model strategy's fallback path exits by the
+        # normal rules and buys only SPY, whichever strategy was trading before.
+        empty = pd.DataFrame(
+            columns=["p"], index=pd.MultiIndex.from_tuples([], names=["date", "symbol"])
+        )
+        return ModelStrategy(
+            s,
+            PanelPredictor(empty, {}, name="fallback"),
+            live_calendar(s, bars, None),
+            name="fallback",  # fallback days never count toward the model's paper exam
+        )
+    if s.strategy.kind == "model":
+        score_todays_text(rt, state, session, notes)
+        upcoming = None
+        src = make_earnings_source(rt)
+        if src is not None:
+            ahead = session + timedelta(days=30)
+            try:
+                upcoming = src.upcoming(sorted(set(s.watchlist) - {s.benchmark}), session, ahead)
+            except Exception as exc:
+                notes.append(f"upcoming earnings unavailable ({type(exc).__name__})")
+        provider = rt.provider or make_provider(s, rt.secrets)
+        lm = build_live_model(s, provider, bars, session, upcoming)
+        if lm is not None:
+            notes.extend(lm.notes)
+            return lm.strategy
+        notes.append("No promoted model yet (`stoa model train`); the rule pipeline ran instead.")
+    return AgentStrategy(s, make_scout(rt, state))
 
 
 # ---- shared helpers -------------------------------------------------------------
@@ -158,13 +318,15 @@ def send(rt: Runtime, result: JobResult, alert: alerts.Alert) -> None:
     result.alerts_sent.append(alert.title)
 
 
-def fetch_bars(rt: Runtime, session: date) -> Bars:
-    provider = rt.provider or make_provider(rt.settings, rt.secrets)
-    start = session - timedelta(days=rt.settings.data.live_lookback_days)
-    symbols = list(rt.settings.watchlist)
+def fetch_bars(rt: Runtime, session: date, held: set[str]) -> tuple[Bars, list[str]]:
+    """Fresh bars for the watchlist. The benchmark and held symbols must be fresh."""
+    s = rt.settings
+    provider = rt.provider or make_provider(s, rt.secrets)
+    start = session - timedelta(days=s.data.live_lookback_days)
+    symbols = list(s.watchlist)
     bars = provider.fetch(symbols, start, session)
-    require_fresh(bars, symbols, session)
-    return bars
+    required = {s.benchmark} | (held & set(symbols))
+    return fresh_subset(bars, symbols, session, required, s.data.min_fresh_fraction)
 
 
 def universe_from_broker(broker: Broker, settings: Settings) -> Universe:
@@ -208,7 +370,7 @@ def settle_open_orders(state: State, broker: Broker) -> list[ClosedTrade | str]:
                     o.symbol: PositionMeta(
                         entry_session=o.session,
                         entry_price=status.filled_avg_price,
-                        entry_atr=o.entry_atr or ZERO,
+                        entry_atr=scaled_atr(o.entry_atr, o.ref_price, status.filled_avg_price),
                     ),
                 }
             if o.side == Side.SELL.value and o.basis is not None:
@@ -225,12 +387,17 @@ def prev_close_equity(state: State, session: date, broker_value: Decimal | None)
     """Equity at the close before ``session``, the daily loss limit's baseline.
 
     Stoa's own record of that close wins; the broker's last_equity is the fallback.
+    Deposits and withdrawals seen since that close are added, so moving money
+    never looks like a down day.
     """
+    base = broker_value
     if state.last_close_equity is not None and state.last_close_session == clock.previous_session(
         session
     ):
-        return state.last_close_equity
-    return broker_value
+        base = state.last_close_equity
+    if base is None:
+        return None
+    return base + state.flows_since_close
 
 
 # ---- shadow portfolio for signal mode ------------------------------------------
@@ -278,7 +445,7 @@ def _book_signal(rt: Runtime, state: State, bars: Bars, session: date) -> Book:
     portfolio = load_shadow(state, s)
     universe = Universe.assume_all_fractionable(s.watchlist, s.benchmark)
     broker = SimBroker(portfolio, s.costs, universe)
-    prev = state.last_close_equity
+    prev = prev_close_equity(state, session, state.last_close_equity)
     settled = None
     plan = state.pending_plan
     held_prices = _prices(bars, session, "close")
@@ -289,6 +456,7 @@ def _book_signal(rt: Runtime, state: State, bars: Bars, session: date) -> Book:
         for t in broker.closed_trades:
             state.add_realized(session.year, t.pnl)
         state.add_trades(broker.closed_trades)
+        state.track.pending_trades += len(broker.closed_trades)
         state.pending_plan = None
         state.mark_executed(session)
     broker.mark(held_prices)
@@ -340,14 +508,7 @@ def _book_broker(
         )
         for sym, p in managed.items()
     }
-    if isinstance(broker, AlpacaBroker):
-        since = state.inception.session if state.inception else session
-        flows = money.apply_flows(
-            state, money.parse_flows(broker.transfer_activities(after=since)), since
-        )
-        flow_alert = money.flows_alert(flows, state.principal_withdrawn)
-        if flow_alert is not None:
-            alerts.safe_send(rt.notifier, flow_alert)
+    sync_flows(rt, state, broker, session)
     book = Book(
         equity=close_equity(account.cash, positions, closes),
         cash=account.cash,
@@ -359,11 +520,93 @@ def _book_broker(
     return book, notes
 
 
+def record_day(rt: Runtime, state: State, book: Book, snap: pd.DataFrame, session: date) -> None:
+    """One honest daily record: broker equity and equity after Stoa's own cost model.
+
+    In paper and live the broker's fills carry no simulated slippage, so the
+    cost drag accumulated at EXECUTE is subtracted. In signal mode the shadow
+    book already pays the backtest costs, so the two numbers match.
+    """
+    s = rt.settings
+    t = state.track
+    last = t.days[-1] if t.days else None
+    flow = state.flows_since_close if last is not None else ZERO
+    adjusted = book.equity - t.cost_drag
+    t.record(
+        tracking.DailyRecord(
+            session=session,
+            mode=s.mode,
+            broker_equity=book.equity,
+            adjusted_equity=adjusted if adjusted > 0 else book.equity,
+            benchmark_close=dec(cell(snap, s.benchmark, "close")),
+            trades_closed=t.pending_trades,
+            flow=flow,
+            strategy=t.last_strategy,
+        )
+    )
+    t.pending_trades = 0
+
+
+def update_fallback(rt: Runtime, state: State, session: date) -> alerts.Alert | None:
+    """Check the drift fallback and the quit rule; activate and alert once on a trigger."""
+    s = rt.settings
+    t = state.track
+    prior = None
+    if s.mode == "live" and s.exam.paper_state_dir is not None:
+        prior = exam.load_track(s.exam.paper_state_dir).days
+    expectation = tracking.load_expectation(s.shared_dir)
+    reason = tracking.check_fallback(t, s.fallback, expectation, prior)
+    if reason is None:
+        return None
+    tracking.activate(t, reason, session)
+    return alerts.Alert(
+        title="FALLBACK: switching to SPY",
+        message=(
+            f"{reason}. Stoa stops opening new positions, lets current ones exit by their "
+            "normal rules, and holds SPY instead (still under the risk caps and the kill "
+            "switch). Only `stoa fallback reset` (or the fallback-reset workflow) undoes this."
+        ),
+        priority=alerts.URGENT,
+        tags=("rotating_light",),
+    )
+
+
+def sync_flows(rt: Runtime, state: State, broker: Broker, session: date) -> None:
+    """Apply new deposits and withdrawals from Alpaca to the high-water mark.
+
+    Runs in DECIDE and again in EXECUTE before the kill switch check, so a
+    withdrawal made after the close can never trip the switch at the open.
+    """
+    if not isinstance(broker, AlpacaBroker):
+        return
+    since = state.inception.session if state.inception else session
+    flows = money.apply_flows(
+        state, money.parse_flows(broker.transfer_activities(after=since)), since
+    )
+    flow_alert = money.flows_alert(flows, state.principal_withdrawn)
+    if flow_alert is not None:
+        alerts.safe_send(rt.notifier, flow_alert)
+
+
 def decide(rt: Runtime, force: bool = False) -> JobResult:
-    return _guarded(rt, "decide", lambda: _decide(rt, force))
+    """DECIDE with the dead man's switch: /start when work begins, then success or /fail.
+
+    A run outside the window or for a session already decided pings nothing,
+    so the second cron slot never resets the check.
+    """
+
+    def body() -> JobResult:
+        return _decide(rt, force, on_start=lambda: safe_ping(make_pinger(rt), "start"))
+
+    result = _guarded(rt, "decide", body)
+    if result.code == EXIT_OK and result.status == "decided":
+        safe_ping(make_pinger(rt), "success", f"decided {result.session}")
+    elif result.code != EXIT_OK:
+        safe_ping(make_pinger(rt), "fail", result.status)
+    return result
 
 
-def _decide(rt: Runtime, force: bool) -> JobResult:
+def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: None) -> JobResult:
     s = rt.settings
     now = rt.now()
     session = clock.decide_session(
@@ -384,9 +627,11 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
         log.info("DECIDE: session %s already decided", session)
         return JobResult(EXIT_OK, "already_done", session)
 
+    on_start()
     result = JobResult(EXIT_OK, "decided", session)
     journal = rt.journal
-    bars = fetch_bars(rt, session)
+    held = set(state.positions_meta) | set(state.sim_positions)
+    bars, dropped = fetch_bars(rt, session, held)
     features = build_features(bars, s.benchmark)
     snap = snapshot(features, session)
     atr = {sym: cell(snap, sym, "atr_14") for sym in snap.index}
@@ -394,11 +639,15 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
         now, "decide", session, "data", symbols=sorted(bars), features_hash=hash_obj(snap.to_dict())
     )
 
-    notes: list[str] = []
+    notes: list[str] = adjust.apply_adjustments(state, bars, shadow=s.mode == "signal")
+    if dropped:
+        notes.append(f"No fresh bar today, skipped: {', '.join(dropped)}")
+    adjust.adjust_benchmark(state, bars, s.benchmark)
     if s.mode == "signal":
         book = _book_signal(rt, state, bars, session)
     else:
-        book, notes = _book_broker(rt, state, session, atr, _prices(bars, session, "close"))
+        book, broker_notes = _book_broker(rt, state, session, atr, _prices(bars, session, "close"))
+        notes += broker_notes
 
     if state.inception is None:
         state.inception = Inception(
@@ -412,8 +661,14 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
     state.high_water_mark = risk.next_high_water_mark(state.high_water_mark, book.equity)
     hwm = state.high_water_mark
 
-    scout = make_scout(rt, state)
-    strategy = AgentStrategy(s, scout)
+    record_day(rt, state, book, snap, session)
+    fallback_alert = update_fallback(rt, state, session)
+    if fallback_alert is not None:
+        send(rt, result, fallback_alert)
+    track = state.track
+    halt = track.fallback_reason if track.fallback_active else None
+
+    strategy = build_strategy_for(rt, state, bars, session, notes)
     decision: Decision = strategy.decide(
         DecisionInput(
             session=session,
@@ -427,13 +682,17 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
             kill_switch_active=state.kill_switch.active,
             universe=book.universe,
             recent_trades=tuple(state.recent_trades[-s.llm.recent_trades_in_prompt :]),
+            halt_reason=halt,
+            fallback_active=track.fallback_active,
         )
     )
+    notes.extend(decision.notes)
     journal.write(
         now,
         "decide",
         session,
         "decision",
+        strategy=strategy.name,
         candidates=[c.model_dump(mode="json") for c in decision.candidates],
         quant_kills=[k.model_dump(mode="json") for k in decision.kills],
         exits=[e.model_dump(mode="json") for e in decision.exits],
@@ -467,17 +726,51 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
         created_at=now,
         equity=book.equity,
     )
+    state.track.last_strategy = strategy.name
     stale = state.pending_plan
     if stale is not None and stale.orders and stale.execute_session <= session:
         notes.append(f"plan for {stale.execute_session} was never executed and is dropped")
     # An empty plan is kept too, so EXECUTE still checks the kill switch at the open.
     state.pending_plan = plan
+    needs_ok = approvals.required(
+        s.approval, s.mode, state.track.first_live_session, session
+    ) and bool(plan.orders)
+    state.approval_required = needs_ok
+    state.approval_nonce = approvals.new_nonce() if needs_ok else None
     if plan.orders:
         store.archive_plan(plan)
-    journal.write(now, "decide", session, "plan", plan=plan.model_dump(mode="json"))
-
+    journal.write(
+        now,
+        "decide",
+        session,
+        "plan",
+        plan=plan.model_dump(mode="json"),
+        approval_required=needs_ok,
+    )
+    topic = rt.secrets.ntfy_approval_topic
     for order in plan.orders:
-        send(rt, result, alerts.signal_alert(order, book.equity, s.mode))
+        alert = alerts.signal_alert(order, book.equity, s.mode)
+        if needs_ok and order.reason not in s.approval.exempt_reasons:
+            if topic is None:
+                alert = alerts.with_actions(
+                    alert,
+                    [],
+                    "Approval is required but STOA_NTFY_APPROVAL_TOPIC is not set, "
+                    "so this order will be skipped.",
+                )
+            else:
+                assert state.approval_nonce is not None
+                acts = approvals.actions(
+                    s.alerts.server,
+                    topic.get_secret_value(),
+                    plan.plan_id,
+                    order.symbol,
+                    state.approval_nonce,
+                )
+                alert = alerts.with_actions(
+                    alert, acts, "Tap Approve or Skip. Nothing is sent without Approve."
+                )
+        send(rt, result, alert)
 
     milestone = money.check_milestone(state, book.equity, s.money)
     if milestone is not None:
@@ -486,6 +779,8 @@ def _decide(rt: Runtime, force: bool) -> JobResult:
     send(rt, result, alerts.daily_summary_alert(_summary(rt, state, book, snap, plan, notes, now)))
     state.last_close_session = session
     state.last_close_equity = book.equity
+    state.flows_since_close = ZERO
+    adjust.anchor(state, bars, session, s.benchmark)
     state.mark_decided(session)
     store.save(state)
     return result
@@ -536,7 +831,7 @@ def _summary(
         cash=book.cash,
         next_actions=actions,
         api_spend=float(state.llm_spend_by_month.get(now.strftime("%Y-%m"), ZERO)),
-        api_cap=s.llm.monthly_cost_cap_usd,
+        api_cap=s.budget.monthly_cap_usd,
         realized_ytd=realized,
         tax_reserve=money.tax_reserve(realized, s.money.tax_rate),
         kill_switch=state.kill_switch.active,
@@ -622,6 +917,7 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         raise Refusal(f"Alpaca says trading is blocked on this account (status {account.status})")
     if isinstance(broker, AlpacaBroker) and not broker.market_is_open():
         raise Refusal("Alpaca says the market is closed right now; orders would queue blind")
+    sync_flows(rt, state, broker, session)
     # The high-water mark only moves on closes, as in backtests. execute_plan checks it.
     hwm = state.high_water_mark or account.equity
 
@@ -631,8 +927,33 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
     before = broker.positions()
     meta_before = dict(state.positions_meta)
     prev = prev_close_equity(state, session, account.last_equity)
-    report = execute_plan(plan, broker, state, s, universe, session, prev)
-    state.add_trades(closed_trades(report, meta_before))
+    track = state.track
+    gate = make_gate(rt, state, plan, session, result)
+    sectors = {sym: sector_of(sym) for sym in set(s.watchlist) | set(before)}
+    report = execute_plan(
+        plan,
+        broker,
+        state,
+        s,
+        universe,
+        session,
+        prev,
+        gate=gate,
+        sectors=sectors,
+        halt_reason=track.fallback_reason if track.fallback_active else None,
+        fallback_active=track.fallback_active,
+    )
+    closed = closed_trades(report, meta_before)
+    state.add_trades(closed)
+    track.pending_trades += len(closed)
+    for f in report.fills:
+        st = f.status
+        if st.filled_avg_price is not None:
+            track.cost_drag += tracking.fill_cost(
+                st.side, st.filled_qty, st.filled_avg_price, st.fees, s.costs
+            )
+    if s.mode == "live" and report.fills and track.first_live_session is None:
+        track.first_live_session = session
     if report.kill_switch_tripped:
         dd = float(risk.drawdown(account.equity, hwm))
         send(rt, result, alerts.kill_switch_alert(account.equity, hwm, dd))
@@ -672,7 +993,7 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         else:
             state.open_orders = [
                 *state.open_orders,
-                _open_order(f.order.symbol, st, session, before, f.order.entry_atr),
+                _open_order(f.order, st, session, before),
             ]
             send(
                 rt,
@@ -684,14 +1005,94 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
                 ),
             )
     for r in report.rejections:
+        if r.reason == "price_check":
+            continue  # already alerted at a higher priority by the cross-check
         send(rt, result, alerts.skipped_order_alert(r.symbol, r.side, r.reason, r.detail))
     state.pending_plan = None
+    state.approval_nonce = None
+    state.approval_required = False
     state.mark_executed(session)
     store.save(state)
     if any(f.status.terminal for f in report.unfilled) and s.mode == "live":
         result.code = EXIT_FAILED
         result.status = "live_order_rejected"
     return result
+
+
+def make_gate(
+    rt: Runtime, state: State, plan: Plan, session: date, result: JobResult
+) -> Callable[
+    [list[PlannedOrder], Mapping[str, Decimal]], tuple[list[PlannedOrder], list[Rejection]]
+]:
+    """The last checks before an order is sent: the hand approval and the price cross-check."""
+    s = rt.settings
+    w = s.job_windows
+    deadline = clock.session(session).open + timedelta(
+        minutes=w.execute_after_open_minutes + w.execute_window_minutes
+    )
+    verdicts: dict[str, approvals.Verdict] | None = None
+
+    def need_approval(o: PlannedOrder) -> bool:
+        return state.approval_required and o.reason not in s.approval.exempt_reasons
+
+    def gate(
+        orders: list[PlannedOrder], prices: Mapping[str, Decimal]
+    ) -> tuple[list[PlannedOrder], list[Rejection]]:
+        nonlocal verdicts
+        ok: list[PlannedOrder] = []
+        rej: list[Rejection] = []
+        pending = [o for o in plan.orders if need_approval(o)]
+        if pending and verdicts is None:
+            verdicts = approvals.wait_and_decide(
+                make_approvals(rt),
+                pending,
+                plan_id=plan.plan_id,
+                nonce=state.approval_nonce or "",
+                created_at=plan.created_at,
+                deadline=deadline,
+                wait_minutes=s.approval.wait_minutes,
+                poll_seconds=s.approval.poll_interval_seconds,
+                now=rt.now,
+                sleep=rt.sleep,
+            )
+            rt.journal.write(
+                rt.now(),
+                "execute",
+                session,
+                "approvals",
+                verdicts={k: v.reason for k, v in verdicts.items()},
+            )
+        for o in orders:
+            if need_approval(o):
+                v = (verdicts or {}).get(o.symbol)
+                if v is None or not v.approved:
+                    reason = v.reason if v is not None else "no_answer"
+                    rej.append(
+                        Rejection(
+                            symbol=o.symbol,
+                            side=o.side,
+                            reason="not_approved",
+                            detail=f"approval {reason.replace('_', ' ')}",
+                        )
+                    )
+                    continue
+            ok.append(o)
+        buys = [o for o in ok if o.side is Side.BUY]
+        if buys and s.crosscheck.enabled:
+            checks = check_prices(
+                [o.symbol for o in buys], prices, make_price_source(rt), s.crosscheck
+            )
+            failed = {sym for sym, c in checks.items() if not c.ok}
+            for sym in sorted(failed):
+                c = checks[sym]
+                rej.append(
+                    Rejection(symbol=sym, side=Side.BUY, reason="price_check", detail=c.detail)
+                )
+                send(rt, result, alerts.price_check_alert(sym, c.detail))
+            ok = [o for o in ok if not (o.side is Side.BUY and o.symbol in failed)]
+        return ok, rej
+
+    return gate
 
 
 def closed_trades(report: ExecutionReport, meta: dict[str, PositionMeta]) -> list[ClosedTrade]:
@@ -720,20 +1121,22 @@ def closed_trades(report: ExecutionReport, meta: dict[str, PositionMeta]) -> lis
 
 
 def _open_order(
-    symbol: str,
+    order: PlannedOrder,
     st: OrderStatus,
     session: date,
     before: dict[str, BrokerPosition],
-    atr: Decimal | None,
 ) -> OpenOrder:
+    symbol = order.symbol
     basis = before[symbol].avg_entry_price if symbol in before else None
+    buy = st.side is Side.BUY
     return OpenOrder(
         client_order_id=st.client_order_id,
         symbol=symbol,
         side=st.side.value,
         session=session,
-        basis=basis if st.side is Side.SELL else None,
-        entry_atr=atr if st.side is Side.BUY else None,
+        basis=None if buy else basis,
+        entry_atr=order.entry_atr if buy else None,
+        ref_price=order.ref_price if buy else None,
     )
 
 

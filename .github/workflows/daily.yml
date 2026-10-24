@@ -14,7 +14,9 @@ on:
       job:
         description: "Which job to run"
         type: choice
-        options: [decide, execute, alert-test, money-confirm, kill-switch-reset]
+        options:
+          [decide, execute, alert-test, approve-test, money-confirm, kill-switch-reset,
+           fallback-reset]
         default: decide
       force:
         description: "Run even outside the window or again for the same session"
@@ -46,11 +48,19 @@ jobs:
       STOA_NTFY_TOPIC: ${{ secrets.STOA_NTFY_TOPIC }}
       STOA_NTFY_TOKEN: ${{ secrets.STOA_NTFY_TOKEN }}
       STOA_LIVE_CONFIRM: ${{ secrets.STOA_LIVE_CONFIRM }}
+      STOA_NTFY_APPROVAL_TOPIC: ${{ secrets.STOA_NTFY_APPROVAL_TOPIC }}
+      STOA_HEALTHCHECK_URL: ${{ secrets.STOA_HEALTHCHECK_URL }}
+      FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
       STOA_MODE: ${{ vars.STOA_MODE }}
       NTFY_SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
       STOA__ALERTS__SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
-      STOA_STATE_DIR: state-branch/state
-      STOA__LLM__CACHE_DIR: state-branch/state/llm_cache
+      # Paper and signal keep their state in state/, live in live-state/, so going live
+      # starts a fresh high-water mark and money plan while the paper record stays put.
+      STOA_STATE_DIR: ${{ vars.STOA_MODE == 'live' && 'state-branch/live-state' || 'state-branch/state' }}
+      STOA__EXAM__PAPER_STATE_DIR: state-branch/state
+      STOA__STATE__SHARED_DIR: state-branch/shared
+      STOA__LLM__CACHE_DIR: state-branch/shared/llm_cache
+      STOA__ANALYST__CACHE_DIR: state-branch/shared/analyst_cache
       JOB_INPUT: ${{ inputs.job }}
       FORCE_INPUT: ${{ inputs.force }}
       EQUITY_INPUT: ${{ inputs.equity }}
@@ -106,7 +116,7 @@ jobs:
 
       - name: Install
         if: steps.secrets.outputs.ready == 'true'
-        run: pip install .
+        run: pip install ".[yahoo]"
 
       - name: Run
         if: steps.secrets.outputs.ready == 'true'
@@ -121,6 +131,8 @@ jobs:
             decide) stoa decide "${force[@]}" ;;
             execute) stoa execute "${force[@]}" ;;
             alert-test) stoa alert test ;;
+            approve-test) stoa approve test ;;
+            fallback-reset) stoa fallback reset --yes ;;
             money-confirm) stoa money confirm-withdrawal --yes "${equity[@]}" ;;
             kill-switch-reset) stoa kill-switch reset --yes "${equity[@]}" ;;
             *) echo "unknown job $JOB"; exit 2 ;;
@@ -146,3 +158,7 @@ jobs:
             "${auth[@]}" \
             -d "The $JOB job failed. Tap to open the log." \
             "${NTFY_SERVER%/}/$STOA_NTFY_TOPIC" || true
+          # Tell the dead man's switch too, so a crash before Stoa starts is not silent.
+          if [ "$JOB" = "decide" ] && [ -n "$STOA_HEALTHCHECK_URL" ]; then
+            curl -fsS --max-time 10 --retry 2 -o /dev/null "${STOA_HEALTHCHECK_URL%/}/fail" || true
+          fi

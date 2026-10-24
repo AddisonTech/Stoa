@@ -98,6 +98,9 @@ class PlannedOrder(_Model):
     conviction: int | None = None
     thesis: str = ""
     client_order_id: str = ""
+    probability: float | None = None  # calibrated model probability, for the record
+    sector: str | None = None
+    max_weight: Decimal | None = None  # only for the benchmark in the SPY-hold fallback
 
 
 class Fill(_Model):
@@ -132,11 +135,20 @@ class ClosedTrade(_Model):
 
 
 class PositionMeta(_Model):
-    """What Stoa remembers about an entry. The broker owns the quantity."""
+    """What Stoa remembers about an entry. The broker owns the quantity.
+
+    ``ref_session`` and ``ref_close`` anchor the entry to the adjusted bar series
+    as it looked when the anchor was taken. Live bars are re-adjusted after every
+    split or dividend, so each DECIDE compares the anchor bar today with the
+    stored close and rescales the entry price and ATR by the same factor. Without
+    this a 4 for 1 split would look like a 75% drop and fire the stop.
+    """
 
     entry_session: date
     entry_price: Decimal
     entry_atr: Decimal
+    ref_session: date | None = None
+    ref_close: Decimal | None = None
 
 
 class Holding(_Model):

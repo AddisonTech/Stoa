@@ -49,15 +49,20 @@ class AlpacaDataProvider:
         self.max_retries = max_retries
         self.sleep = sleep
         self.last_feed_used: str | None = None
+        self.last_missing: list[str] = []
 
     def fetch(self, symbols: list[str], start: date, end: date) -> Bars:
+        self.last_missing = []
         out: Bars = {}
         for i in range(0, len(symbols), SYMBOLS_PER_REQUEST):
             chunk = symbols[i : i + SYMBOLS_PER_REQUEST]
             out.update(self._fetch_chunk(chunk, start, end))
         missing = [s for s in symbols if s not in out]
         if missing:
-            raise DataError(f"Alpaca returned no bars for {missing}")
+            # A delisted or renamed symbol returns nothing. The caller decides
+            # whether that is fatal (held symbols, the benchmark) or just a gap.
+            log.warning("Alpaca returned no bars for %s", missing)
+            self.last_missing = missing
         return out
 
     def _fetch_chunk(self, symbols: list[str], start: date, end: date) -> Bars:

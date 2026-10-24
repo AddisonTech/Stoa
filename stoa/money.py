@@ -162,6 +162,7 @@ def apply_flows(state: State, flows: Iterable[CashFlow], since: date | None) -> 
         if since is not None and f.day is not None and f.day <= since:
             continue
         state.net_flows = state.net_flows + f.amount
+        state.flows_since_close = state.flows_since_close + f.amount
         applied.append(f)
         if f.amount < 0 and state.milestone_alerted:
             state.withdrawn_since_milestone = state.withdrawn_since_milestone - f.amount

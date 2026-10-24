@@ -17,6 +17,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, Field
 
 from stoa.models import ZERO, ClosedTrade, PlannedOrder, PositionMeta
+from stoa.tracking import Track
 
 STATE_VERSION = 1
 SESSION_HISTORY = 60
@@ -58,6 +59,7 @@ class OpenOrder(BaseModel):
     session: date
     basis: Decimal | None = None  # cost basis per share for a sell, for realized P&L
     entry_atr: Decimal | None = None  # ATR at decision for a buy, for its stop
+    ref_price: Decimal | None = None  # the decision close the ATR was measured against
 
 
 class Inception(BaseModel):
@@ -79,6 +81,7 @@ class State(BaseModel):
     inception: Inception | None = None
     last_close_session: date | None = None
     last_close_equity: Decimal | None = None
+    last_benchmark_close: Decimal | None = None  # adjusted close at last_close_session
     decided_sessions: list[date] = Field(default_factory=list)
     executed_sessions: list[date] = Field(default_factory=list)
     pending_plan: Plan | None = None
@@ -87,6 +90,7 @@ class State(BaseModel):
     llm_spend_by_month: dict[str, Decimal] = Field(default_factory=dict)
     processed_activity_ids: list[str] = Field(default_factory=list)
     net_flows: Decimal = ZERO  # deposits minus withdrawals since inception
+    flows_since_close: Decimal = ZERO  # flows applied after last_close_session's DECIDE
     withdrawn_since_milestone: Decimal = ZERO
     principal_flow_pending: bool = False  # confirmed by hand, not yet seen in activities
     recent_trades: list[ClosedTrade] = Field(default_factory=list)
@@ -94,6 +98,9 @@ class State(BaseModel):
     sim_cash: Decimal | None = None
     sim_positions: dict[str, Decimal] = Field(default_factory=dict)
     sim_avg_cost: dict[str, Decimal] = Field(default_factory=dict)
+    track: Track = Field(default_factory=Track)
+    approval_nonce: str | None = None  # for the pending plan only
+    approval_required: bool = False
 
     def mark_decided(self, session: date) -> None:
         self.decided_sessions = _push(self.decided_sessions, session)

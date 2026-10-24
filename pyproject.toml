@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "stoa"
-version = "1.0.0"
+version = "0.2.0"
 description = "Daily-cadence AI equity trading system with a rule-based risk engine and honest grading."
 readme = "README.md"
 license = "MIT"
@@ -21,11 +21,13 @@ dependencies = [
     "exchange_calendars>=4.5",
     "click>=8.1",
     "pyarrow>=15",
+    "scikit-learn>=1.5",
+    "scipy>=1.13",
 ]
 
 [project.optional-dependencies]
 yahoo = ["yfinance>=0.2.40"]
-dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10", "pandas-stubs", "types-PyYAML"]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10", "pandas-stubs", "types-PyYAML", "scipy-stubs"]
 
 [project.scripts]
 stoa = "stoa.cli:main"
@@ -65,11 +67,28 @@ module = [
     "stoa.journal",
     "stoa.holdout",
     "stoa.broker.*",
+    "stoa.adjust",
+    "stoa.analyst",
+    "stoa.approvals",
+    "stoa.calibration",
+    "stoa.crosscheck",
+    "stoa.events",
+    "stoa.exam",
+    "stoa.experiments",
+    "stoa.healthcheck",
+    "stoa.membership",
+    "stoa.model",
+    "stoa.pit",
+    "stoa.redact",
+    "stoa.retrain",
+    "stoa.sizing",
+    "stoa.tracking",
+    "stoa.walkforward",
 ]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["exchange_calendars.*", "yfinance.*", "pyarrow.*"]
+module = ["exchange_calendars.*", "yfinance.*", "pyarrow.*", "sklearn.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

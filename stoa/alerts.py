@@ -17,6 +17,7 @@ from typing import Protocol
 import httpx
 
 from stoa.models import PlannedOrder, Side
+from stoa.redact import redact
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class Alert:
     tags: tuple[str, ...] = ()
     click: str | None = None
     markdown: bool = False
+    actions: tuple[dict[str, object], ...] = ()  # ntfy action buttons (at most 3)
 
     def __post_init__(self) -> None:
         if not MIN <= self.priority <= URGENT:
@@ -88,8 +90,8 @@ class NtfyNotifier:
     def payload(self, alert: Alert) -> dict[str, object]:
         body: dict[str, object] = {
             "topic": self._topic,
-            "title": alert.title,
-            "message": truncate_utf8(alert.message, self.max_message_bytes),
+            "title": redact(alert.title),
+            "message": truncate_utf8(redact(alert.message), self.max_message_bytes),
             "priority": alert.priority,
         }
         if alert.tags:
@@ -99,6 +101,8 @@ class NtfyNotifier:
             body["click"] = click
         if alert.markdown:
             body["markdown"] = True
+        if alert.actions:
+            body["actions"] = [dict(a) for a in alert.actions[:3]]
         return body
 
     def send(self, alert: Alert) -> bool:
@@ -123,7 +127,7 @@ class ConsoleNotifier:
     """Default when no topic is set: prints alerts to the log."""
 
     def send(self, alert: Alert) -> bool:
-        print(f"[alert p{alert.priority}] {alert.title}\n{alert.message}\n")
+        print(f"[alert p{alert.priority}] {redact(alert.title)}\n{redact(alert.message)}\n")
         return True
 
 
@@ -198,6 +202,19 @@ def signal_alert(order: PlannedOrder, equity: Decimal, mode: str) -> Alert:
     )
 
 
+def with_actions(alert: Alert, actions: list[dict[str, object]], note: str) -> Alert:
+    """The same alert with action buttons and a line telling the reader to tap one."""
+    return Alert(
+        title=alert.title,
+        message=f"{alert.message}\n{note}",
+        priority=alert.priority,
+        tags=alert.tags,
+        click=alert.click,
+        markdown=alert.markdown,
+        actions=tuple(actions),
+    )
+
+
 def fill_alert(symbol: str, side: Side, qty: Decimal, price: Decimal, mode: str) -> Alert:
     gross = qty * price
     action = f"{side.value.upper()} {symbol}"
@@ -220,11 +237,24 @@ def rejected_order_alert(symbol: str, side: Side, detail: str, live: bool) -> Al
 
 
 def skipped_order_alert(symbol: str, side: Side, reason: str, detail: str) -> Alert:
+    if reason == "not_approved":
+        msg = f"Not approved ({detail.removeprefix('approval ')}). Nothing was sent for {symbol}."
+    else:
+        msg = f"Risk check {reason.replace('_', ' ')}: {detail}. Nothing was sent for {symbol}."
     return Alert(
         title=f"Skipped {side.value} {symbol}",
-        message=f"Risk check {reason.replace('_', ' ')}: {detail}. Nothing was sent for {symbol}.",
-        priority=LOW,
+        message=msg,
+        priority=HIGH if side is Side.SELL else LOW,
         tags=("no_entry_sign",),
+    )
+
+
+def price_check_alert(symbol: str, detail: str) -> Alert:
+    return Alert(
+        title=f"Skipped buy {symbol}: price check",
+        message=f"The second price source did not confirm {symbol}: {detail}. Nothing was sent.",
+        priority=HIGH,
+        tags=("warning",),
     )
 
 

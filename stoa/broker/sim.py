@@ -85,10 +85,10 @@ class SimBroker:
         return info
 
     def latest_prices(self, symbols: list[str]) -> dict[str, Decimal]:
-        missing = [s for s in symbols if s not in self.prices]
-        if missing:
-            raise BrokerError(f"no price for {missing}")
-        return {s: self.prices[s] for s in symbols}
+        """Prices for symbols that trade this session. Like Alpaca, a missing symbol
+        is left out instead of failing the whole request; the risk check then
+        skips that buy for having no live price."""
+        return {s: self.prices[s] for s in symbols if s in self.tradable_today}
 
     def find_order(self, client_order_id: str) -> OrderStatus | None:
         return self.orders.get(client_order_id)
@@ -108,6 +108,31 @@ class SimBroker:
 
     def orders_for_session(self, session: date) -> list[OrderStatus]:
         return [o for o in self.orders.values() if o.session == session]
+
+    def force_close(self, symbol: str, price: Decimal, session: date, reason: str) -> Fill | None:
+        """Close a position in a symbol that no longer trades, at its last close less slippage.
+
+        Models a delisting or a cash takeover in backtests: the money comes back
+        at the last traded price. Returns the fill, or None when not held.
+        """
+        qty = self.portfolio.qty(symbol)
+        if qty <= 0:
+            return None
+        px = sell_fill_price(price, self.costs.slippage_bps)
+        fill = Fill(
+            symbol=symbol,
+            side=Side.SELL,
+            qty=qty,
+            price=px,
+            fees=sell_fees(qty * px, self.costs),
+            session=session,
+            client_order_id=f"delist-{symbol}-{session:%Y%m%d}",
+        )
+        closed = self.portfolio.apply_fill(fill, reason)
+        self.fills.append(fill)
+        if closed is not None:
+            self.closed_trades.append(closed)
+        return fill
 
     def _next_id(self) -> str:
         self._seq += 1

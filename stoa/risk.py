@@ -18,16 +18,23 @@ Reason codes:
   same_day_round_trip  the symbol was or would be traded the other way the same day
   price_sanity         execution price moved too far from the plan reference
   no_position          exit for a symbol that is not held
+  sector_cap           the position's sector is already at its share of equity
+  correlation          too correlated with a position already held or planned
+  earnings             an earnings release falls inside the holding window, or no
+                       confirmed date is known and the last report is stale
+  halted               new entries are halted (the drift fallback or the quit rule)
+  zero_size            sizing gave the idea no weight (no edge after costs)
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 
 from stoa.config import RiskLimits
+from stoa.membership import UNKNOWN_SECTOR
 from stoa.models import (
     ZERO,
     Candidate,
@@ -37,6 +44,7 @@ from stoa.models import (
     Side,
     cents_down,
 )
+from stoa.sizing import correlation
 from stoa.universe import Universe
 
 
@@ -53,12 +61,21 @@ class HeldPosition:
 
 @dataclass(frozen=True)
 class EntryIdea:
-    """A candidate that passed the quant gates, with the numbers sizing needs."""
+    """A candidate that passed the quant gates, with the numbers sizing needs.
+
+    ``target_weight`` comes from the sizing module (None means the v1 rule:
+    every entry asks for the full position cap). ``max_weight`` may raise the
+    per-position cap only for the benchmark while the SPY-hold fallback is
+    active; the risk engine ignores it for any other symbol.
+    """
 
     candidate: Candidate
     ref_price: Decimal
     atr: Decimal
     stop_price: Decimal
+    target_weight: Decimal | None = None
+    max_weight: Decimal | None = None
+    probability: float | None = None
 
 
 @dataclass(frozen=True)
@@ -73,6 +90,13 @@ class RiskContext:
     regime_bull: bool
     universe: Universe
     limits: RiskLimits
+    sectors: Mapping[str, str] = field(default_factory=dict)
+    returns: Mapping[str, Sequence[float]] = field(default_factory=dict)
+    entry_blocks: Mapping[str, tuple[str, str]] = field(default_factory=dict)
+    size_multiplier: Decimal = Decimal(1)
+    size_note: str = ""
+    halt_reason: str | None = None
+    fallback_active: bool = False
 
 
 @dataclass(frozen=True)
@@ -155,10 +179,57 @@ def exit_orders(
     return orders, rejections
 
 
+def sector_of(symbol: str, sectors: Mapping[str, str]) -> str:
+    return sectors.get(symbol, UNKNOWN_SECTOR)
+
+
+def position_cap(
+    symbol: str, max_weight: Decimal | None, benchmark: str, fallback: bool, limits: RiskLimits
+) -> Decimal:
+    """The per-position cap as a fraction of equity.
+
+    Only the benchmark, and only while the SPY-hold fallback is active, may go
+    above ``max_position_pct``, and never above ``max_benchmark_pct``.
+    """
+    if fallback and symbol == benchmark and max_weight is not None:
+        return min(max_weight, limits.max_benchmark_pct)
+    return limits.max_position_pct
+
+
+def too_correlated(
+    symbol: str,
+    others: set[str],
+    returns: Mapping[str, Sequence[float]],
+    limit: float,
+) -> tuple[str, str] | None:
+    """The first held or planned symbol whose return correlation with ``symbol`` is over ``limit``.
+
+    With no return history supplied at all the check is skipped (unit tests and
+    baselines). With history supplied, a symbol that has none is rejected,
+    because the check cannot be done.
+    """
+    if not returns or not others:
+        return None
+    mine = returns.get(symbol)
+    if mine is None:
+        return symbol, "no return history to check correlation"
+    for other in sorted(others):
+        theirs = returns.get(other)
+        if theirs is None:
+            continue
+        n = min(len(mine), len(theirs))
+        c = correlation(list(mine)[-n:], list(theirs)[-n:]) if n >= 3 else None
+        if c is not None and c > limit:
+            return other, f"{c:.2f} correlation with {other} (limit {limit:.2f})"
+    return None
+
+
 def entry_block_reason(ctx: RiskContext) -> tuple[str, str] | None:
     """Why no new entries are allowed at all this session, or None."""
     if ctx.kill_switch_active:
         return "kill_switch", "kill switch is active; reset it by hand"
+    if ctx.halt_reason is not None and not ctx.fallback_active:
+        return "halted", ctx.halt_reason
     if daily_loss_breached(ctx.equity, ctx.prev_equity, ctx.limits):
         assert ctx.prev_equity is not None
         change = (ctx.equity - ctx.prev_equity) / ctx.prev_equity
@@ -166,7 +237,7 @@ def entry_block_reason(ctx: RiskContext) -> tuple[str, str] | None:
             "daily_loss_limit",
             f"day change {change:.2%} breaches the {ctx.limits.daily_loss_limit_pct:.0%} limit",
         )
-    if ctx.limits.block_entries_when_risk_off and not ctx.regime_bull:
+    if ctx.limits.block_entries_when_risk_off and not ctx.regime_bull and not ctx.fallback_active:
         return "risk_off", "benchmark is below its 200 day average"
     return None
 
@@ -210,16 +281,33 @@ def evaluate(
     # from the real cash after sells fill, so the plan never assumes money it lacks.
     room = buying_room(ctx.equity, ctx.cash, invested, limits)
     open_count = len([p for p in ctx.positions.values() if p.qty > 0 and p.symbol not in selling])
-    target = cents_down(ctx.equity * limits.max_position_pct)
     buys: list[PlannedOrder] = []
+    kept = {s for s, p in ctx.positions.items() if p.qty > 0 and s not in selling}
+    sector_value: dict[str, Decimal] = {}
+    for s_ in kept:
+        sec = sector_of(s_, ctx.sectors)
+        sector_value[sec] = sector_value.get(sec, ZERO) + ctx.positions[s_].value
+    sector_cap = ctx.equity * limits.max_sector_pct
 
     for idea in ideas:
         sym = idea.candidate.symbol
         reason = _entry_rule_violation(sym, ctx, selling, {b.symbol for b in buys})
+        if reason is None and sym in ctx.entry_blocks:
+            reason = ctx.entry_blocks[sym]
+        if reason is None and ctx.fallback_active and sym != ctx.universe.benchmark:
+            reason = ("halted", ctx.halt_reason or "SPY-hold fallback is active")
+        fallback_buy = ctx.fallback_active and sym == ctx.universe.benchmark
+        if reason is None and not fallback_buy:
+            hit = too_correlated(
+                sym, kept | {b.symbol for b in buys}, ctx.returns, limits.max_pair_correlation
+            )
+            if hit is not None:
+                reason = ("correlation", hit[1])
         if reason is not None:
             rejections.append(_reject(sym, Side.BUY, reason[0], reason[1]))
             continue
-        if open_count + len(buys) >= limits.max_positions:
+        topping_up = fallback_buy and sym in kept
+        if not topping_up and open_count + len(buys) >= limits.max_positions:
             rejections.append(
                 _reject(sym, Side.BUY, "max_positions", f"limit {limits.max_positions}")
             )
@@ -229,7 +317,32 @@ def evaluate(
                 _reject(sym, Side.BUY, "max_orders", f"limit {limits.max_orders_per_day}")
             )
             continue
-        notional = cents_down(min(target, room))
+        cap_w = position_cap(
+            sym, idea.max_weight, ctx.universe.benchmark, ctx.fallback_active, limits
+        )
+        want_w = cap_w if idea.target_weight is None else min(idea.target_weight, cap_w)
+        want_w = want_w * ctx.size_multiplier
+        if topping_up:
+            want_w = want_w - ctx.positions[sym].value / ctx.equity
+        if want_w <= 0:
+            rejections.append(_reject(sym, Side.BUY, "zero_size", "sizing gave no weight"))
+            continue
+        sec = sector_of(sym, ctx.sectors)
+        # No sector map at all (unit tests, baselines) means no sector cap.
+        exempt_sector = not ctx.sectors or (ctx.fallback_active and sym == ctx.universe.benchmark)
+        sector_room = room if exempt_sector else sector_cap - sector_value.get(sec, ZERO)
+        if room >= limits.min_order_usd and sector_room < limits.min_order_usd:
+            rejections.append(
+                _reject(
+                    sym,
+                    Side.BUY,
+                    "sector_cap",
+                    f"{sec} already {sector_value.get(sec, ZERO) / ctx.equity:.0%} of equity "
+                    f"(cap {limits.max_sector_pct:.0%})",
+                )
+            )
+            continue
+        notional = cents_down(min(ctx.equity * want_w, room, sector_room))
         if notional <= 0:
             rejections.append(_reject(sym, Side.BUY, "insufficient_cash", f"room {room:.2f}"))
             continue
@@ -239,6 +352,10 @@ def evaluate(
             )
             continue
         room -= notional
+        sector_value[sec] = sector_value.get(sec, ZERO) + notional
+        thesis = idea.candidate.thesis
+        if ctx.size_multiplier < 1 and ctx.size_note:
+            thesis = f"{thesis} Sized x{ctx.size_multiplier} for {ctx.size_note}."
         buys.append(
             PlannedOrder(
                 symbol=sym,
@@ -247,9 +364,12 @@ def evaluate(
                 ref_price=idea.ref_price,
                 entry_atr=idea.atr,
                 stop_price=idea.stop_price,
-                reason="entry",
+                reason="entry" if not ctx.fallback_active else "spy_fallback",
                 conviction=idea.candidate.conviction,
-                thesis=idea.candidate.thesis,
+                thesis=thesis,
+                probability=idea.probability,
+                sector=sec,
+                max_weight=cap_w if cap_w != limits.max_position_pct else None,
             )
         )
     return RiskResult(tuple(sells + buys), tuple(rejections), False)
@@ -267,7 +387,11 @@ def _entry_rule_violation(
     if symbol in buying:
         return "already_held", "duplicate buy in this plan"
     pos = ctx.positions.get(symbol)
-    if pos is not None and pos.qty > 0:
+    if (
+        pos is not None
+        and pos.qty > 0
+        and not (ctx.fallback_active and symbol == ctx.universe.benchmark)
+    ):
         return "already_held", "position already open"
     return None
 
@@ -302,6 +426,10 @@ class ExecutionContext:
     traded_today: Mapping[str, frozenset[Side]]
     universe: Universe
     limits: RiskLimits
+    position_values: Mapping[str, Decimal] = field(default_factory=dict)
+    sectors: Mapping[str, str] = field(default_factory=dict)
+    halt_reason: str | None = None
+    fallback_active: bool = False
 
 
 def check_sells(
@@ -347,20 +475,28 @@ def check_buys(
         ]
 
     room = buying_room(ctx.equity, ctx.cash, ctx.invested, limits)
-    target = cents_down(ctx.equity * limits.max_position_pct)
     count = ctx.orders_today
     positions = ctx.open_positions
     out: list[PlannedOrder] = []
+    sector_value: dict[str, Decimal] = {}
+    for s_, v in ctx.position_values.items():
+        sec = sector_of(s_, ctx.sectors)
+        sector_value[sec] = sector_value.get(sec, ZERO) + v
     for o in buys:
         sym = o.symbol
         live = live_prices.get(sym)
+        fallback_buy = ctx.fallback_active and sym == ctx.universe.benchmark
+        if ctx.halt_reason is not None and not fallback_buy:
+            rejections.append(_reject(sym, Side.BUY, "halted", ctx.halt_reason))
+            continue
         if not ctx.universe.is_listed(sym):
             rejections.append(_reject(sym, Side.BUY, "not_in_watchlist", "not on the watchlist"))
             continue
         if not ctx.universe.is_fractionable(sym):
             rejections.append(_reject(sym, Side.BUY, "not_fractionable", "broker asset flags"))
             continue
-        if sym in ctx.held:
+        topping_up = fallback_buy and sym in ctx.held
+        if sym in ctx.held and not topping_up:
             rejections.append(_reject(sym, Side.BUY, "already_held", "held at execution"))
             continue
         if round_trip_blocked(sym, Side.BUY, ctx.traded_today):
@@ -370,7 +506,7 @@ def check_buys(
             detail = "no live price" if live is None else f"ref {o.ref_price:.2f} live {live:.2f}"
             rejections.append(_reject(sym, Side.BUY, "price_sanity", detail))
             continue
-        if positions >= limits.max_positions:
+        if positions >= limits.max_positions and not topping_up:
             rejections.append(
                 _reject(sym, Side.BUY, "max_positions", f"limit {limits.max_positions}")
             )
@@ -378,14 +514,29 @@ def check_buys(
         if count >= limits.max_orders_per_day:
             rejections.append(_reject(sym, Side.BUY, "max_orders", "per-day order limit"))
             continue
+        cap_w = position_cap(sym, o.max_weight, ctx.universe.benchmark, ctx.fallback_active, limits)
+        already = ctx.position_values.get(sym, ZERO) if topping_up else ZERO
+        target = cents_down(max(ZERO, ctx.equity * cap_w - already))
+        sec = sector_of(sym, ctx.sectors)
+        sector_room = (
+            room
+            if fallback_buy or not ctx.sectors
+            else ctx.equity * limits.max_sector_pct - sector_value.get(sec, ZERO)
+        )
         planned = o.notional or ZERO
-        notional = cents_down(min(planned, target, room))
+        notional = cents_down(min(planned, target, room, sector_room))
         if notional < limits.min_order_usd:
-            reason = "insufficient_cash" if room < limits.min_order_usd else "min_order"
+            if room < limits.min_order_usd:
+                reason = "insufficient_cash"
+            elif sector_room < limits.min_order_usd:
+                reason = "sector_cap"
+            else:
+                reason = "min_order"
             rejections.append(_reject(sym, Side.BUY, reason, f"notional {notional}"))
             continue
         room -= notional
+        sector_value[sec] = sector_value.get(sec, ZERO) + notional
         count += 1
-        positions += 1
+        positions += 0 if topping_up else 1
         out.append(o.model_copy(update={"notional": notional}))
     return out, rejections
