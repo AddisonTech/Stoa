@@ -273,3 +273,26 @@ def test_force_decide_outside_window_uses_last_closed_session(tmp_path: Path, ba
     rt, _ = runtime(s, bars, PAPER, datetime(2021, 10, 13, 12, 0, tzinfo=UTC), sim(s, bars))
     res = jobs.decide(rt, force=True)
     assert res.code == 0 and res.session == DECIDE_DAY
+
+
+def test_milestone_alert_sent_from_decide_once(tmp_path: Path, bars: Bars) -> None:
+    s = settings_for(tmp_path)
+    store = StateStore(s.state.dir)
+    broker = sim(s, bars)
+    rt, rec = runtime(s, bars, PAPER, DECIDE_AT, broker)
+    jobs.decide(rt)
+    assert "Withdraw $100.00 now" not in rec.titles()
+    # Equity doubles; the next session's DECIDE sends the withdraw alert once.
+    broker.portfolio.cash = Decimal(210)
+    broker.portfolio.positions.clear()
+    nxt = datetime(2021, 10, 13, 22, 20, tzinfo=UTC)
+    rt2, rec2 = runtime(s, bars, PAPER, nxt, broker)
+    state = store.load()
+    state.pending_plan = None
+    state.positions_meta = {}
+    store.save(state)
+    jobs.decide(rt2)
+    assert rec2.titles().count("Withdraw $100.00 now") == 1
+    rt3, rec3 = runtime(s, bars, PAPER, datetime(2021, 10, 14, 22, 20, tzinfo=UTC), broker)
+    jobs.decide(rt3)
+    assert "Withdraw $100.00 now" not in rec3.titles()
