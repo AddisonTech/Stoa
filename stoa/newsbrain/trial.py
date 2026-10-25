@@ -232,10 +232,11 @@ def replay(
     sigs: list[event_signals.Signal],
     h: int,
     fills: Any,
+    name: str,
 ) -> dict[str, Replay]:
     out: dict[str, Replay] = {}
     for w, (start, end) in WINDOWS.items():
-        src = source(settings, bars, end, signals=sigs, name=f"news9_h{h}")
+        src = source(settings, bars, end, signals=sigs, name=name)
         assert src.window_bars is not None
         res = run_backtest(
             settings,
@@ -277,7 +278,10 @@ class EntryPrices:
         self.cache = cache
         self.cache.mkdir(parents=True, exist_ok=True)
 
-    def __call__(self, day: date, symbols: set[str]) -> dict[str, Decimal]:
+    def __call__(self, day: date, buys: set[str], others: set[str]) -> dict[str, Decimal]:
+        return self.at_945(day, buys | others)
+
+    def at_945(self, day: date, symbols: set[str]) -> dict[str, Decimal]:
         from stoa.newsbrain.alpaca_pull import get
 
         path = self.cache / f"{day.isoformat()}.parquet"
@@ -482,13 +486,25 @@ def run_trial(
     registry: Registry,
     out: Path,
     trial: int = 9,
+    frozen_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """The whole trial. Walk-forward and freezing finish before any 2023 row is scored."""
+    """The whole trial. Walk-forward and freezing finish before any 2023 row is scored.
+
+    Trial 10 passes ``frozen_dir`` (trial 9's folder): the same frozen models and
+    walk-forward, nothing refit, only the entry fill changes.
+    """
     for h in HORIZONS:
         register_kind(h)
-    wf = {h: walk_forward(rows, days, h) for h in HORIZONS}
-    frozen = {h: freeze(rows, days, h, out) for h in HORIZONS}
-    (out / "walkforward.json").write_text(json.dumps(wf, indent=1, default=str), encoding="utf-8")
+    out.mkdir(parents=True, exist_ok=True)
+    if frozen_dir is None:
+        wf = {h: walk_forward(rows, days, h) for h in HORIZONS}
+        frozen = {h: freeze(rows, days, h, out) for h in HORIZONS}
+        (out / "walkforward.json").write_text(
+            json.dumps(wf, indent=1, default=str), encoding="utf-8"
+        )
+    else:
+        frozen = {h: pickle.loads((frozen_dir / f"model_h{h}.pkl").read_bytes()) for h in HORIZONS}
+        wf = json.loads((frozen_dir / "walkforward.json").read_text(encoding="utf-8"))
     log.info("frozen; replaying the test window")
 
     test = rows[(rows["session"] >= TEST_START) & (rows["session"] <= TEST_END)]
@@ -499,7 +515,7 @@ def run_trial(
     for h in HORIZONS:
         p = frozen[h].predict(test)
         sigs = signals_for(test, p, h)
-        runs[h] = replay(settings, bars, sigs, h, fills)
+        runs[h] = replay(settings, bars, sigs, h, fills, name=f"news{trial}_h{h}")
         trades[h] = trade_table(runs[h]["test"].result, bars["SPY"], adv)
     base = baselines(settings, bars)
     deflated = log_trials(registry, runs, trial)

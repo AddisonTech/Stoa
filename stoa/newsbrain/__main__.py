@@ -1,6 +1,6 @@
 """Run one background job: ``python -m stoa.newsbrain <job>``.
 
-Jobs: news, minute, sec, score, panel, trial9, coverage. Each logs to data/newsbrain/logs/
+Jobs: news, minute, sec, score, panel, trial9, trial10, coverage. Each logs to data/newsbrain/logs/
 and can be stopped and restarted at any time.
 """
 
@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import sys
 from datetime import date
+from typing import Any
 
 from stoa.newsbrain import ROOT
 
@@ -17,8 +18,8 @@ START_MINUTE = date(2016, 1, 1)
 END = date(2026, 10, 23)  # the last full session before the pulls began
 
 
-def run_trial9() -> None:
-    """Trial 9 end to end. Needs the panel and the Alpaca keys (for the 9:45 am prices)."""
+def run_trial9(trial: int = 9) -> None:
+    """Trial 9 (or 10) end to end. Needs the panel and the Alpaca keys (9:45 am prices)."""
     import json
     from pathlib import Path
 
@@ -34,9 +35,23 @@ def run_trial9() -> None:
     settings = load_settings(Path("config/default.yaml"))
     rows = pd.read_parquet(PANEL)
     days, _ = calendar(PANEL_START, PANEL_END)
-    fills = EntryPrices(client_from_env(), Pace("entry", 60, LIMITS), ROOT / "entry")
+    entry = EntryPrices(client_from_env(), Pace("entry", 60, LIMITS), ROOT / "entry")
+    fills: Any = entry
+    frozen_dir = None
+    if trial == 10:
+        from stoa.newsbrain.timing import CoolOffPrices, MinuteStore
+
+        fills = CoolOffPrices(MinuteStore(), entry.at_945)
+        frozen_dir = ROOT / "trial9"
     report = run_trial(
-        settings, rows, days, fills, Registry(settings.registry_path), ROOT / "trial9"
+        settings,
+        rows,
+        days,
+        fills,
+        Registry(settings.registry_path),
+        ROOT / f"trial{trial}",
+        trial=trial,
+        frozen_dir=frozen_dir,
     )
     print(json.dumps({"passed": report["passed"], "checks": report["checks"]}, indent=1))
 
@@ -72,6 +87,8 @@ def main(argv: list[str]) -> int:
         build(PANEL_START, PANEL_END, out=PANEL)
     elif job == "trial9":
         run_trial9()
+    elif job == "trial10":
+        run_trial9(10)
     elif job == "coverage":
         from stoa.newsbrain.coverage import report
 

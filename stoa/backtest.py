@@ -26,7 +26,7 @@ from stoa.config import Settings
 from stoa.data.base import Bars, DataError
 from stoa.features import build_features, cell, slice_features
 from stoa.journal import Journal, hash_obj
-from stoa.models import ClosedTrade, Fill, Holding, PositionMeta, dec
+from stoa.models import ClosedTrade, Fill, Holding, PositionMeta, Side, dec
 from stoa.planner import Decision, DecisionInput, Strategy, make_plan
 from stoa.portfolio import Portfolio
 from stoa.risk import next_high_water_mark
@@ -84,14 +84,14 @@ def run_backtest(
     universe: Universe | None = None,
     journal: Journal | None = None,
     slippage: Slippage | None = None,
-    fill_prices: Callable[[date, set[str]], dict[str, Decimal]] | None = None,
+    fill_prices: Callable[[date, set[str], set[str]], dict[str, Decimal]] | None = None,
 ) -> BacktestResult:
     """Run ``strategy`` over the sessions from ``start`` to ``end``.
 
-    ``fill_prices`` replaces the open as the fill price: it gets the session and
-    the symbols that may trade (planned orders and holdings) and returns a
-    price for those it knows (the 9:45 am price in the news trials). Symbols it
-    leaves out fill at the open.
+    ``fill_prices`` replaces the open as the fill price: it gets the session, the
+    planned buys and the other symbols that may trade (holdings, planned sells)
+    and returns a price for those it knows (the 9:45 am price in the news
+    trials). Symbols it leaves out fill at the open.
     """
     bench = settings.benchmark
     if bench not in bars:
@@ -199,8 +199,9 @@ def run_backtest(
                 state.positions_meta = {k: v for k, v in state.positions_meta.items() if k != sym}
         fills = _prices(bars, ts, "open")
         if fill_prices is not None and pending is not None:
-            wanted = {o.symbol for o in pending.orders} | set(portfolio.positions)
-            fills.update(fill_prices(day, wanted))
+            buys = {o.symbol for o in pending.orders if o.side is Side.BUY}
+            others = {o.symbol for o in pending.orders if o.side is not Side.BUY}
+            fills.update(fill_prices(day, buys, others | set(portfolio.positions)))
         broker.begin_session(day, fills)
         due = pending is not None and (
             pending.orders or (strategy.risk_managed and portfolio.positions)

@@ -202,7 +202,46 @@ def test_entry_prices_take_the_first_bar_at_or_after_945_and_cache(tmp_path: Pat
 
     ep = trial.EntryPrices(Client(), Pace(), tmp_path)
     day = date(2025, 3, 10)
-    got = ep(day, {"AAA", "BBB"})
+    got = ep(day, {"AAA"}, {"BBB"})
     assert {k: float(v) for k, v in got.items()} == {"AAA": 10.5}
     assert calls[0]["start"] == "2025-03-10T13:45:00Z"  # 9:45 am New York
-    assert ep(day, {"AAA"}) == got and len(calls) == 1  # cached
+    assert ep(day, {"AAA"}, set()) == got and len(calls) == 1  # cached
+
+
+def minute_bars(day: date, path: list[float]) -> pd.DataFrame:
+    """One bar a minute from 9:30 am New York with the given closes (open = previous close)."""
+    start = pd.Timestamp(clock.session(day).open)
+    t = [start + pd.Timedelta(minutes=i) for i in range(len(path))]
+    opens = [path[0], *path[:-1]]
+    return pd.DataFrame({"t": t, "o": opens, "c": path})
+
+
+def test_cool_off_waits_for_the_spike_to_settle() -> None:
+    from stoa.newsbrain.timing import cool_off_price
+
+    day = date(2025, 3, 10)
+    spike = [10.0 * (1.01**i) for i in range(10)]  # 9:30 to 9:39: 1% a minute
+    flat = [spike[-1]] * 120
+    # Settled well before 9:45, so the buy fills at the 9:45 open.
+    assert cool_off_price(minute_bars(day, spike + flat), day) == pytest.approx(spike[-1])
+    # Still running until 10:09: the first settled close is later.
+    longer = [10.0 * (1.01**i) for i in range(40)] + [10.0 * 1.01**39] * 90
+    px = cool_off_price(minute_bars(day, longer), day)
+    assert px == pytest.approx(10.0 * 1.01**39)
+    # A steady climb never cools: the buy fills at 11:00.
+    steady = [10.0 * (1.002**i) for i in range(150)]
+    bars = minute_bars(day, steady)
+    at_11 = bars[bars["t"] >= pd.Timestamp(clock.at_ny(day, "11:00"))]["o"].iloc[0]
+    assert cool_off_price(bars, day) == pytest.approx(at_11)
+
+
+def test_cool_off_never_uses_a_bar_before_it_closes() -> None:
+    from stoa.newsbrain.timing import cool_off_price
+
+    day = date(2025, 3, 10)
+    path = [10.0 * (1.01**i) for i in range(15)] + [10.0 * 1.01**14] * 100
+    bars = minute_bars(day, path)
+    px = cool_off_price(bars, day)
+    entry = bars[bars["o"] == px]["t"].iloc[0]
+    # The 9:44 bar is the first settled one (r5 0 vs a 5% peak); it closes at 9:45.
+    assert entry >= pd.Timestamp(clock.at_ny(day, "09:45"))
