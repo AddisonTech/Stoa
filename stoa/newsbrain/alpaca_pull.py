@@ -230,9 +230,11 @@ def groups_for(month_rows: pd.DataFrame) -> list[list[str]]:
 
 
 def iter_bar_pages(
-    client: httpx.Client, pace: Pace, symbols: list[str], m: date
+    client: httpx.Client, pace: Pace, symbols: list[str], m: date, end: date
 ) -> Iterator[dict[str, list[dict[str, Any]]]]:
-    last = month_end(m)
+    # The free plan refuses SIP queries that reach the last 15 minutes, so the
+    # window never runs past the last full session.
+    last = min(month_end(m), end)
     params: dict[str, Any] = {
         "symbols": ",".join(symbols),
         "timeframe": "1Min",
@@ -286,7 +288,7 @@ def pull_minutes(start: date, end: date) -> None:
             path = MINUTE_DIR / stamp / f"g{gi:04d}.parquet"
             if path.exists():
                 continue
-            df = frame_of(list(iter_bar_pages(client, pace, group, m)))
+            df = frame_of(list(iter_bar_pages(client, pace, group, m, end)))
             write_parquet(df, path)
             bars += len(df)
         log_progress(progress, month=stamp, symbols=len(rows), groups=len(groups), bars=bars)

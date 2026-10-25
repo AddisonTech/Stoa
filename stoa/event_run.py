@@ -182,11 +182,20 @@ def load_signals(end: date) -> list[event_signals.Signal]:
     return out
 
 
-def source(settings: Settings, base_bars: Bars, end: date) -> ModelSource:
+def source(
+    settings: Settings,
+    base_bars: Bars,
+    end: date,
+    *,
+    signals: list[event_signals.Signal] | None = None,
+    name: str = "event",
+) -> ModelSource:
+    """The event strategy on the wide universe: trial 8's signals, or the ones given."""
     s = settings
     cache = BarCache(s.data.cache_dir, wide.WIDE_NAMESPACE)
     cands = wide.candidates(wide.load_assets(cache.dir / "_assets.json"))
-    signals = [x for x in load_signals(end) if x.symbol in cands]
+    given = signals if signals is not None else load_signals(end)
+    signals = [x for x in given if x.symbol in cands]
     by_day = event_signals.by_session(signals)
     symbols = sorted({x.symbol for x in signals})
     sics: dict[str, Any] = json.loads((events_dir() / "sic.json").read_text(encoding="utf-8"))
@@ -224,6 +233,7 @@ def source(settings: Settings, base_bars: Bars, end: date) -> ModelSource:
         signals=by_day,
         earnings=EarningsCalendar(table if len(table) else empty_calendar()),
         sectors={k: sector_of_sic(sics.get(k)) for k in symbols},
+        name=name,
     )
     assets = {
         k: AssetInfo(k, tradable=True, fractionable=bool(cands[k]["fractionable"])) for k in symbols
@@ -242,7 +252,7 @@ def source(settings: Settings, base_bars: Bars, end: date) -> ModelSource:
         strategy=strategy,
         bars=base_bars,
         universe=universe,
-        name="event",
+        name=name,
         slippage=slip,
         window_bars=window_bars,
     )

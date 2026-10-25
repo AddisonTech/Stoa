@@ -13,6 +13,7 @@ every strategy starts the window with the same cash and the same first fill day.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
@@ -83,7 +84,15 @@ def run_backtest(
     universe: Universe | None = None,
     journal: Journal | None = None,
     slippage: Slippage | None = None,
+    fill_prices: Callable[[date, set[str]], dict[str, Decimal]] | None = None,
 ) -> BacktestResult:
+    """Run ``strategy`` over the sessions from ``start`` to ``end``.
+
+    ``fill_prices`` replaces the open as the fill price: it gets the session and
+    the symbols that may trade (planned orders and holdings) and returns a
+    price for those it knows (the 9:45 am price in the news trials). Symbols it
+    leaves out fill at the open.
+    """
     bench = settings.benchmark
     if bench not in bars:
         raise DataError(f"benchmark {bench} missing")
@@ -188,7 +197,11 @@ def run_backtest(
                 last = last_bar[sym]
                 broker.force_close(sym, dec(cell(df, last, "close")), day, "delisted")
                 state.positions_meta = {k: v for k, v in state.positions_meta.items() if k != sym}
-        broker.begin_session(day, _prices(bars, ts, "open"))
+        fills = _prices(bars, ts, "open")
+        if fill_prices is not None and pending is not None:
+            wanted = {o.symbol for o in pending.orders} | set(portfolio.positions)
+            fills.update(fill_prices(day, wanted))
+        broker.begin_session(day, fills)
         due = pending is not None and (
             pending.orders or (strategy.risk_managed and portfolio.positions)
         )
