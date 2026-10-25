@@ -362,3 +362,43 @@ def test_day_summary_shows_today_per_position_and_spy(tmp_path: Path, bars: Bars
     for sym in bought:
         assert f"{sym} " in today and "bought today at $" in today
     assert not [a for a in rec.alerts if a.title.startswith(("BUY ", "SELL "))]
+
+
+# ---- the public trade log -------------------------------------------------------------------
+
+
+def test_trade_log_lists_picks_fills_and_skips(tmp_path: Path, bars: Bars) -> None:
+    from stoa import dashboard
+    from stoa.journal import read_journal
+
+    s, broker, plan = decided(tmp_path, bars)
+    rt, _ = rt_for(s, bars, broker, SWEEP_AT, news_client=FakeNews([]))
+    jobs.sweep_job(rt)
+    state = StateStore(s.state.dir).load()
+    assert state.approval_nonce is not None
+    topic = Topic()
+    first = plan.orders[0].symbol
+    topic.tap("approve", plan, first, state.approval_nonce, SWEEP_AT + timedelta(minutes=5))
+    broker.begin_session(EXEC_DAY, prices(bars, EXEC_DAY, "open"))
+    rt2, _ = rt_for(s, bars, broker, EXEC_AT, approvals=topic)
+    jobs.execute(rt2)
+
+    rows = dashboard.trade_log(
+        read_journal(s.state.dir / "journal"), StateStore(s.state.dir).load()
+    )
+    kinds = {(r["kind"], r["symbol"]) for r in rows}
+    assert {("pick", o.symbol) for o in plan.orders} <= kinds
+    assert ("filled", first) in kinds
+    skipped = [r for r in rows if r["kind"] == "skipped"]
+    assert len(skipped) == len(plan.orders) - 1
+    assert all("not approved" in r["reason"] for r in skipped)
+    filled = next(r for r in rows if r["kind"] == "filled")
+    assert filled["side"] == "buy" and " sh at $" in filled["size"]
+    assert all(r["date"] == EXEC_DAY.isoformat() for r in rows)
+
+
+def test_trade_log_empty_state_renders(tmp_path: Path) -> None:
+    from stoa import dashboard
+
+    html_text = dashboard.render_trades({"trades": []})
+    assert "No trades yet" in html_text

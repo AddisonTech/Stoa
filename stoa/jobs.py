@@ -567,6 +567,14 @@ def _book_broker(
         state.track.cost_drag += rec.cost
         for t in rec.trades:
             state.add_realized(t.exit_session.year, t.pnl)
+        if rec.trades:
+            rt.journal.write(
+                rt.now(),
+                "decide",
+                session,
+                "stop_outs",
+                closed=[t.model_dump(mode="json") for t in rec.trades],
+            )
         notes += [
             f"Stopped out of {o.symbol} at {alerts.money(o.fill_price)}" for o in rec.stop_outs
         ]
@@ -1166,6 +1174,7 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         unfilled=[f.status.model_dump(mode="json") for f in report.unfilled],
         rejections=[r.model_dump(mode="json") for r in report.rejections],
         flattened=report.flattened,
+        closed=[t.model_dump(mode="json") for t in closed],
     )
     for f in report.fills:
         st = f.status

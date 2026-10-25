@@ -11,7 +11,7 @@ Files read, relative to the state directory (``state.dir``) and the shared
 directory (``state.shared_dir``, the same as the state directory when unset):
 
 - ``<state>/state.json``             equity history, positions, stops, kill switch
-- ``<state>/journal/*.jsonl``        decisions and the reasoning recorded with them
+- ``<state>/journal/*.jsonl``        decisions, picks, fills and closed trades (the trade log)
 - ``<state>/healthcheck.json``       whether the last dead man's switch ping went out
 - ``<shared>/exam/walkforward.json`` walk-forward result for the exam
 - ``<shared>/results/*-model/calibration.json``  the latest model report
@@ -38,6 +38,7 @@ from stoa.journal import read_journal
 from stoa.state import State, StateStore
 
 DECISIONS_SHOWN = 20
+TRADES_SHOWN = 250
 CHECKIN_FILE = "healthcheck.json"
 HIDDEN = "[hidden]"
 
@@ -189,6 +190,123 @@ def decisions(records: list[dict[str, Any]], limit: int = DECISIONS_SHOWN) -> li
     return ordered[:limit]
 
 
+def _size(notional: Any, qty: Any, price: Any = None) -> str:
+    n, q, p = _num(notional), _num(qty), _num(price)
+    if q is not None and p is not None:
+        return f"{q:g} sh at {_money(p)} = {_money(q * p)}"
+    if n is not None:
+        return _money(n)
+    return f"{q:g} sh" if q is not None else ""
+
+
+def _row(
+    session: Any,
+    kind: str,
+    symbol: Any,
+    side: Any,
+    size: str,
+    reason: str,
+    pnl: float | None = None,
+) -> dict[str, Any]:
+    return {
+        "date": str(session or ""),
+        "kind": kind,
+        "symbol": str(symbol or ""),
+        "side": str(side or "").lower(),
+        "size": size,
+        "reason": reason,
+        "pnl": pnl,
+    }
+
+
+def trade_log(
+    records: list[dict[str, Any]], state: State, limit: int = TRADES_SHOWN
+) -> list[dict[str, Any]]:
+    """Every decision and fill, newest first: picks, drops, fills, skips and closed trades.
+
+    Picks are the final morning picks from the sweep (the evening plan when no
+    sweep ran). P&L is realized on closed trades and unrealized, at the last
+    close, on buys still held.
+    """
+    rows: list[dict[str, Any]] = []
+    swept = {r.get("session") for r in records if r.get("job") == "sweep"}
+    held = state.holdings_at_close
+    for rec in records:
+        job, step, data = rec.get("job"), rec.get("step"), rec.get("data") or {}
+        session = rec.get("session")
+        if job == "sweep" and step == "sweep":
+            plan = data.get("plan") or {}
+            for o in _orders(plan):
+                why = o["thesis"] or o["reason"].replace("_", " ")
+                rows.append(
+                    _row(
+                        session, "pick", o["symbol"], o["side"], _size(o["notional"], o["qty"]), why
+                    )
+                )
+            for sym in data.get("dropped") or []:
+                tone = (data.get("tones") or {}).get(sym) or {}
+                why = f"dropped on overnight news: {tone.get('worst', '')}".strip()
+                rows.append(_row(session, "dropped", sym, "buy", "", why))
+        elif job == "decide" and step == "plan":
+            plan = data.get("plan") or {}
+            execute_on = plan.get("execute_session")
+            if execute_on in swept:
+                continue
+            for o in _orders(plan):
+                why = o["thesis"] or o["reason"].replace("_", " ")
+                rows.append(
+                    _row(
+                        execute_on,
+                        "pick",
+                        o["symbol"],
+                        o["side"],
+                        _size(o["notional"], o["qty"]),
+                        why,
+                    )
+                )
+        elif job == "execute" and step == "execution":
+            for f in data.get("fills") or []:
+                sym = f.get("symbol")
+                pnl = None
+                h = held.get(str(sym))
+                meta = state.positions_meta.get(str(sym))
+                price = _num(f.get("filled_avg_price"))
+                if str(f.get("side")) == "buy" and h is not None and meta is not None and price:
+                    pnl = float(h.qty) * (float(h.close) - price)
+                rows.append(
+                    _row(
+                        session,
+                        "filled",
+                        sym,
+                        f.get("side"),
+                        _size(None, f.get("filled_qty"), f.get("filled_avg_price")),
+                        "open position" if pnl is not None else "",
+                        pnl,
+                    )
+                )
+            for r in data.get("rejections") or []:
+                why = f"{str(r.get('reason', '')).replace('_', ' ')}: {r.get('detail', '')}"
+                rows.append(_row(session, "skipped", r.get("symbol"), r.get("side"), "", why))
+        if step in ("execution", "stop_outs"):
+            for t in data.get("closed") or []:
+                qty, entry, exit_ = (_num(t.get(k)) for k in ("qty", "entry_price", "exit_price"))
+                rows.append(
+                    _row(
+                        t.get("exit_session") or session,
+                        "closed",
+                        t.get("symbol"),
+                        "sell",
+                        _size(None, qty, exit_),
+                        f"{str(t.get('reason', '')).replace('_', ' ')}, bought "
+                        f"{t.get('entry_session', '')} at {_money(entry)}",
+                        _num(t.get("pnl")),
+                    )
+                )
+    order = {"pick": 0, "dropped": 1, "skipped": 2, "filled": 3, "closed": 4}
+    rows.sort(key=lambda r: (r["date"], order.get(r["kind"], 9)), reverse=True)
+    return rows[:limit]
+
+
 def last_run(records: list[dict[str, Any]]) -> dict[str, Any] | None:
     stamped = [r for r in records if r.get("ts")]
     if not stamped:
@@ -301,6 +419,7 @@ def collect(
             for s in reversed(state.stop_outs[-10:])
         ],
         "decisions": decisions(records),
+        "trades": trade_log(records, state),
         "exam": exam_progress(settings, repo),
         "calibration": calibration(latest_model_report(results or settings.shared_dir / "results")),
         "last_run": last_run(records),
@@ -628,6 +747,34 @@ def render_decisions(data: dict[str, Any]) -> str:
     return "".join(out)
 
 
+def render_trades(data: dict[str, Any]) -> str:
+    rows = data.get("trades") or []
+    if not rows:
+        return _empty(
+            "No trades yet. Every morning pick, fill, skip and closed trade will be listed "
+            "here, with its size, its reason and its profit or loss, from the next runs on."
+        )
+    labels = ("Date", "What", "Symbol", "Side", "Size", "Reason", "P&L")
+    body = ""
+    for r in rows:
+        pnl = _money(r["pnl"]) if r["pnl"] is not None else ""
+        cells = (r["date"], r["kind"], r["symbol"], r["side"], r["size"], r["reason"], pnl)
+        body += (
+            "<tr>"
+            + "".join(
+                f'<td data-label="{_e(k)}">{_e(v)}</td>' for k, v in zip(labels, cells, strict=True)
+            )
+            + "</tr>"
+        )
+    head = "".join(f"<th>{_e(k)}</th>" for k in labels)
+    return (
+        f'<table class="stack"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>'
+        '<p class="muted small">Picks are the 9:00 am picks; buys need a tap to be placed. '
+        "P&amp;L is realized on closed trades and at the last close on positions still held. "
+        "Paper money.</p>"
+    )
+
+
 def render_exam(data: dict[str, Any]) -> str:
     x = data["exam"]
     holdout_text = (
@@ -852,6 +999,7 @@ def render(data: dict[str, Any]) -> str:
         f'<section class="card"><h2>Exam progress toward live</h2>{render_exam(data)}</section>'
         f'<section class="card"><h2>Runs and checks</h2>{render_health(data)}</section>'
         "</div>"
+        f'<section class="card"><h2>Trade log</h2>{render_trades(data)}</section>'
         f'<section class="card"><h2>Last {DECISIONS_SHOWN} decisions</h2>'
         f"{render_decisions(data)}</section>"
         f'<section class="card"><h2>Model calibration</h2>{render_calibration(data)}</section>'
