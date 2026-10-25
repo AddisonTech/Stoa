@@ -48,6 +48,9 @@ class Plan(BaseModel):
     orders: tuple[PlannedOrder, ...]
     equity_at_decide: Decimal
     kill_switch: bool = False
+    # Buys the rules passed but had no slot for. The morning sweep may add one on
+    # strong overnight news; EXECUTE re-checks and resizes it like any buy.
+    reserves: tuple[PlannedOrder, ...] = ()
 
 
 class OpenOrder(BaseModel):
@@ -144,6 +147,7 @@ class State(BaseModel):
     last_benchmark_close: Decimal | None = None  # adjusted close at last_close_session
     decided_sessions: list[date] = Field(default_factory=list)
     executed_sessions: list[date] = Field(default_factory=list)
+    swept_sessions: list[date] = Field(default_factory=list)
     pending_plan: Plan | None = None
     positions_meta: dict[str, PositionMeta] = Field(default_factory=dict)
     realized_by_year: dict[str, Decimal] = Field(default_factory=dict)
@@ -177,6 +181,9 @@ class State(BaseModel):
 
     def mark_executed(self, session: date) -> None:
         self.executed_sessions = _push(self.executed_sessions, session)
+
+    def mark_swept(self, session: date) -> None:
+        self.swept_sessions = _push(self.swept_sessions, session)
 
     def add_trades(self, trades: list[ClosedTrade]) -> None:
         self.recent_trades = [*self.recent_trades, *trades][-RECENT_TRADES:]

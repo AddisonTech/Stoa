@@ -173,8 +173,11 @@ def shares(qty: Decimal) -> str:
     return text or "0"
 
 
-def signal_alert(order: PlannedOrder, equity: Decimal, mode: str) -> Alert:
-    when = "at the open" if mode != "signal" else "at the open (you place it)"
+def signal_alert(
+    order: PlannedOrder, equity: Decimal, mode: str, when: str = "at the open"
+) -> Alert:
+    if mode == "signal":
+        when = f"{when} (you place it)"
     if order.side is Side.BUY:
         assert order.notional is not None
         share = float(order.notional / equity) if equity > 0 else 0.0
@@ -328,27 +331,37 @@ class Summary:
     tax_reserve: Decimal
     kill_switch: bool
     notes: Sequence[str] = ()
+    spy_day: float | None = None  # SPY's change today, shown beside the account's
+    day_lines: Sequence[str] = ()  # how each position and today's buys did today
+    next_line: str | None = None  # replaces the list of planned orders
 
 
 def daily_summary_alert(s: Summary) -> Alert:
-    lines = [
-        f"Equity {money(s.equity)}"
-        + (f" ({pct(s.day_change)} today)" if s.day_change is not None else "")
-    ]
+    today = ""
+    if s.day_change is not None and s.spy_day is not None:
+        today = f" ({pct(s.day_change)} today, SPY {pct(s.spy_day)})"
+    elif s.day_change is not None:
+        today = f" ({pct(s.day_change)} today)"
+    lines = [f"Equity {money(s.equity)}{today}"]
     if s.since_start is not None and s.spy_since_start is not None:
         edge = s.since_start - s.spy_since_start
         lines.append(
             f"Since start {pct(s.since_start)} vs SPY {pct(s.spy_since_start)} ({pct(edge)})"
         )
-    if s.positions:
+    if s.day_lines:
+        lines.extend(s.day_lines)
+    elif s.positions:
         held = ", ".join(f"{p.symbol} {money(p.value)} {pct(p.gain)}" for p in s.positions)
         lines.append(f"Holding: {held}")
     else:
         lines.append("Holding: nothing")
     lines.append(f"Cash {money(s.cash)}")
-    lines.append(
-        "Next: " + ("; ".join(s.next_actions) if s.next_actions else "no trades at the open")
-    )
+    if s.next_line is not None:
+        lines.append(s.next_line)
+    else:
+        lines.append(
+            "Next: " + ("; ".join(s.next_actions) if s.next_actions else "no trades at the open")
+        )
     lines.append(f"API spend {money(s.api_spend)} of {money(s.api_cap)} this month")
     lines.append(
         f"Realized short-term gains this year {money(s.realized_ytd)}, "

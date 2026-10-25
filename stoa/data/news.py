@@ -46,6 +46,7 @@ NEWS_COLUMNS = (
     "content",
     "source",
     "kind",
+    "n_symbols",
 )
 _TAG = re.compile(r"<[^>]+>")
 _SPACE = re.compile(r"\s+")
@@ -74,7 +75,8 @@ def parse_articles(rows: list[dict[str, Any]], wanted: set[str]) -> list[dict[st
         if created is None or updated is None:
             continue
         known = max(created, updated)
-        for sym in a.get("symbols") or []:
+        tagged = a.get("symbols") or []
+        for sym in tagged:
             s = str(sym).upper()
             if s not in wanted:
                 continue
@@ -89,6 +91,7 @@ def parse_articles(rows: list[dict[str, Any]], wanted: set[str]) -> list[dict[st
                     "content": clean_text(str(a.get("content", ""))),
                     "source": str(a.get("source", "")),
                     "kind": "news",
+                    "n_symbols": len(tagged),
                 }
             )
     return out

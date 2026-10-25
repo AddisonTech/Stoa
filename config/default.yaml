@@ -97,10 +97,13 @@ costs:
   min_sell_fee_usd: "0.01"         # brokers round regulatory fees up to the next cent
 
 job_windows:
-  decide_after_close_minutes: 30
+  decide_after_close_minutes: 30   # DECIDE (5:15 pm cron): day summary, then a quiet plan
   decide_end: "23:59"
-  execute_after_open_minutes: 15
+  execute_after_open_minutes: 15   # EXECUTE at 9:45 am
   execute_window_minutes: 120
+  sweep_start: "08:50"             # the morning sweep may start from here (New York time)
+  news_cutoff: "09:00"             # news published up to here counts for today's picks
+  approval_deadline: "09:40"       # taps after this are ignored
 
 backtest:
   starting_equity: "100"
@@ -249,11 +252,26 @@ sources:
   reference_symbols: [MTUM]
 
 approval:
-  mode: auto                       # auto (live, first 30 days), always (test on paper), never
+  mode: auto                       # sells: auto (live, first 30 days), always, never
+  buys: always                     # every buy needs a tap on the 9:00 am pick alert
   live_days: 30
   wait_minutes: 5                  # EXECUTE keeps polling this long for missing answers
   poll_interval_seconds: 30
   exempt_reasons: [kill_switch]    # never wait for a tap to flatten
+
+sweep:
+  enabled: true
+  model: ProsusAI/finbert          # read on CPU in GitHub Actions; no paid API
+  revision: 0bc2ac10dda6929bcb1f77ccc43c7ec5c424f031
+  batch_size: 16
+  max_length: 128
+  max_articles_per_symbol: 20
+  max_symbols_per_article: 3       # roundups that tag more tickers are not read
+  drop_negative: 0.80              # drop a planned buy on an article this negative ...
+  drop_net: -0.30                  # ... when the night's mean tone is at or below this
+  add_positive: 0.90               # add a reserve on an article this positive ...
+  add_net: 0.50                    # ... when the night's mean tone is at or above this
+  max_adds: 1
 
 crosscheck:
   enabled: true

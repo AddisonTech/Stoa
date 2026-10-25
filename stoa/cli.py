@@ -19,6 +19,7 @@ from stoa.config import Secrets, Settings, load_settings
 from stoa.jobs import EXIT_OK, Runtime, live_lock_problems
 from stoa.jobs import decide as run_decide
 from stoa.jobs import execute as run_execute
+from stoa.jobs import sweep_job as run_sweep
 from stoa.state import StateStore
 
 log = logging.getLogger("stoa")
@@ -396,6 +397,14 @@ def decide(ctx: Ctx, force: bool) -> None:
 def execute(ctx: Ctx, force: bool) -> None:
     """After the open: submit last night's plan."""
     sys.exit(run_execute(runtime(ctx), force=force).code)
+
+
+@main.command()
+@click.option("--force", is_flag=True, help="Run outside the window or again for the same session.")
+@pass_ctx
+def sweep(ctx: Ctx, force: bool) -> None:
+    """Before the open: read the overnight news, then send the picks to approve."""
+    sys.exit(run_sweep(runtime(ctx), force=force).code)
 
 
 @main.command()

@@ -153,13 +153,18 @@ class JobWindows(_Frozen):
     decide_end: str = "23:59"
     execute_after_open_minutes: int = Field(default=15, ge=0)
     execute_window_minutes: int = Field(default=120, ge=1)
+    # The morning sweep (New York time): it may start from sweep_start, reads news
+    # published up to news_cutoff, and taps count until approval_deadline.
+    sweep_start: str = "08:50"
+    news_cutoff: str = "09:00"
+    approval_deadline: str = "09:40"
 
-    @field_validator("decide_end")
+    @field_validator("decide_end", "sweep_start", "news_cutoff", "approval_deadline")
     @classmethod
     def _hhmm(cls, v: str) -> str:
         hh, mm = v.split(":")
         if not (0 <= int(hh) <= 23 and 0 <= int(mm) <= 59):
-            raise ValueError("decide_end must be HH:MM")
+            raise ValueError("job window times must be HH:MM")
         return v
 
 
@@ -403,10 +408,34 @@ class DataSourcesConfig(_Frozen):
 
 class ApprovalConfig(_Frozen):
     mode: Literal["auto", "always", "never"] = "auto"
+    # Buys need a tap on the morning pick alert in paper and live, whatever ``mode``
+    # says. Sells (rule exits) follow ``mode``; the kill switch never waits.
+    buys: Literal["always", "mode"] = "always"
     live_days: int = Field(default=30, ge=0)
     wait_minutes: float = Field(default=5.0, ge=0, le=20)
     poll_interval_seconds: float = Field(default=30.0, gt=0)
     exempt_reasons: tuple[str, ...] = ("kill_switch",)
+
+
+class SweepConfig(_Frozen):
+    """The 9:00 am overnight news sweep, read by FinBERT on CPU."""
+
+    enabled: bool = True
+    model: str = "ProsusAI/finbert"
+    revision: str = "0bc2ac10dda6929bcb1f77ccc43c7ec5c424f031"
+    batch_size: int = Field(default=16, ge=1)
+    max_length: int = Field(default=128, ge=16, le=512)
+    max_articles_per_symbol: int = Field(default=20, ge=1)
+    max_symbols_per_article: int = Field(default=3, ge=1)
+    # Drop a planned buy: an overnight article at least this negative and a mean
+    # net tone (positive minus negative) at or below drop_net.
+    drop_negative: float = Field(default=0.80, gt=0, le=1)
+    drop_net: float = Field(default=-0.30, ge=-1, le=0)
+    # Add a reserve pick: an article at least this positive and a mean net tone at
+    # or above add_net. Only into a free slot, only names the rules already passed.
+    add_positive: float = Field(default=0.90, gt=0, le=1)
+    add_net: float = Field(default=0.50, ge=0, le=1)
+    max_adds: int = Field(default=1, ge=0)
 
 
 class CrossCheckConfig(_Frozen):
@@ -468,6 +497,7 @@ class Settings(_Frozen):
     budget: BudgetConfig = BudgetConfig()
     sources: DataSourcesConfig = DataSourcesConfig()
     approval: ApprovalConfig = ApprovalConfig()
+    sweep: SweepConfig = SweepConfig()
     crosscheck: CrossCheckConfig = CrossCheckConfig()
     healthcheck: HealthcheckConfig = HealthcheckConfig()
     fallback: FallbackConfig = FallbackConfig()

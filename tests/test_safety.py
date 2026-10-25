@@ -20,6 +20,7 @@ from stoa.broker.sim import SimBroker
 from stoa.config import CostConfig, CrossCheckConfig, ExamConfig, FallbackConfig, Secrets
 from stoa.crosscheck import check_prices, compare
 from stoa.data.base import Bars
+from stoa.data.news import NEWS_COLUMNS
 from stoa.features import cell
 from stoa.healthcheck import HealthcheckPinger, safe_ping
 from stoa.models import PlannedOrder, Side, dec
@@ -352,6 +353,7 @@ def test_expectation_bands_from_oos_returns() -> None:
 
 DECIDE_AT = datetime(2021, 10, 12, 22, 20, tzinfo=UTC)
 EXEC_AT = datetime(2021, 10, 13, 13, 50, tzinfo=UTC)
+SWEEP_AT = datetime(2021, 10, 13, 13, 0, tzinfo=UTC)  # 9:00 am New York
 PAPER = {"ALPACA_PAPER_KEY_ID": "pk-paper-key-1", "ALPACA_PAPER_SECRET": "ps-paper-secret-1"}
 
 
@@ -379,6 +381,7 @@ def prices(bars: Bars, day: date, col: str) -> dict[str, Decimal]:
 
 
 def setup(tmp: Path, bars: Bars, **extra: str) -> tuple[Any, SimBroker]:
+    extra.setdefault("approval__buys", "mode")
     s = make_settings(
         watchlist=",".join(SMALL_WATCHLIST),
         state__dir=str(tmp / "state"),
@@ -427,15 +430,24 @@ def test_decide_pings_start_then_success_and_fail_on_error(tmp_path: Path, bars:
     assert jobs.decide(rt3).code == jobs.EXIT_REFUSED and p3.signals == ["fail"]
 
 
+class NoNews:
+    def fetch(self, symbols: list[str], start: date, end: date) -> pd.DataFrame:
+        return pd.DataFrame(columns=list(NEWS_COLUMNS))
+
+
 def approval_flow(tmp: Path, bars: Bars, reply: str | None) -> tuple[SimBroker, Any]:
-    s, broker = setup(tmp, bars, approval__mode="always", crosscheck__enabled="false")
+    # The production default: every buy needs a tap on the 9:00 am pick alert.
+    s, broker = setup(tmp, bars, approval__buys="always", crosscheck__enabled="false")
     env = {**PAPER, "STOA_NTFY_APPROVAL_TOPIC": "approval-topic-xyz"}
     rt, rec = rt_for(s, bars, broker, DECIDE_AT, env)
     jobs.decide(rt)
+    assert not [a for a in rec.alerts if a.title.startswith("BUY ")]
+    rt_s, rec_s = rt_for(s, bars, broker, SWEEP_AT, env, news_client=NoNews())
+    assert jobs.sweep_job(rt_s).status == "swept"
     state = StateStore(s.state.dir).load()
     plan = state.pending_plan
-    assert plan is not None and plan.orders and state.approval_required
-    buy_alerts = [a for a in rec.alerts if a.title.startswith("BUY ")]
+    assert plan is not None and plan.orders and state.approval_nonce
+    buy_alerts = [a for a in rec_s.alerts if a.title.startswith("BUY ")]
     assert buy_alerts and all(len(a.actions) == 2 for a in buy_alerts)
     nonce = state.approval_nonce or ""
 
@@ -445,7 +457,7 @@ def approval_flow(tmp: Path, bars: Bars, reply: str | None) -> tuple[SimBroker, 
                 return []
             sym = plan.orders[0].symbol
             text = reply.format(plan=plan.plan_id, sym=sym, nonce=nonce)
-            return [msg(text, DECIDE_AT + timedelta(hours=2))]
+            return [msg(text, SWEEP_AT + timedelta(minutes=10))]
 
     broker.begin_session(EXEC_AT.date(), prices(bars, EXEC_AT.date(), "open"))
     rt2, rec2 = rt_for(s, bars, broker, EXEC_AT, env, approvals=Topic())

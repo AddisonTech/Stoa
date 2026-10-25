@@ -3,20 +3,26 @@ name: daily
 # GitHub cron runs in UTC, can start late and ignores daylight saving time.
 # Each job runs in both the EDT and the EST slot. Stoa itself checks New York
 # time and the NYSE calendar and only acts inside its window, once per session.
+# The day: DECIDE at 5:15 pm (day summary, then a quiet plan), the news SWEEP at
+# 9:00 am (final picks with Approve and Skip, taps until 9:40), EXECUTE at 9:45 am.
 on:
   schedule:
-    - cron: "20 21 * * 1-5" # DECIDE, EDT slot (5:20 pm EDT)
-    - cron: "20 22 * * 1-5" # DECIDE, EST slot (5:20 pm EST)
-    - cron: "50 13 * * 1-5" # EXECUTE, EDT slot (9:50 am EDT)
-    - cron: "50 14 * * 1-5" # EXECUTE, EST slot (9:50 am EST)
+    - cron: "15 21 * * 1-5" # DECIDE, EDT slot (5:15 pm EDT)
+    - cron: "15 22 * * 1-5" # DECIDE, EST slot (5:15 pm EST)
+    # The sweep starts at 8:55, off the top of the hour when GitHub is busiest,
+    # and waits until 9:00 so the night's news is complete.
+    - cron: "55 12 * * 1-5" # SWEEP, EDT slot (8:55 am EDT)
+    - cron: "55 13 * * 1-5" # SWEEP, EST slot (8:55 am EST)
+    - cron: "45 13 * * 1-5" # EXECUTE, EDT slot (9:45 am EDT)
+    - cron: "45 14 * * 1-5" # EXECUTE, EST slot (9:45 am EST)
   workflow_dispatch:
     inputs:
       job:
         description: "Which job to run"
         type: choice
         options:
-          [decide, execute, alert-test, approve-test, money-confirm, kill-switch-reset,
-           fallback-reset]
+          [decide, sweep, execute, alert-test, approve-test, money-confirm,
+           kill-switch-reset, fallback-reset]
         default: decide
       force:
         description: "Run even outside the window or again for the same session"
@@ -51,6 +57,7 @@ jobs:
       STOA_NTFY_APPROVAL_TOPIC: ${{ secrets.STOA_NTFY_APPROVAL_TOPIC }}
       STOA_HEALTHCHECK_URL: ${{ secrets.STOA_HEALTHCHECK_URL }}
       FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+      HF_HUB_DISABLE_TELEMETRY: "1"
       STOA_MODE: ${{ vars.STOA_MODE }}
       NTFY_SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
       STOA__ALERTS__SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
@@ -71,8 +78,10 @@ jobs:
         run: |
           if [ -n "$JOB_INPUT" ]; then
             job="$JOB_INPUT"
-          elif [ "$SCHEDULE" = "20 21 * * 1-5" ] || [ "$SCHEDULE" = "20 22 * * 1-5" ]; then
+          elif [ "$SCHEDULE" = "15 21 * * 1-5" ] || [ "$SCHEDULE" = "15 22 * * 1-5" ]; then
             job="decide"
+          elif [ "$SCHEDULE" = "55 12 * * 1-5" ] || [ "$SCHEDULE" = "55 13 * * 1-5" ]; then
+            job="sweep"
           else
             job="execute"
           fi
@@ -118,6 +127,21 @@ jobs:
         if: steps.secrets.outputs.ready == 'true'
         run: pip install ".[yahoo]"
 
+      # The sweep reads the night's news with FinBERT on the runner's CPU.
+      # CPU-only torch keeps the install small; the model is cached between runs.
+      - name: Install the news reader
+        if: steps.secrets.outputs.ready == 'true' && steps.pick.outputs.job == 'sweep'
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install ".[yahoo,reader]"
+
+      - name: Cache the news reader model
+        if: steps.secrets.outputs.ready == 'true' && steps.pick.outputs.job == 'sweep'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: finbert-0bc2ac10dda6929bcb1f77ccc43c7ec5c424f031
+
       - name: Run
         if: steps.secrets.outputs.ready == 'true'
         env:
@@ -129,6 +153,7 @@ jobs:
           if [ -n "$EQUITY_INPUT" ]; then equity=(--equity "$EQUITY_INPUT"); fi
           case "$JOB" in
             decide) stoa decide "${force[@]}" ;;
+            sweep) stoa sweep "${force[@]}" ;;
             execute) stoa execute "${force[@]}" ;;
             alert-test) stoa alert test ;;
             approve-test) stoa approve test ;;

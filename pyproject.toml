@@ -27,6 +27,9 @@ dependencies = [
 
 [project.optional-dependencies]
 yahoo = ["yfinance>=0.2.40"]
+# FinBERT for the morning news sweep and the news research. CPU torch is enough
+# for the sweep; install CUDA torch first for GPU scoring.
+reader = ["torch>=2.4", "transformers>=4.44"]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10", "pandas-stubs", "types-PyYAML", "scipy-stubs"]
 
 [project.scripts]
@@ -87,12 +90,19 @@ module = [
     "stoa.stops",
     "stoa.dashboard",
     "stoa.files",
+    "stoa.reader",
+    "stoa.sweep",
 ]
 strict = true
 
 [[tool.mypy.overrides]]
 module = ["exchange_calendars.*", "yfinance.*", "pyarrow.*", "sklearn.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["torch", "torch.*", "transformers", "transformers.*"]
+ignore_missing_imports = true
+follow_imports = "skip"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

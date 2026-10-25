@@ -120,6 +120,12 @@ def decide_session(ts: datetime, after_close_minutes: int, end_hhmm: str) -> dat
     return day if start <= ts <= end else None
 
 
+def at_ny(day: date, hhmm: str) -> datetime:
+    """``hhmm`` New York time on ``day``, as a timezone-aware UTC datetime."""
+    hh, mm = (int(x) for x in hhmm.split(":"))
+    return datetime.combine(day, time(hh, mm), tzinfo=NY).astimezone(UTC)
+
+
 def execute_session(ts: datetime, after_open_minutes: int, window_minutes: int) -> date | None:
     """The session EXECUTE may act in at ``ts``, or None when outside the window."""
     day = to_ny(ts).date()

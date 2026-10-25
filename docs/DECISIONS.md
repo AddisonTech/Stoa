@@ -360,3 +360,15 @@ Pre-registered on 2026-10-24, before any code for it was written. A fixed rule w
 **Holdout.** 2026-07-01 to 2026-10-23 stays excluded and unscored. The scoreboard windows end 2026-06-30.
 
 **Registry.** The one `stoa score --strategy event` run logs exactly one trial.
+
+## The new day: summary at 5:15 pm, picks at 9:00 am, orders at 9:45 am
+
+Decided 2026-10-25.
+
+- **DECIDE at 5:15 pm is quiet.** It records the day and sends the day summary (each position's move today, today's buys against their fill price, sells, the account against SPY today and since the start), then plans the next open without announcing it. Safety alerts (kill switch, fallback, stop-outs, the withdraw milestone) still go out at once.
+- **The sweep at 9:00 am.** It reads every article published after the plan's close and visible by 9:00 (created after the close, last updated by 9:00) on the planned buys and the reserves (only articles that tag at most 3 tickers, since roundups are rarely about the name), with ProsusAI/finbert pinned at revision `0bc2ac10`, on CPU, headline plus summary, 128 tokens. A buy is dropped when one article is at least 0.80 negative and the night's mean tone (positive minus negative) is at or below -0.30. A reserve is added when one article is at least 0.90 positive and the mean tone is at or above +0.50, only into a free slot, at most one a day. Reserves are candidates the rules and quant gates passed and the risk engine turned down only for capacity, so an add can never bypass the regime filter, the kill switch or the daily loss limit; EXECUTE resizes it and re-runs every check. **These thresholds are a judgment call, not a tested edge.** Trials 9 and 10 measure whether this kind of news signal has any value. Sells are never changed by the sweep.
+- **The cron starts the sweep at 8:55**, off the top of the hour when GitHub's scheduler is busiest, and Stoa waits until 9:00 so the night's news is complete. Window: 8:50 am until EXECUTE starts. A sweep that runs after 9:40 still sends the picks but says they will be skipped.
+- **Every buy needs a tap** (`approval.buys: always`), in paper too. The approval code is drawn at the sweep, so a tap can only answer the final picks. Taps count until 9:40 am. Sells follow `approval.mode` as before (live: the first 30 days). The kill switch never waits.
+- **A missed evening run.** If no plan exists for today and the last session was never decided, the sweep runs the evening work first (without the evening summary). This also covers the very first day.
+- **No sweep, no buys.** If the sweep never runs, EXECUTE finds no approval code and skips every buy with a "Skipped" alert; sells still run.
+- **FinBERT on CPU in Actions.** CPU-only torch and transformers are installed only for the sweep (`.[reader]`), and the model files are cached by revision. A night of watchlist news is a few dozen articles, a few seconds on the runner's CPU.

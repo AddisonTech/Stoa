@@ -24,7 +24,7 @@ from typing import Any, Literal
 
 import pandas as pd
 
-from stoa import adjust, alerts, approvals, clock, exam, money, risk, stops, tracking
+from stoa import adjust, alerts, approvals, clock, exam, money, risk, stops, sweep, tracking
 from stoa.approvals import ApprovalClient
 from stoa.broker.alpaca import AlpacaBroker, make_trading_client
 from stoa.broker.base import Broker, BrokerPosition, OrderStatus
@@ -34,6 +34,7 @@ from stoa.crosscheck import check_prices
 from stoa.data.base import BarProvider, Bars, DataError, fresh_subset
 from stoa.data.external import EarningsSource, PriceSource, pick_source
 from stoa.data.factory import alpaca_data_client, make_provider
+from stoa.exits import initial_stop
 from stoa.features import build_features, cell, slice_features, snapshot
 from stoa.files import replace_file
 from stoa.healthcheck import HealthcheckPinger, NullPinger, Pinger, Signal, safe_ping
@@ -49,10 +50,12 @@ from stoa.models import (
     PositionMeta,
     Rejection,
     Side,
+    cents_down,
     dec,
 )
-from stoa.planner import Decision, DecisionInput, Strategy, make_plan
+from stoa.planner import Decision, DecisionInput, Strategy, client_order_id, make_plan
 from stoa.portfolio import Lot, Portfolio
+from stoa.reader import Reader
 from stoa.roles.llm import Budget
 from stoa.roles.scout import Scout
 from stoa.state import (
@@ -74,7 +77,7 @@ EXIT_OK = 0
 EXIT_FAILED = 1
 EXIT_REFUSED = 2
 
-JobName = Literal["decide", "execute"]
+JobName = Literal["decide", "execute", "sweep"]
 
 
 class Refusal(RuntimeError):
@@ -101,6 +104,7 @@ class Runtime:
     use_external: bool = True  # build real HTTP clients for missing sources
     news_client: Any = None  # stoa.data.news.AlpacaNewsClient, injectable
     analyst_client: Any = None  # anthropic client, injectable
+    reader: Any = None  # stoa.reader.Reader for the morning sweep, injectable
 
     @property
     def store(self) -> StateStore:
@@ -706,7 +710,18 @@ def record_checkin(rt: Runtime, signal: Signal, sent: bool, session: date | None
         log.warning("could not record the healthcheck check-in: %s", type(exc).__name__)
 
 
-def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: None) -> JobResult:
+def _decide(
+    rt: Runtime,
+    force: bool,
+    on_start: Callable[[], object] = lambda: None,
+    summary: bool = True,
+) -> JobResult:
+    """The evening run: record the day, send the day summary, plan the next open quietly.
+
+    The plan is not announced. The 9:00 am sweep reads the overnight news,
+    settles the picks and sends them with the Approve and Skip buttons.
+    ``summary=False`` is the sweep catching up on a missed evening run.
+    """
     s = rt.settings
     now = rt.now()
     session = clock.decide_session(
@@ -837,57 +852,28 @@ def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: N
         created_at=now,
         equity=book.equity,
     )
+    plan = plan.model_copy(update={"reserves": reserves_for(decision, plan, snap, book.equity, s)})
     state.track.last_strategy = strategy.name
     stale = state.pending_plan
     if stale is not None and stale.orders and stale.execute_session <= session:
         notes.append(f"plan for {stale.execute_session} was never executed and is dropped")
     # An empty plan is kept too, so EXECUTE still checks the kill switch at the open.
     state.pending_plan = plan
-    needs_ok = approvals.required(
-        s.approval, s.mode, state.track.first_live_session, session
-    ) and bool(plan.orders)
-    state.approval_required = needs_ok
-    state.approval_nonce = approvals.new_nonce() if needs_ok else None
+    # Quiet: no pick alerts and no approval code yet. The 9:00 am sweep sends the
+    # picks and draws the code, so a tap can only answer the final picks.
+    state.approval_required = False
+    state.approval_nonce = None
     if plan.orders:
         store.archive_plan(plan)
-    journal.write(
-        now,
-        "decide",
-        session,
-        "plan",
-        plan=plan.model_dump(mode="json"),
-        approval_required=needs_ok,
-    )
-    topic = rt.secrets.ntfy_approval_topic
-    for order in plan.orders:
-        alert = alerts.signal_alert(order, book.equity, s.mode)
-        if needs_ok and order.reason not in s.approval.exempt_reasons:
-            if topic is None:
-                alert = alerts.with_actions(
-                    alert,
-                    [],
-                    "Approval is required but STOA_NTFY_APPROVAL_TOPIC is not set, "
-                    "so this order will be skipped.",
-                )
-            else:
-                assert state.approval_nonce is not None
-                acts = approvals.actions(
-                    s.alerts.server,
-                    topic.get_secret_value(),
-                    plan.plan_id,
-                    order.symbol,
-                    state.approval_nonce,
-                )
-                alert = alerts.with_actions(
-                    alert, acts, "Tap Approve or Skip. Nothing is sent without Approve."
-                )
-        send(rt, result, alert)
+    journal.write(now, "decide", session, "plan", plan=plan.model_dump(mode="json"))
 
     milestone = money.check_milestone(state, book.equity, s.money)
     if milestone is not None:
         send(rt, result, milestone)
 
-    send(rt, result, alerts.daily_summary_alert(_summary(rt, state, book, snap, plan, notes, now)))
+    if summary:
+        day = _summary(rt, state, book, snap, plan, notes, now, bars=bars, session=session)
+        send(rt, result, alerts.daily_summary_alert(day))
     state.last_close_session = session
     state.last_close_equity = book.equity
     state.flows_since_close = ZERO
@@ -898,6 +884,79 @@ def _decide(rt: Runtime, force: bool, on_start: Callable[[], object] = lambda: N
     return result
 
 
+def reserves_for(
+    decision: Decision, plan: Plan, snap: pd.DataFrame, equity: Decimal, s: Settings
+) -> tuple[PlannedOrder, ...]:
+    """Buys the rules passed but had no slot or cash for, in the rules' order.
+
+    Only candidates the quant gates passed and the risk engine turned down for
+    capacity (positions, orders or cash). Each is sized at the position cap;
+    EXECUTE resizes it to real cash and re-runs every check if it is ever added.
+    """
+    capacity = {"max_positions", "max_orders", "insufficient_cash"}
+    killed = {k.symbol for k in decision.kills}
+    planned = {o.symbol for o in plan.orders}
+    turned_down = {r.symbol for r in decision.rejections if r.reason in capacity}
+    out: list[PlannedOrder] = []
+    for c in decision.candidates:
+        sym = c.symbol
+        if sym in killed or sym in planned or sym not in turned_down or sym not in snap.index:
+            continue
+        close = cell(snap, sym, "close")
+        atr = cell(snap, sym, "atr_14")
+        out.append(
+            PlannedOrder(
+                symbol=sym,
+                side=Side.BUY,
+                notional=cents_down(equity * s.risk.max_position_pct),
+                ref_price=dec(close),
+                entry_atr=dec(atr),
+                stop_price=dec(round(initial_stop(close, atr, s.exits), 4)),
+                reason="entry",
+                conviction=c.conviction,
+                thesis=c.thesis,
+                client_order_id=client_order_id(plan.plan_id, plan.execute_session, sym, Side.BUY),
+            )
+        )
+    return tuple(out)
+
+
+def _day_change(bars: Bars, sym: str, session: date) -> float | None:
+    df = bars.get(sym)
+    if df is None:
+        return None
+    upto = df.loc[: pd.Timestamp(session), "close"]
+    if len(upto) < 2 or upto.index[-1] != pd.Timestamp(session) or upto.iloc[-2] <= 0:
+        return None
+    return float(upto.iloc[-1] / upto.iloc[-2] - 1)
+
+
+def day_lines(state: State, book: Book, snap: pd.DataFrame, bars: Bars, session: date) -> list[str]:
+    """How each position and each of today's buys did today, and what was sold."""
+    parts = []
+    for sym, h in sorted(book.positions.items()):
+        close = dec(cell(snap, sym, "close")) if sym in snap.index else h.avg_entry_price
+        value = alerts.money(h.qty * close)
+        meta = state.positions_meta.get(sym)
+        if meta is not None and meta.entry_session == session and meta.entry_price > 0:
+            move = float(close / meta.entry_price - 1)
+            bought = alerts.money(meta.entry_price)
+            parts.append(f"{sym} {move:+.2%} {value} (bought today at {bought})")
+            continue
+        change = _day_change(bars, sym, session)
+        parts.append(f"{sym} {change:+.2%} {value}" if change is not None else f"{sym} {value}")
+    lines = ["Today: " + ("; ".join(parts) if parts else "no positions")]
+    sold = [t for t in state.recent_trades if t.exit_session == session]
+    if sold:
+        lines.append(
+            "Sold today: "
+            + "; ".join(
+                f"{t.symbol} {alerts.money(t.pnl)} ({t.reason.replace('_', ' ')})" for t in sold
+            )
+        )
+    return lines
+
+
 def _summary(
     rt: Runtime,
     state: State,
@@ -906,6 +965,9 @@ def _summary(
     plan: Plan,
     notes: list[str],
     now: datetime,
+    *,
+    bars: Bars | None = None,
+    session: date | None = None,
 ) -> alerts.Summary:
     s = rt.settings
     day_change = None
@@ -951,6 +1013,13 @@ def _summary(
         tax_reserve=money.tax_reserve(realized, s.money.tax_rate),
         kill_switch=state.kill_switch.active,
         notes=extra,
+        spy_day=_day_change(bars, s.benchmark, session) if bars and session else None,
+        day_lines=day_lines(state, book, snap, bars, session) if bars and session else (),
+        next_line=(
+            "Tomorrow: the picks come at 9:00 am, after the overnight news sweep."
+            if bars and session
+            else None
+        ),
     )
 
 
@@ -1209,13 +1278,15 @@ def make_gate(
     """The last checks before an order is sent: the hand approval and the price cross-check."""
     s = rt.settings
     w = s.job_windows
-    deadline = clock.session(session).open + timedelta(
-        minutes=w.execute_after_open_minutes + w.execute_window_minutes
+    deadline = min(
+        clock.session(session).open
+        + timedelta(minutes=w.execute_after_open_minutes + w.execute_window_minutes),
+        clock.at_ny(session, w.approval_deadline),
     )
     verdicts: dict[str, approvals.Verdict] | None = None
 
     def need_approval(o: PlannedOrder) -> bool:
-        return state.approval_required and o.reason not in s.approval.exempt_reasons
+        return needs_tap(o, s, state.approval_required)
 
     def gate(
         orders: list[PlannedOrder], prices: Mapping[str, Decimal]
@@ -1277,6 +1348,15 @@ def make_gate(
     return gate
 
 
+def needs_tap(o: PlannedOrder, s: Settings, sells_need: bool) -> bool:
+    """Whether an order waits for Approve. Buys always do in paper and live; sells per mode."""
+    if o.reason in s.approval.exempt_reasons:
+        return False
+    if o.side is Side.BUY and s.approval.buys == "always" and s.mode in ("paper", "live"):
+        return True
+    return sells_need
+
+
 def closed_trades(report: ExecutionReport, meta: dict[str, PositionMeta]) -> list[ClosedTrade]:
     out = []
     for f in report.fills:
@@ -1320,6 +1400,225 @@ def _open_order(
         entry_atr=order.entry_atr if buy else None,
         ref_price=order.ref_price if buy else None,
     )
+
+
+# ---- SWEEP (9:00 am) -----------------------------------------------------------------
+
+
+def sweep_job(rt: Runtime, force: bool = False) -> JobResult:
+    """The morning sweep: overnight news, then the final picks with Approve and Skip."""
+    return _guarded(rt, "sweep", lambda: _sweep(rt, force))
+
+
+def sweep_session(now: datetime, s: Settings) -> date | None:
+    """The session the sweep may act for at ``now``: from sweep_start until EXECUTE starts."""
+    day = clock.to_ny(now).date()
+    if not clock.is_session(day):
+        return None
+    w = s.job_windows
+    start = clock.at_ny(day, w.sweep_start)
+    end = clock.session(day).open + timedelta(minutes=w.execute_after_open_minutes)
+    return day if start <= now < end else None
+
+
+def make_reader(rt: Runtime) -> Reader:
+    if rt.reader is None:
+        from stoa.reader import FinBert
+
+        c = rt.settings.sweep
+        rt.reader = FinBert(
+            c.model, c.revision, device="cpu", batch_size=c.batch_size, max_length=c.max_length
+        )
+    reader: Reader = rt.reader
+    return reader
+
+
+def read_overnight(
+    rt: Runtime, plan: Plan, session: date, symbols: list[str]
+) -> dict[str, sweep.Tone]:
+    """FinBERT's read of every article published between the plan's close and the cutoff."""
+    from stoa.data.news import AlpacaNewsClient
+
+    s = rt.settings
+    since = clock.session(plan.decided_session).close
+    until = min(rt.now(), clock.at_ny(session, s.job_windows.news_cutoff))
+    client = rt.news_client
+    if client is None:
+        client = AlpacaNewsClient(alpaca_data_client(s, rt.secrets), include_content=False)
+    df = client.fetch(symbols, since.date(), session)
+    if not df.empty:
+        created = pd.to_datetime(df["created_at"], utc=True)
+        known = pd.to_datetime(df["known_at"], utc=True)
+        df = df[(created > pd.Timestamp(since)) & (known <= pd.Timestamp(until))]
+    if df.empty:
+        return {sym: sweep.quiet(sym) for sym in symbols}  # a quiet night needs no model
+    return sweep.read_tones(df, symbols, make_reader(rt), s.sweep)
+
+
+def _clock_text(ts: datetime) -> str:
+    ny = clock.to_ny(ts)
+    return f"{ny.hour % 12 or 12}:{ny.minute:02d} {'am' if ny.hour < 12 else 'pm'}"
+
+
+def _sweep(rt: Runtime, force: bool) -> JobResult:
+    s = rt.settings
+    w = s.job_windows
+    now = rt.now()
+    session = sweep_session(now, s)
+    if session is None:
+        if not force:
+            log.info(
+                "SWEEP: outside the window at %s ET; nothing to do",
+                clock.to_ny(now).strftime("%Y-%m-%d %H:%M"),
+            )
+            return JobResult(EXIT_OK, "outside_window")
+        day = clock.to_ny(now).date()
+        open_today = clock.is_session(day) and now < clock.session(day).close
+        session = day if open_today else clock.next_session(day)
+    check_mode(s, rt.secrets)
+    store = rt.store
+    state = store.load()
+    if session in state.swept_sessions and not force:
+        log.info("SWEEP: session %s already swept", session)
+        return JobResult(EXIT_OK, "already_done", session)
+    result = JobResult(EXIT_OK, "swept", session)
+
+    # News up to the cutoff counts; a run that starts a few minutes early waits for it.
+    wait = (clock.at_ny(session, w.news_cutoff) - rt.now()).total_seconds()
+    if 0 < wait <= 20 * 60:
+        rt.sleep(wait)
+
+    notes: list[str] = []
+    plan = state.pending_plan
+    prev = clock.previous_session(session)
+    if (plan is None or plan.execute_session != session) and prev not in state.decided_sessions:
+        caught = _decide(rt, force=True, summary=False)
+        result.alerts_sent.extend(caught.alerts_sent)
+        state = store.load()
+        plan = state.pending_plan
+        notes.append("The evening run did not happen, so the plan was made this morning.")
+    if plan is None or plan.execute_session != session:
+        send(
+            rt,
+            result,
+            alerts.Alert(
+                title="No picks today",
+                message="There is no plan for this morning's open. Nothing will be traded.",
+                priority=alerts.LOW,
+                tags=("zzz",),
+            ),
+        )
+        state.mark_swept(session)
+        store.save(state)
+        result.status = "no_plan"
+        return result
+
+    tones: dict[str, sweep.Tone] = {}
+    outcome = sweep.Outcome(plan)
+    watch = sorted(
+        {o.symbol for o in plan.orders if o.side is Side.BUY} | {r.symbol for r in plan.reserves}
+    )
+    if s.sweep.enabled and watch and not plan.kill_switch:
+        try:
+            tones = read_overnight(rt, plan, session, watch)
+            held = set(state.sim_positions) if s.mode == "signal" else set(state.positions_meta)
+            outcome = sweep.apply(
+                plan, tones, s.sweep, max_positions=s.risk.max_positions, held=held
+            )
+        except Exception as exc:
+            log.warning("news sweep failed: %s", traceback.format_exc())
+            notes.append(
+                f"The news sweep could not run ({type(exc).__name__}); "
+                "these are the rules' picks, unchanged."
+            )
+    plan = outcome.plan
+    state.pending_plan = plan
+
+    sells_need = approvals.required(s.approval, s.mode, state.track.first_live_session, session)
+    state.approval_required = sells_need and any(o.side is Side.SELL for o in plan.orders)
+    tapped = [o for o in plan.orders if needs_tap(o, s, state.approval_required)]
+    state.approval_nonce = approvals.new_nonce() if tapped else None
+
+    journal = rt.journal
+    journal.write(
+        now,
+        "sweep",
+        session,
+        "sweep",
+        tones={k: v.__dict__ for k, v in tones.items()},
+        dropped=[o.symbol for o, _ in outcome.dropped],
+        added=[o.symbol for o, _ in outcome.added],
+        plan=plan.model_dump(mode="json"),
+        approval_required=bool(tapped),
+        notes=notes,
+    )
+
+    for o, tone in outcome.dropped:
+        send(
+            rt,
+            result,
+            alerts.Alert(
+                title=f"Dropped BUY {o.symbol}",
+                message=(
+                    f"Bad overnight news: {tone.worst} (FinBERT negative {tone.max_negative:.2f}, "
+                    f"mean tone {tone.mean_net:+.2f} over {tone.articles}). "
+                    f"Not buying {o.symbol} today."
+                ),
+                priority=alerts.DEFAULT,
+                tags=("newspaper",),
+            ),
+        )
+
+    deadline = clock.at_ny(session, w.approval_deadline)
+    when = "at " + _clock_text(
+        clock.session(session).open + timedelta(minutes=w.execute_after_open_minutes)
+    )
+    topic = rt.secrets.ntfy_approval_topic
+    late = rt.now() > deadline
+    for order in plan.orders:
+        alert = alerts.signal_alert(order, plan.equity_at_decide, s.mode, when=when)
+        seen = tones.get(order.symbol)
+        lines = [seen.line()] if seen is not None and order.side is Side.BUY else []
+        acts: list[dict[str, Any]] = []
+        if order in tapped:
+            if late:
+                lines.append(f"Approvals closed at {_clock_text(deadline)}; this will be skipped.")
+            elif topic is None:
+                lines.append(
+                    "Approval is required but STOA_NTFY_APPROVAL_TOPIC is not set, "
+                    "so this order will be skipped."
+                )
+            else:
+                assert state.approval_nonce is not None
+                acts = approvals.actions(
+                    s.alerts.server,
+                    topic.get_secret_value(),
+                    plan.plan_id,
+                    order.symbol,
+                    state.approval_nonce,
+                )
+                lines.append(
+                    f"Tap Approve or Skip by {_clock_text(deadline)}. "
+                    "Nothing is sent without Approve."
+                )
+        if lines:
+            alert = alerts.with_actions(alert, acts, "\n".join(lines))
+        send(rt, result, alert)
+    if not plan.orders or notes:
+        head = "No trades this morning." if not plan.orders else "Morning sweep notes."
+        send(
+            rt,
+            result,
+            alerts.Alert(
+                title="No trades today" if not plan.orders else "Morning sweep",
+                message=" ".join([head, *notes]),
+                priority=alerts.LOW,
+                tags=("newspaper",),
+            ),
+        )
+    state.mark_swept(session)
+    store.save(state)
+    return result
 
 
 # ---- guard wrapper ----------------------------------------------------------------

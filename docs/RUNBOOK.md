@@ -67,7 +67,7 @@ Stoa already alerts you when it fails. This catches the case where it never runs
 
 1. Sign up at healthchecks.io (free: 20 checks).
 2. **Add Check**. Name it `Stoa daily`.
-3. Schedule: pick **Cron**. Cron expression `15 16 * * 1-5`. Time zone `America/New_York`. Grace time **4 hours**. That means: after 4:15 pm New York time on a weekday, Stoa must report success by 8:15 pm. (DECIDE runs at about 5:20 pm, and about 4:20 pm on early close days, so the success ping always lands after 4:15 pm and inside the window, with room for GitHub's delays and the second slot an hour later.)
+3. Schedule: pick **Cron**. Cron expression `15 16 * * 1-5`. Time zone `America/New_York`. Grace time **4 hours**. That means: after 4:15 pm New York time on a weekday, Stoa must report success by 8:15 pm. (DECIDE runs at about 5:15 pm, so the success ping always lands after 4:15 pm and inside the window, with room for GitHub's delays and the second slot an hour later.)
 4. Copy the check's **Ping URL** (looks like `https://hc-ping.com/<long id>`). Add it as the GitHub secret `STOA_HEALTHCHECK_URL`. It is a secret: anyone with it can mark your job as fine.
 5. Connect your phone: **Integrations**, **ntfy**. Server `https://ntfy.sh`, topic: your `STOA_NTFY_TOPIC` value (or a third topic just for this). Priority: urgent. Then on the check, make sure the ntfy integration is ticked.
 6. Market holidays: the check will alert on NYSE holidays because Stoa does not run. Either add the year's holidays as pauses, or accept one alert on each holiday and ignore it.
@@ -76,12 +76,12 @@ Stoa pings `/start` when DECIDE begins, the plain URL after the daily summary is
 
 ## 6. Hand approval of trades
 
-For the first 30 days after the first live trade, every trade alert has **Approve** and **Skip** buttons. Nothing is sent to the broker without Approve.
+Every buy, in paper and live, comes as a 9:00 am pick alert with **Approve** and **Skip** buttons. Nothing is bought without Approve. Sells (stops, time exits and the other exit rules) go through on their own, except during the first 30 days after the first live trade, when they need a tap too. The kill switch flatten never waits.
 
 1. Make a second long random topic name, different from the alerts topic. Add it as `STOA_NTFY_APPROVAL_TOPIC`. You do not need to subscribe to it in the app; the buttons post to it.
-2. When a trade alert arrives after the close, tap **Approve** or **Skip** before about 11:45 am New York time the next day. A tap after that is ignored.
-3. EXECUTE reads your taps after the open. Approved orders go through the usual checks. Anything skipped, or not answered, is not sent, and you get a "Skipped" alert saying why.
-4. To test it now (on paper): Actions, daily, Run workflow, pick **approve-test**. Tap a button within three minutes. The log says what it saw. To run a paper day with approval on, add the repository variable `STOA__APPROVAL__MODE` with `always`.
+2. When the pick alert arrives at about 9:00 am New York time, tap **Approve** or **Skip** by **9:40 am**. A tap after that is ignored.
+3. EXECUTE reads your taps at 9:45 am. Approved orders go through the usual checks. Anything skipped, or not answered, is not sent, and you get a "Skipped" alert saying why.
+4. To test it now (on paper): Actions, daily, Run workflow, pick **approve-test**. Tap a button within three minutes. The log says what it saw. To let paper buys go through without a tap, add the repository variable `STOA__APPROVAL__BUYS` with `mode`.
 
 Each plan has its own random code. An old tap, a tap from a different plan, or a forged message without the code does nothing.
 
@@ -89,12 +89,11 @@ Each plan has its own random code. An old tap, a tap from a different plan, or a
 
 All times are New York time.
 
-- **About 5:20 pm**: DECIDE. Stoa reads the day's bars, checks stops and earnings dates, asks the model for today's probabilities, runs the risk engine, and sends you:
-  - one alert per planned trade (priority 4), with Approve and Skip buttons when approval is on, and
-  - the daily summary (priority 3), every trading day, even with no trades.
+- **About 5:15 pm**: DECIDE. Stoa reads the day's bars, records the day and sends the **day summary** (priority 3), every trading day: how each position and each of today's buys did today, and the whole account against SPY, today and since the start. Then it quietly plans tomorrow (checks stops and earnings dates, runs the rules and the risk engine). No pick alert goes out in the evening.
+- **About 9:00 am**: the SWEEP. Stoa fetches every article published since the close on the planned buys and on the reserves (names the rules passed but had no slot for), and reads each headline and summary with FinBERT, a free open-source model, on GitHub's CPU. A planned buy with clearly bad news overnight is dropped (you get a "Dropped BUY" alert with the headline). A reserve with clearly good news can take a free slot (at most one a day). Then you get the **final picks**, one alert per order (priority 4), buys with Approve and Skip buttons. Taps count until **9:40 am**. If the evening run was missed, the sweep makes the plan first from the last close. If the reader cannot run, the rules' picks go out unchanged and an alert says so.
 - **The 2nd of each month, early morning**: the monthly retrain. New data, the same walk-forward, and a new model only if it is no worse than the current one. You get a short summary.
   **Currently off** (disabled on 2026-10-24 with `gh workflow disable monthly`). It stays off until a design passes walk-forward: none has (trials 1 to 6 failed, see DECISIONS.md), and retraining a failed design only adds trials to the registry. Turn it back on with `gh workflow enable monthly` or the Actions tab once a model is promoted.
-- **About 9:50 am**: EXECUTE. Stoa places last night's orders and sends one alert per fill, then places a stop order at Alpaca for every position held from a prior day (see docs/RISK.md, Stops at the broker). If a stop fills during the day, DECIDE records it that evening and alerts you.
+- **About 9:45 am**: EXECUTE. Stoa places the approved buys and the planned sells and sends one alert per fill with its price, then places a stop order at Alpaca for every position held from a prior day (see docs/RISK.md, Stops at the broker). If a stop fills during the day, DECIDE records it that evening and alerts you.
 - **About 7:45 pm (6:45 pm in winter)**: the analyst workflow (trial 7, the analyst forward test in DECISIONS.md). It scores the session's news for the point-in-time S&P 500 through the Batch API in shadow mode and commits the scores to `shared/shadow/` on the state branch. Shadow scores never reach a trade. It has its own concurrency group, so it never holds up DECIDE or EXECUTE. The daily summary and the dashboard show how many of the 210 sessions are scored. After 210, run `stoa analyst evaluate` once.
 - **After each daily run**: the pages workflow rebuilds the read-only dashboard at https://addisontech.github.io/Stoa/ from the committed state. It gets no secrets and has no buttons; approvals stay on your phone. To rebuild by hand: Actions, pages, Run workflow. One-time setup: Settings, Pages, Source: GitHub Actions.
 
@@ -102,18 +101,24 @@ GitHub runs each job twice an hour apart (because it ignores daylight saving tim
 
 ## 8. Reading alerts
 
-**Signal** (priority 4)
-> BUY NVDA $19.40 (19% of account) at the open. Stop $91.25. Why: ...
+**Pick** (priority 4, about 9:00 am)
+> BUY NVDA $19.40 (19% of account) at 9:45 am. Stop $91.25. Why: ...
+> Overnight news: 2 articles, tone +0.31.
+> Tap Approve or Skip by 9:40 am. Nothing is sent without Approve.
 
-In paper and live mode you do nothing; Stoa places it at the open. In signal mode, place it yourself if you want to follow along. The stop is where Stoa would sell on a close.
+Tap Approve to buy it at 9:45, Skip (or nothing) to pass. In signal mode, place it yourself if you want to follow along. The stop is where Stoa would sell on a close. The tone is FinBERT's average read of the night's articles, from -1 (all negative) to +1 (all positive).
 
-> SELL KO all 0.12 sh at the open. Why: stop loss ...
+> SELL KO all 0.12 sh at 9:45 am. Why: stop loss ...
 
 Stoa sells the whole position. Reasons: stop loss, trailing stop, time exit (30 sessions), trend break (two closes under the 50 day average), kill switch.
 
 **Filled** (priority 4): the order went through, with shares and price.
 
-**Daily summary** (priority 3): equity and today's change, return since start against SPY, what is held, cash, what happens at the next open, Claude API spend this month, realized short-term gains this year and how much to set aside for tax.
+**Dropped BUY** (priority 3, about 9:00 am): bad overnight news on a planned buy; the headline is in the alert. Nothing to do.
+
+**Morning sweep** (priority 2): a note from the sweep, such as the reader not running or the plan being made in the morning. **No trades today** (priority 2): nothing planned for the open.
+
+**Day summary** (priority 3, about 5:15 pm): equity and today's change against SPY's, each position's move today (and today's buys against their fill price), anything sold today, return since start against SPY, cash, Claude API spend this month, realized short-term gains this year and how much to set aside for tax. Tomorrow's picks are not in it; they come at 9:00 am.
 
 **Skipped** (priority 2 for a buy, 4 for a sell): a check stopped an order. Usually the price jumped more than 8% overnight, or the order was not approved. For a buy, nothing to do. For a sell (during the approval month, an exit you did not approve), the position is still open: approve the next one, or sell it yourself in the Alpaca app.
 
@@ -174,6 +179,9 @@ The money plan milestone. See "Withdrawing" below.
 
 **"Detected withdrawal" or "Detected deposit" (priority 4)**
 Stoa saw money move in Alpaca and adjusted its high-water mark so it is not counted as a gain or loss.
+
+**No pick alert by 9:20 am on a trading day**
+Either nothing was planned (you get "No trades today"), or the sweep did not run. Check the Actions tab. Without a sweep no buy is approved, so nothing is bought; sells still run at 9:45.
 
 **No summary by 7 pm on a trading day**
 Silence means something broke. Check the Actions tab. If there is no run at all, see "Scheduled runs stopped".
@@ -274,41 +282,49 @@ Local runs keep state in `state/`. The workflow keeps its own copy on the `stoa-
 
 ## Sample run
 
-This is part 3 of `python scripts/demo.py`: DECIDE and EXECUTE against the simulated broker on synthetic data, with hand approval on and every alert printed instead of sent. The phone is simulated: it approves the first order and leaves the rest unanswered. The prices are made up.
+This is part 3 of `python scripts/demo.py`: DECIDE at 5:15 pm, the 9:00 am sweep and EXECUTE at 9:45 am against the simulated broker on synthetic data, with every alert printed instead of sent. The night is quiet (no news), so the sweep leaves the rules' picks alone. The phone is simulated: it approves the first pick and leaves the rest unanswered. The prices are made up.
 
 ```text
-DECIDE 2021-10-12 22:20 UTC -> decided
+DECIDE 2021-10-12 21:15 UTC -> decided
 
-[p4] BUY NVDA
-    BUY NVDA $20.00 (20% of account) at the open. Stop $120.27. Why: Momentum score 0.432: 60 day +45.7%, 120 day +39.5%, above its 50 and 200 day averages.
-    Tap Approve or Skip. Nothing is sent without Approve.
-    [button] Approve
-    [button] Skip
-[p4] BUY HD
-    BUY HD $20.00 (20% of account) at the open. Stop $1,152.07. Why: Momentum score 0.271: 60 day +10.3%, 120 day +52.2%, above its 50 and 200 day averages.
-    Tap Approve or Skip. Nothing is sent without Approve.
-    [button] Approve
-    [button] Skip
-[p4] BUY UNH
-    BUY UNH $20.00 (20% of account) at the open. Stop $1,050.99. Why: Momentum score 0.253: 60 day +19.6%, 120 day +34.0%, above its 50 and 200 day averages.
-    Tap Approve or Skip. Nothing is sent without Approve.
-    [button] Approve
-    [button] Skip
-[p4] BUY AMZN
-    BUY AMZN $20.00 (20% of account) at the open. Stop $375.18. Why: Momentum score 0.250: 60 day +23.1%, 120 day +27.9%, above its 50 and 200 day averages.
-    Tap Approve or Skip. Nothing is sent without Approve.
-    [button] Approve
-    [button] Skip
 [p3] Stoa 2021-10-12 (paper)
     Equity $100.00
     Since start +0.0% vs SPY +0.0% (+0.0%)
-    Holding: nothing
+    Today: no positions
     Cash $100.00
-    Next: BUY NVDA $20.00; BUY HD $20.00; BUY UNH $20.00; BUY AMZN $20.00
+    Tomorrow: the picks come at 9:00 am, after the overnight news sweep.
     API spend $0.00 of $25.00 this month
     Realized short-term gains this year $0.00, set aside $0.00 for tax
+    Analyst shadow: 0 of 210 sessions scored; Claude spend $0.00 of $25.00 in 2021-10
 
-EXECUTE 2021-10-13 13:50 UTC (first order approved, rest unanswered) -> executed
+SWEEP 2021-10-13 13:00 UTC -> swept
+
+[p4] BUY NVDA
+    BUY NVDA $20.00 (20% of account) at 9:45 am. Stop $120.27. Why: Momentum score 0.432: 60 day +45.7%, 120 day +39.5%, above its 50 and 200 day averages.
+    No overnight news.
+    Tap Approve or Skip by 9:40 am. Nothing is sent without Approve.
+    [button] Approve
+    [button] Skip
+[p4] BUY HD
+    BUY HD $20.00 (20% of account) at 9:45 am. Stop $1,152.07. Why: Momentum score 0.271: 60 day +10.3%, 120 day +52.2%, above its 50 and 200 day averages.
+    No overnight news.
+    Tap Approve or Skip by 9:40 am. Nothing is sent without Approve.
+    [button] Approve
+    [button] Skip
+[p4] BUY UNH
+    BUY UNH $20.00 (20% of account) at 9:45 am. Stop $1,050.99. Why: Momentum score 0.253: 60 day +19.6%, 120 day +34.0%, above its 50 and 200 day averages.
+    No overnight news.
+    Tap Approve or Skip by 9:40 am. Nothing is sent without Approve.
+    [button] Approve
+    [button] Skip
+[p4] BUY AMZN
+    BUY AMZN $20.00 (20% of account) at 9:45 am. Stop $375.18. Why: Momentum score 0.250: 60 day +23.1%, 120 day +27.9%, above its 50 and 200 day averages.
+    No overnight news.
+    Tap Approve or Skip by 9:40 am. Nothing is sent without Approve.
+    [button] Approve
+    [button] Skip
+
+EXECUTE 2021-10-13 13:45 UTC (first order approved, rest unanswered) -> executed
 
 [p4] Filled buy NVDA
     BUY NVDA: 0.154398 sh at $129.54 = $20.00 (paper).

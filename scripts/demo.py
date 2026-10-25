@@ -4,8 +4,8 @@
    small planted momentum edge), print the calibration report, log the trials.
 2. Backtest the model, the v1 rule pipeline, SPY, the 50/200 rule and MTUM on
    every window and grade on risk, with the deflated Sharpe.
-3. Run DECIDE then EXECUTE against the simulated broker with hand approval on,
-   and print every alert (the trade alerts carry Approve and Skip buttons).
+3. Run DECIDE, the 9:00 am sweep, then EXECUTE against the simulated broker,
+   and print every alert (the morning picks carry Approve and Skip buttons).
 
     python scripts/demo.py [output-dir]
 """
@@ -34,8 +34,9 @@ from stoa.portfolio import Portfolio
 from stoa.retrain import train
 from stoa.universe import Universe
 
-DECIDE_AT = datetime(2021, 10, 12, 22, 20, tzinfo=UTC)
-EXECUTE_AT = datetime(2021, 10, 13, 13, 50, tzinfo=UTC)
+DECIDE_AT = datetime(2021, 10, 12, 21, 15, tzinfo=UTC)  # 5:15 pm New York
+SWEEP_AT = datetime(2021, 10, 13, 13, 0, tzinfo=UTC)  # 9:00 am
+EXECUTE_AT = datetime(2021, 10, 13, 13, 45, tzinfo=UTC)  # 9:45 am
 SIGNAL = "1.0"  # a small planted edge: AUC about 0.57, like a good real factor
 
 
@@ -77,9 +78,18 @@ class ApproveFirst:
         if plan is None or not plan.orders:
             return []
         first = plan.orders[0].symbol
-        at = int((DECIDE_AT + timedelta(hours=1)).timestamp())
+        at = int((SWEEP_AT + timedelta(minutes=5)).timestamp())
         body = f"approve {plan.plan_id} {first} {st.approval_nonce}"
         return [{"event": "message", "time": at, "message": body}]
+
+
+class QuietNight:
+    """No news overnight, so the sweep leaves the rules' picks as they are."""
+
+    def fetch(self, symbols: list[str], start: date, end: date) -> pd.DataFrame:
+        from stoa.data.news import NEWS_COLUMNS
+
+        return pd.DataFrame(columns=list(NEWS_COLUMNS))
 
 
 def main(out: Path) -> int:
@@ -112,14 +122,13 @@ def main(out: Path) -> int:
         print(scoreboard.render_markdown(report))
         print(f"(written to {path})")
 
-        print("\n## 3. A day of operation with hand approval on\n")
+        print("\n## 3. A day of operation: summary, morning picks, approved orders\n")
         s = load_settings(
             Path("config/default.yaml"),
             env={
                 "STOA_STATE_DIR": f"{tmp}/live",
                 "STOA__SCOUT__KIND": "rule",
                 "STOA__STRATEGY__KIND": "rule",
-                "STOA__APPROVAL__MODE": "always",
                 "STOA__CROSSCHECK__ENABLED": "false",
                 "STOA__DATA__PROVIDER": "csv",
             },
@@ -150,6 +159,21 @@ def main(out: Path) -> int:
         decided = jobs.decide(rt)
         print_alerts(f"DECIDE {DECIDE_AT:%Y-%m-%d %H:%M} UTC -> {decided.status}", rec)
 
+        rec_s = alerts.RecordingNotifier()
+        rt_s = jobs.Runtime(
+            s,
+            keys,
+            rec_s,
+            now=lambda: SWEEP_AT,
+            provider=FixedProvider(bars),
+            broker=broker,
+            use_external=False,
+            sleep=lambda _s: None,
+            news_client=QuietNight(),
+        )
+        swept = jobs.sweep_job(rt_s)
+        print_alerts(f"SWEEP {SWEEP_AT:%Y-%m-%d %H:%M} UTC -> {swept.status}", rec_s)
+
         broker.begin_session(EXECUTE_AT.date(), prices(bars, EXECUTE_AT.date(), "open"))
         rec2 = alerts.RecordingNotifier()
         rt2 = jobs.Runtime(
@@ -173,7 +197,7 @@ def main(out: Path) -> int:
         print(f"\nSim broker cash {broker.portfolio.cash:.2f}, positions:")
         for sym, lot in sorted(broker.portfolio.positions.items()):
             print(f"    {sym} {lot.qty:.9f} sh at {lot.avg_cost:.4f}")
-        return max(decided.code, executed.code)
+        return max(decided.code, swept.code, executed.code)
 
 
 if __name__ == "__main__":

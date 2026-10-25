@@ -39,6 +39,8 @@ class FixedProvider:
 
 
 def settings_for(tmp: Path, mode: str = "paper", **extra: str) -> Settings:
+    # These tests are about DECIDE and EXECUTE; the morning tap has its own tests.
+    extra.setdefault("approval__buys", "mode")
     return make_settings(
         watchlist=",".join(SMALL_WATCHLIST),
         mode=mode,
@@ -109,8 +111,10 @@ def test_decide_paper_builds_plan_and_summary_then_is_idempotent(
     assert state.inception is not None and state.high_water_mark == Decimal(100)
     plan = state.pending_plan
     assert plan is not None and plan.execute_session == EXEC_DAY
-    buy_titles = [a.title for a in rec.alerts if a.title.startswith("BUY ")]
-    assert len(buy_titles) == len(plan.orders)
+    # Quiet: the picks wait for the 9:00 am sweep; the summary says so.
+    assert not [a for a in rec.alerts if a.title.startswith("BUY ")]
+    assert "Tomorrow: the picks come at 9:00 am" in rec.alerts[-1].message
+    assert state.approval_nonce is None
     for o in plan.orders:
         assert o.client_order_id.startswith(f"stoa-{EXEC_DAY:%Y%m%d}-{o.symbol}-buy-")
     assert (s.state.dir / "journal").exists() and any((s.state.dir / "plans").iterdir())
