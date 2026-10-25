@@ -1,0 +1,58 @@
+[
+  {
+    "window": "tune_a",
+    "kind": "insider_cluster",
+    "trades": 15,
+    "hit_rate": 0.13333333333333333,
+    "avg_excess": -0.09066032194833322
+  },
+  {
+    "window": "tune_a",
+    "kind": "earnings_drift",
+    "trades": 12,
+    "hit_rate": 0.3333333333333333,
+    "avg_excess": -0.00873932637317205
+  },
+  {
+    "window": "tune_b",
+    "kind": "insider_cluster",
+    "trades": 34,
+    "hit_rate": 0.3235294117647059,
+    "avg_excess": -0.045428646296074904
+  },
+  {
+    "window": "tune_b",
+    "kind": "earnings_drift",
+    "trades": 33,
+    "hit_rate": 0.5151515151515151,
+    "avg_excess": 0.011056474757808465
+  },
+  {
+    "window": "tune_c",
+    "kind": "insider_cluster",
+    "trades": 26,
+    "hit_rate": 0.34615384615384615,
+    "avg_excess": -0.035044690127270434
+  },
+  {
+    "window": "tune_c",
+    "kind": "earnings_drift",
+    "trades": 17,
+    "hit_rate": 0.23529411764705882,
+    "avg_excess": -0.03871455334196455
+  },
+  {
+    "window": "validation",
+    "kind": "insider_cluster",
+    "trades": 9,
+    "hit_rate": 0.2222222222222222,
+    "avg_excess": -0.061399545284409766
+  },
+  {
+    "window": "validation",
+    "kind": "earnings_drift",
+    "trades": 6,
+    "hit_rate": 0.3333333333333333,
+    "avg_excess": -0.0006729155536420173
+  }
+]
