@@ -27,6 +27,7 @@ Gate = Callable[
     [list[PlannedOrder], Mapping[str, Decimal]], tuple[list[PlannedOrder], list[Rejection]]
 ]
 BeforeSells = Callable[[list[str]], None]
+BeforeFlatten = Callable[[], None]
 
 BROKER_MIN_NOTIONAL = Decimal("1.00")
 
@@ -195,6 +196,7 @@ def execute_plan(
     halt_reason: str | None = None,
     fallback_active: bool = False,
     before_sells: BeforeSells | None = None,
+    before_flatten: BeforeFlatten | None = None,
 ) -> ExecutionReport:
     """Run one plan. Safe to call again for the same session after a crash.
 
@@ -208,6 +210,9 @@ def execute_plan(
 
     ``before_sells`` gets the symbols about to be sold, just before the sells
     are sent. EXECUTE uses it to cancel their protective stops first.
+
+    ``before_flatten`` runs once when the kill switch is on, before the flatten
+    sells. EXECUTE uses it to cancel every working order at the broker.
     """
     report = ExecutionReport(session=session)
     positions = broker.positions()
@@ -222,12 +227,19 @@ def execute_plan(
         report.kill_switch_tripped = True
 
     if state.kill_switch.active:
-        # Only symbols Stoa manages are flattened; anything else in the account is left alone.
-        held = {
-            s: risk.HeldPosition(s, p.qty, p.current_price)
-            for s, p in positions.items()
-            if s in settings.watchlist
-        }
+        # All out: every working order is cancelled and every position at the broker
+        # is sold, watchlist or not. A name outside the watchlist (bought by hand, or
+        # left over from a wider universe) is still money at risk.
+        report.flattened = True
+        report.rejections.extend(
+            Rejection(symbol=o.symbol, side=o.side, reason="kill_switch", detail="entries halted")
+            for o in plan.orders
+            if o.side is Side.BUY
+        )
+        if before_flatten is not None:
+            before_flatten()
+            positions = broker.positions()  # a cancelled order may have filled first
+        held = {s: risk.HeldPosition(s, p.qty, p.current_price) for s, p in positions.items()}
         flatten = [
             o.model_copy(
                 update={
@@ -236,13 +248,7 @@ def execute_plan(
             )
             for o in risk.flatten_orders(held)
         ]
-        report.flattened = True
-        report.rejections.extend(
-            Rejection(symbol=o.symbol, side=o.side, reason="kill_switch", detail="entries halted")
-            for o in plan.orders
-            if o.side is Side.BUY
-        )
-        if before_sells is not None and flatten:
+        if before_flatten is None and before_sells is not None and flatten:
             before_sells(sorted({o.symbol for o in flatten}))
         _record(report, _submit_all(broker, flatten), basis)
         update_meta(state, report, broker.positions())

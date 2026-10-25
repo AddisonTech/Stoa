@@ -1051,6 +1051,11 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
             for a in stops.cancel_stops(broker, symbols):
                 send(rt, result, a)
 
+    def cancel_everything() -> None:
+        if isinstance(broker, stops.StopBroker):
+            for a in stops.cancel_all_orders(broker):
+                send(rt, result, a)
+
     report = execute_plan(
         plan,
         broker,
@@ -1064,6 +1069,7 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         halt_reason=track.fallback_reason if track.fallback_active else None,
         fallback_active=track.fallback_active,
         before_sells=cancel_before_sells,
+        before_flatten=cancel_everything,
     )
     closed = closed_trades(report, meta_before)
     state.add_trades(closed)

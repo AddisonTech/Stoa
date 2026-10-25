@@ -17,8 +17,10 @@ position (the initial ATR stop, or the trailing stop once it is higher).
   stop-out with its fill price and time.
 
 Every stop carries a client order id starting with ``stoa-stop-``. Stoa only
-ever lists, cancels or replaces orders with that prefix. A failure to place or
-cancel a stop is alerted urgently and never stops the rest of the run.
+ever lists, cancels or replaces orders with that prefix, with one exception:
+when the kill switch is on, every working order in the account is cancelled
+before the flatten. A failure to place or cancel a stop is alerted urgently and
+never stops the rest of the run.
 """
 
 from __future__ import annotations
@@ -181,6 +183,53 @@ def cancel_stops(broker: StopBroker, symbols: Iterable[str]) -> list[alerts.Aler
             )
         log.info("cancelled stop %s (%s)", o.client_order_id, final.status)
     return out
+
+
+def cancel_all_orders(broker: StopBroker) -> list[alerts.Alert]:
+    """Kill switch: cancel every working order in the account, Stoa's or not.
+
+    Each cancel is confirmed, so no order can hold shares the flatten needs or
+    buy something after the switch tripped. Returns alerts for anything that
+    could not be cancelled or filled first; never raises.
+    """
+    try:
+        working = broker.open_orders()
+    except BrokerError as exc:
+        return [cancel_failure_alert("all open orders", str(exc))]
+    out: list[alerts.Alert] = []
+    for o in working:
+        try:
+            final = broker.cancel_order(o)
+        except BrokerError as exc:
+            out.append(cancel_failure_alert(f"{o.side.value} {o.symbol}", str(exc)))
+            continue
+        if final.filled_qty > 0:
+            out.append(
+                alerts.Alert(
+                    title=f"Order filled before cancel: {o.symbol}",
+                    message=(
+                        f"The {o.side.value} order on {o.symbol} filled "
+                        f"{alerts.shares(final.filled_qty)} sh before the kill switch could "
+                        "cancel it. The flatten uses the position as it is now."
+                    ),
+                    priority=alerts.URGENT,
+                    tags=("warning",),
+                )
+            )
+        log.info("kill switch cancelled %s (%s)", o.client_order_id, final.status)
+    return out
+
+
+def cancel_failure_alert(what: str, detail: str) -> alerts.Alert:
+    return alerts.Alert(
+        title=f"Order cancel failed: {what}",
+        message=(
+            f"The kill switch could not cancel {what}: {detail[:300]}. "
+            "Open the Alpaca app, cancel it by hand and check the positions."
+        ),
+        priority=alerts.URGENT,
+        tags=("warning",),
+    )
 
 
 def place_stops(

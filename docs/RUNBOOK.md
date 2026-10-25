@@ -192,7 +192,7 @@ In signal mode, money-confirm takes the $100 out of Stoa's own paper portfolio i
 
 ## 11. Kill switch
 
-When it trips, Stoa sells every watchlist position at the next open and stops buying.
+When it trips, Stoa cancels every open order in the account and sells every position at the next open, watchlist or not, and stops buying.
 
 Before resetting:
 

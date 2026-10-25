@@ -71,7 +71,7 @@ The rules above look at the close. During the day, a real stop order at Alpaca c
 - **Placed.** EXECUTE runs the plan first, then places a DAY stop sell for the whole position. Positions are fractional at this size and Alpaca only takes fractional orders as DAY orders, so the stops expire at the close and are placed again every morning. A position bought that morning gets no stop, so nothing is ever bought and sold the same day. If the price is already at or below the stop at the open, no order is placed (it would fill at once) and you get an alert; the close rule sells it if it stays there.
 - **Before a sell.** Any planned sell, including the kill switch flatten, first cancels that position's open Stoa stop and waits for the broker to confirm, so the sell is never rejected for shares held by the stop.
 - **Fills.** DECIDE checks every stop it placed. A filled one is recorded as a `stop_out` trade with its fill price and time, the position is closed in state, and an alert goes out.
-- **Only its own.** Every stop's client order id starts with `stoa-stop-`. Stoa never lists, cancels or replaces any other order.
+- **Only its own.** Every stop's client order id starts with `stoa-stop-`. Stoa never lists, cancels or replaces any other order, except when the kill switch is on: then every working order is cancelled before the flatten.
 - **Failures.** If placing, cancelling or checking a stop fails, an urgent alert goes out and the rest of the run carries on.
 - **Kill switch.** No new buys, as always. Protective stops stay: any position still held after the flatten gets its stop.
 
@@ -82,10 +82,11 @@ Paper and live use the same code. The live lock is unchanged.
 The high-water mark is the highest equity at any close. If equity falls 25% or more below it, the kill switch trips:
 
 1. An urgent alert goes to your phone.
-2. Every Stoa position is sold at the next open (its broker stop is cancelled first).
-3. No new buys happen until a person resets it.
+2. At the next open, every working order in the account is cancelled (Stoa's stops and anything placed by hand), each cancel confirmed by the broker.
+3. Then every position in the account is sold, on the watchlist or not. A name left over from a wider universe, or bought by hand, is still money at risk.
+4. No new buys happen until a person resets it.
 
-The check runs after each close and again at the open, so an overnight gap can trip it too. Positions outside the watchlist are left alone.
+The check runs after each close and again at the open, so an overnight gap can trip it too. A cancel that fails sends its own urgent alert and the flatten still runs.
 
 Withdrawals do not trip it. Stoa reads cash transfers from Alpaca at DECIDE and again at EXECUTE, before the check, and moves the high-water mark by the same amount.
 
