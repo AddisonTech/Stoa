@@ -372,3 +372,53 @@ Decided 2026-10-25.
 - **A missed evening run.** If no plan exists for today and the last session was never decided, the sweep runs the evening work first (without the evening summary). This also covers the very first day.
 - **No sweep, no buys.** If the sweep never runs, EXECUTE finds no approval code and skips every buy with a "Skipped" alert; sells still run.
 - **FinBERT on CPU in Actions.** CPU-only torch and transformers are installed only for the sweep (`.[reader]`), and the model files are cached by revision. A night of watchlist news is a few dozen articles, a few seconds on the runner's CPU.
+
+## Trial 9: the news brain, daily
+
+Pre-registered on 2026-10-25, before any feature, label or training code for it was written and before any of its data was looked at beyond pull smoke tests. It is trained once and tested once. If it fails, the result is reported and nothing is tuned or retried.
+
+**Question.** Does news, read by a free open-source model, predict which stocks beat SPY after realistic costs, in a book run through Stoa's real risk rails?
+
+**Data, all point in time.** Alpaca (Benzinga) news from 2015-01-01 for the 14,858 symbols of the wide universe (id, created and updated times, symbols, headline, summary); an article is known at its `updated_at`. SEC EDGAR text: 8-K item 2.02 main documents and EX-99 exhibits, 10-K paragraphs that tie a customer or supplier to a share of sales, other 8-Ks; each known at its EDGAR acceptance time. Daily bars from the wide cache. Every article and filing is read by ProsusAI/finbert at revision `0bc2ac10` (positive, negative, neutral): news from headline plus summary (128 tokens), filings from the first section (the first substantial paragraphs, about 1,500 characters, 256 tokens). Only articles that tag at most 3 tickers are read, as in the live sweep. No Claude, no paid service.
+
+**Timing.** The decision for session t is made at 9:00 am New York time on t. It sees daily bars through the close of t-1, and articles and filings known by 9:00 am on t; news after 4:00 pm counts for the next session by construction. A session's fresh news is everything known after 9:00 am on t-1 and by 9:00 am on t. Entry at 9:45 am on t.
+
+**Universe.** Trial 8's liquidity universe, measured each day with no lookahead: close at least $5, 20 session average dollar volume at least $5 million, fractionable or priced below the position size. A row is a (symbol, session) with at least one fresh article, a filing in the last 5 sessions, or a ripple signal; other rows are not scored or traded.
+
+**Features (each per symbol and session, from information known by 9:00 am).**
+
+- `sent`: weighted mean FinBERT tone (positive minus negative) of the fresh articles; first breaks weigh 1, rewrites 0.25.
+- `surprise`: `sent` minus the symbol's mean daily `sent` over its previous 60 sessions with news, over their standard deviation (at least 5 such sessions, else 0).
+- `first_break`: share of fresh articles that are first on their story. An article is a rewrite when the same symbol had an article in the previous 3 days whose headline shares at least half its word set (Jaccard of lower-case words of 3 or more letters, at least 0.5).
+- `quiet_spike`: log((1 + fresh articles) / (1 + the symbol's average daily articles over the previous 60 sessions)), and `coverage`: log(1 + that average). A rarely covered name with news scores high on the first and low on the second.
+- `ripple`: the mean `sent` times `first_break` of the company's linked customers and suppliers over sessions t-1 to t-3 (never the same day). Links come from 10-K paragraphs that tie a named customer or supplier to a share of sales; names are matched to universe companies by their SEC names (legal suffixes dropped, at least 5 characters, among the 1,500 most traded names that month). A link is known from the 10-K's acceptance and lasts until the next 10-K or 15 months. Signals pass from the larger to the smaller company only (by 20 session dollar volume).
+- `filing_tone`, `guidance`, `beat_miss`: for an 8-K item 2.02 accepted in the last 5 sessions, FinBERT's tone of the press release's first section (the EX-99, else the main document); guidance +1 when the text says guidance or outlook was raised, -1 when lowered, cut or reduced, else 0; beat_miss +1 for exceeded, above or beat expectations or consensus, -1 for below expectations or consensus or missed, else 0.
+- Controls from daily bars: the return of t-1, the 5 session return to t-1, 20 session volatility, log 20 session dollar volume.
+
+**Labels.** For h in 1, 5 and 20 sessions: the return from the open of t to the open of t+h, minus SPY's over the same span, minus costs. Costs per fill in basis points: 25 times the square root of ($10 million over the 20 session dollar volume), at least 5 and at most 75 (trial 8's rule, wider for small caps), on both fills, plus the sell fee. The label is 1 when the net excess return is above 0. Training uses the open as the entry; the replay uses the real 9:45 price.
+
+**Model.** Gradient boosted trees (scikit-learn HistGradientBoostingClassifier: max_depth 3, learning_rate 0.05, max_iter 300, l2_regularization 1.0, min_samples_leaf 200), isotonic calibration inside each training set on its last quarter with its own gap. Fixed now; nothing is tuned.
+
+**Walk-forward on 2016-01-01 to 2022-12-31.** 63 session test slices, expanding window, 504 sessions minimum training, embargo at least the horizon, purged labels: the existing protocol. Reported: log loss against the base rate, Brier, AUC, calibration error, hit rate by bucket. Then the model is frozen: one fit on every row whose label ends by 2022-12-30, calibrated the same way. Nothing from 2023-01-01 on is read by any training, tuning or feature-selection step.
+
+**Fast-forward test, 2023-01-01 to 2026-06-30.** Replayed session by session through the backtest engine, the simulated broker and the risk engine, as if live. At 9:00 am the frozen model scores that morning's rows; names with a probability of at least 0.55 are candidates, best first, up to 10. Risk unchanged: 5 positions, 20% each, 40% per sector (SIC major group), 2% cash, the correlation check, the regime filter, the daily loss limit, the 25% kill switch, the ATR stop and trailing stop (2.5 and 3 ATR), and the earnings rules (never hold through a confirmed next report). Hold h sessions, decided at the close of the h-th session and sold at 9:45 am the next session, like every exit. Buys and sells fill at the 9:45 am price from Alpaca minute bars plus the slippage above. $100 start, fractional shares. SPY and MTUM run through the same engine.
+
+**Grading.** The 5 session horizon is the graded strategy. The 1 and 20 session runs are reported beside it as diagnostics and logged as trials, so they count in the deflated Sharpe; they are never picked between. Reported for each: total return, Sharpe, max drawdown, hit rate (closed trades that beat SPY over their holding span after costs) and trade count, against SPY and MTUM, and by size: small (market value under $2 billion), mid ($2 to $10 billion), large (over $10 billion), from SEC shares outstanding times price at entry, else by dollar volume (under $20 million small, under $100 million mid).
+
+**Pass bar (SCOREBOARD.md, applied to the replay).** All of: max drawdown below SPY's, and Sharpe and Sortino above SPY's, on the validation window (2025-01-01 to 2026-06-30); Sharpe above SPY's on tune_c (2023-01-01 to 2024-12-31), the only tune window outside training, so it must pass; max drawdown never past 25%; at least 30 closed trades; Claude spend under $25 in every month (it is $0); deflated Sharpe at least 0.95 counting every distinct configuration in the registry; and, as for trial 8, Sharpe above MTUM's on the validation window.
+
+**Known limits, said now.** The test window overlaps tune_c and validation, which earlier trials were scored on: it is out of sample for this model but not unseen by the research. FinBERT's training text predates 2019, so it cannot know how any test-period story ended. Alpaca's inactive list is the only record of delisted names. 10-K name matching misses customers named loosely ("a large retailer").
+
+**Holdout.** 2026-07-01 to 2026-10-23 stays sealed and unscored.
+
+**Registry.** One run logs three trials (1, 5 and 20 sessions).
+
+## Trial 10: the news brain, with minute timing
+
+Pre-registered on 2026-10-25 with trial 9. Identical to trial 9 (data, features, model, frozen fit, replay, grading on the 5 session horizon, pass bar) except the entry time, which uses Alpaca minute bars.
+
+**Entry.** For a buy on session t, follow the minute bars from 9:30 am. Let r5 be the absolute 5 minute return (the close of the minute over the close 5 minutes earlier, less 1) and P the largest r5 seen since 9:30. Enter at the open of the first minute at or after 9:45 am whose r5 is at most a third of P: the first spike has cooled. If none by 11:00 am, enter at 11:00 am. Sells stay at 9:45 am. The model, its features (known by 9:00 am) and its labels do not change.
+
+**When.** Run once, after the minute bar pull is complete. Trial 9 does not wait for it.
+
+**Registry.** One run logs three trials (1, 5 and 20 sessions).

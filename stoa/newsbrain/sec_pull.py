@@ -236,6 +236,18 @@ def company_ciks(sec: SECClient) -> dict[int, list[str]]:
     return out
 
 
+def by_liquidity(ciks: dict[int, list[str]]) -> list[int]:
+    """Companies whose stock traded the most dollars in any month first: they are tradable."""
+    from stoa.newsbrain.alpaca_pull import PLAN
+
+    if not PLAN.exists():
+        return sorted(ciks)
+    plan = pd.read_parquet(PLAN, columns=["symbol", "dollars"])
+    peak = plan.groupby("symbol")["dollars"].max().to_dict()
+    best = {cik: max(peak.get(s, 0.0) for s in syms) for cik, syms in ciks.items()}
+    return sorted(ciks, key=lambda c: (-best[c], c))
+
+
 def pull_sec(passes: tuple[str, ...] = PASSES) -> None:
     sec = make_sec_client(USER_AGENT, Path("data/sec"), 8.0)
     fetch = Fetcher(sec.client, sec.limiter)
@@ -245,9 +257,10 @@ def pull_sec(passes: tuple[str, ...] = PASSES) -> None:
         SEC_DIR / "ciks.parquet",
     )
     progress = ROOT / "logs" / "sec.jsonl"
+    order = by_liquidity(ciks)
     for name in passes:
         fn = PASS_FN[name]
-        for i, cik in enumerate(sorted(ciks)):
+        for i, cik in enumerate(order):
             path = SEC_DIR / name / f"{cik}.parquet"
             if path.exists():
                 continue
