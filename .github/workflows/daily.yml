@@ -22,7 +22,7 @@ on:
         type: choice
         options:
           [decide, sweep, execute, alert-test, approve-test, money-confirm,
-           kill-switch-reset, fallback-reset]
+           kill-switch-reset, fallback-reset, reader-check]
         default: decide
       force:
         description: "Run even outside the window or again for the same session"
@@ -130,13 +130,17 @@ jobs:
       # The sweep reads the night's news with FinBERT on the runner's CPU.
       # CPU-only torch keeps the install small; the model is cached between runs.
       - name: Install the news reader
-        if: steps.secrets.outputs.ready == 'true' && steps.pick.outputs.job == 'sweep'
+        if: >-
+          steps.secrets.outputs.ready == 'true' &&
+          (steps.pick.outputs.job == 'sweep' || steps.pick.outputs.job == 'reader-check')
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install ".[yahoo,reader]"
 
       - name: Cache the news reader model
-        if: steps.secrets.outputs.ready == 'true' && steps.pick.outputs.job == 'sweep'
+        if: >-
+          steps.secrets.outputs.ready == 'true' &&
+          (steps.pick.outputs.job == 'sweep' || steps.pick.outputs.job == 'reader-check')
         uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface
@@ -158,6 +162,7 @@ jobs:
             alert-test) stoa alert test ;;
             approve-test) stoa approve test ;;
             fallback-reset) stoa fallback reset --yes ;;
+            reader-check) stoa reader-check ;;
             money-confirm) stoa money confirm-withdrawal --yes "${equity[@]}" ;;
             kill-switch-reset) stoa kill-switch reset --yes "${equity[@]}" ;;
             *) echo "unknown job $JOB"; exit 2 ;;

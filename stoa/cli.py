@@ -407,6 +407,28 @@ def sweep(ctx: Ctx, force: bool) -> None:
     sys.exit(run_sweep(runtime(ctx), force=force).code)
 
 
+@main.command("reader-check")
+@pass_ctx
+def reader_check(ctx: Ctx) -> None:
+    """Load the sweep's news reader on this machine and read two test headlines."""
+    from stoa.reader import LABELS, FinBert
+
+    c = ctx.settings.sweep
+    reader = FinBert(c.model, c.revision, device="cpu", batch_size=2, max_length=c.max_length)
+    texts = [
+        "Acme beats estimates and raises full-year guidance",
+        "Acme misses estimates and cuts its outlook",
+    ]
+    probs = reader.score(texts)
+    for text, row in zip(texts, probs, strict=True):
+        click.echo(
+            f"{text}: " + ", ".join(f"{k} {v:.2f}" for k, v in zip(LABELS, row, strict=True))
+        )
+    ok = probs[0][0] > probs[0][1] and probs[1][1] > probs[1][0]
+    click.echo("reader ok" if ok else "reader gave unexpected tones")
+    sys.exit(0 if ok else 1)
+
+
 @main.command()
 @pass_ctx
 def status(ctx: Ctx) -> None:
