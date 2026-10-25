@@ -1,0 +1,56 @@
+"""Run one background job: ``python -m stoa.newsbrain <job>``.
+
+Jobs: news, minute, sec, score, coverage. Each logs to data/newsbrain/logs/
+and can be stopped and restarted at any time.
+"""
+
+from __future__ import annotations
+
+import logging
+import sys
+from datetime import date
+
+from stoa.newsbrain import ROOT
+
+START_NEWS = date(2015, 1, 1)
+START_MINUTE = date(2016, 1, 1)
+END = date(2026, 10, 23)  # the last full session before the pulls began
+
+
+def main(argv: list[str]) -> int:
+    job = argv[0] if argv else ""
+    (ROOT / "logs").mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        handlers=[logging.FileHandler(ROOT / "logs" / f"{job or 'main'}.log", encoding="utf-8")],
+    )
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    if job == "news":
+        from stoa.newsbrain.alpaca_pull import pull_news
+
+        pull_news(START_NEWS, END)
+    elif job == "minute":
+        from stoa.newsbrain.alpaca_pull import pull_minutes
+
+        pull_minutes(START_MINUTE, END)
+    elif job == "sec":
+        from stoa.newsbrain.sec_pull import pull_sec
+
+        pull_sec()
+    elif job == "score":
+        from stoa.newsbrain.score import score_forever
+
+        score_forever()
+    elif job == "coverage":
+        from stoa.newsbrain.coverage import report
+
+        print(report())
+    else:
+        print(__doc__)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
