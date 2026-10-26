@@ -1122,7 +1122,7 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
     prev = prev_close_equity(state, session, account.last_equity)
     track = state.track
     gate = make_gate(rt, state, plan, session, result)
-    sectors = {sym: sector_of(sym) for sym in set(s.watchlist) | set(before)}
+    sectors = {sym: sector_of(sym) for sym in set(s.watchlist) | set(before) | set(assets)}
 
     def cancel_before_sells(symbols: list[str]) -> None:
         if isinstance(broker, stops.StopBroker):
@@ -1286,7 +1286,7 @@ def _manual_override(rt: Runtime, symbols: list[str] | None) -> JobResult:
     universe = Universe(watchlist=s.watchlist, benchmark=s.benchmark, assets=assets)
     before = broker.positions()
     track = state.track
-    sectors = {sym: sector_of(sym) for sym in set(s.watchlist) | set(before)}
+    sectors = {sym: sector_of(sym) for sym in set(s.watchlist) | set(before) | set(assets)}
     report = execute_plan(
         run_plan,
         broker,

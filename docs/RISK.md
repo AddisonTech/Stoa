@@ -12,7 +12,7 @@ Risk is checked twice. Once after the close when the plan is made, and again aft
 | Max open positions | 5 | plan and execution | `max_positions` |
 | Max gross exposure | 100% of equity | plan and execution | sized down |
 | Cash buffer | 2% of equity | plan and execution | `insufficient_cash` |
-| Sector cap | 40% of equity per GICS sector | plan and execution | `sector_cap` |
+| Sector cap | 40% of equity per GICS sector (see Sectors below) | plan and execution | `sector_cap` |
 | Correlation check | no new position whose 60 day return correlation with a held or planned one is above 0.8 | plan | `correlation` |
 | Min order | $1.00 | plan and execution | `min_order` |
 | Max orders per day | 10 | plan and execution | `max_orders` |
@@ -117,3 +117,7 @@ Paper keys are never used for live orders. They are separate secrets with separa
 ## Things the broker would allow that Stoa does not
 
 Alpaca has no cash accounts. An account under $2,000 is a limited margin account with 1x buying power. Stoa does not rely on that. It caps gross exposure at 100% of equity itself, keeps a cash buffer and never submits an order larger than its cash.
+
+## Sectors
+
+The sector cap needs a sector for every symbol. S&P 500 members use their GICS sector from `stoa/reference/sectors.csv`. Every other wide-universe symbol uses `stoa/reference/sectors_wide.csv`, built by `python scripts/build_sectors.py` from the company's SEC SIC code, mapped to the same GICS sector names (`membership.SIC_SECTORS`, an approximation of GICS). A symbol with neither (most ETFs, units, warrants) is "Unknown", and all Unknown symbols share one bucket, so they are capped together. Until 2026-10-26 the plan's risk check got no sector map, so every pick showed "Unknown" and the cap was applied only at EXECUTE; the plan now applies it too.

@@ -1,0 +1,7340 @@
+symbol,sector,sic
+A,Information Technology,3826
+AA,Materials,3334
+AAAU,Financials,6221
+AAC,Financials,6770
+AACG,Consumer Discretionary,8200
+AACI,Financials,6770
+AACIU,Financials,6770
+AACIW,Financials,6770
+AACO,Financials,6770
+AACOU,Financials,6770
+AACOW,Financials,6770
+AACP,Financials,6770
+AACPR,Financials,6770
+AACPU,Financials,6770
+AACPW,Financials,6770
+AADX,Industrials,3728
+AAL,Industrials,4512
+AAME,Financials,6311
+AAMI,Financials,6282
+AAOI,Information Technology,3674
+AAON,Industrials,3585
+AAP,Consumer Discretionary,5531
+AAPG,Health Care,2834
+AAPL,Information Technology,3571
+AARD,Health Care,2834
+AAT,Real Estate,6798
+AAUC,Materials,1040
+AB,Financials,6282
+ABAT,Materials,1400
+ABBV,Health Care,2834
+ABCB,Financials,6022
+ABCL,Health Care,2834
+ABEO,Health Care,2834
+ABEV,Consumer Staples,2080
+ABG,Consumer Discretionary,5500
+ABLV,Consumer Discretionary,5960
+ABLVW,Consumer Discretionary,5960
+ABM,Industrials,7340
+ABNB,Industrials,7340
+ABOS,Health Care,2836
+ABR,Real Estate,6798
+ABSI,Health Care,8731
+ABT,Health Care,2834
+ABTC,Financials,6199
+ABTS,Financials,6199
+ABUS,Health Care,2834
+ABVC,Health Care,2834
+ABVX,Health Care,2834
+ABX,Financials,6282
+ABXL,Financials,6282
+ACAA,Financials,6770
+ACAAU,Financials,6770
+ACAAW,Financials,6770
+ACAD,Health Care,2834
+ACB,Health Care,2833
+ACBI,Financials,6022
+ACC,Real Estate,6798
+ACCL,Industrials,8742
+ACCO,Communication Services,2780
+ACCS,Industrials,8742
+ACCV,Industrials,3620
+ACDC,Energy,1389
+ACEL,Consumer Discretionary,7900
+ACET,Health Care,2834
+ACFN,Industrials,8711
+ACGC,Financials,6770
+ACGCU,Financials,6770
+ACGCW,Financials,6770
+ACGL,Financials,6331
+ACGLN,Financials,6331
+ACGLO,Financials,6331
+ACH,Industrials,5047
+ACHC,Health Care,8093
+ACHR,Industrials,3721
+ACHV,Health Care,2835
+ACI,Consumer Staples,5411
+ACIC,Financials,6331
+ACIU,Health Care,2834
+ACIW,Information Technology,7372
+ACKIU,Financials,6770
+ACLS,Industrials,3559
+ACLZ,Industrials,7389
+ACM,Industrials,8711
+ACMR,Industrials,3559
+ACN,Industrials,7389
+ACNB,Financials,6022
+ACNT,Materials,2800
+ACOG,Health Care,2836
+ACON,Health Care,8071
+ACONW,Health Care,8071
+ACR,Real Estate,6798
+ACRE,Real Estate,6798
+ACRS,Health Care,2834
+ACRT,Information Technology,7372
+ACRV,Health Care,2834
+ACT,Financials,6411
+ACTG,Financials,6794
+ACTU,Health Care,2834
+ACU,Industrials,3420
+ACXP,Health Care,2834
+AD,Communication Services,4812
+ADAC,Financials,6770
+ADACU,Financials,6770
+ADACW,Financials,6770
+ADAG,Health Care,2834
+ADAM,Real Estate,6798
+ADAMG,Real Estate,6798
+ADAMH,Real Estate,6798
+ADAMI,Real Estate,6798
+ADAMK,Real Estate,6798
+ADAML,Real Estate,6798
+ADAMM,Real Estate,6798
+ADAMN,Real Estate,6798
+ADAMO,Real Estate,6798
+ADAMZ,Real Estate,6798
+ADBE,Information Technology,7372
+ADBT,Information Technology,7372
+ADC,Real Estate,6798
+ADCT,Health Care,2834
+ADEA,Communication Services,4841
+ADGM,Health Care,3841
+ADI,Information Technology,3674
+ADIG,Industrials,5072
+ADIL,Health Care,2834
+ADM,Consumer Staples,2070
+ADMA,Health Care,2836
+ADMS,Health Care,2834
+ADNT,Consumer Discretionary,3714
+ADP,Information Technology,7374
+ADPT,Health Care,2836
+ADRX,Health Care,2834
+ADSE,Industrials,3690
+ADSEW,Industrials,3690
+ADSK,Information Technology,7372
+ADSW,Industrials,4953
+ADT,Industrials,7381
+ADTN,Information Technology,3661
+ADUR,Materials,2800
+ADUS,Health Care,8082
+ADV,Industrials,7389
+ADVB,Health Care,8071
+ADXN,Health Care,2834
+AEAQ,Financials,6770
+AEAQU,Financials,6770
+AEAQW,Financials,6770
+AEBI,Industrials,3531
+AEC,Materials,1000
+AEE,Utilities,4931
+AEFC,Financials,6311
+AEG,Financials,6311
+AEGN,Industrials,1623
+AEHL,Communication Services,4899
+AEHR,Information Technology,3825
+AEI,Real Estate,6500
+AEIS,Information Technology,3679
+AEM,Materials,1040
+AEMD,Health Care,3841
+AENT,Industrials,5099
+AENTW,Industrials,5099
+AEO,Consumer Discretionary,5651
+AEON,Health Care,2834
+AEP,Utilities,4911
+AER,Industrials,7359
+AERO,Industrials,4512
+AERT,Industrials,8742
+AERTW,Industrials,8742
+AES,Utilities,4991
+AESI,Energy,1311
+AESP,Financials,6770
+AESPR,Financials,6770
+AESPU,Financials,6770
+AESPW,Financials,6770
+AETI,Utilities,4924
+AEVA,Consumer Discretionary,3714
+AEXA,Financials,6770
+AEYE,Information Technology,7372
+AFG,Financials,6331
+AFGB,Financials,6331
+AFGC,Financials,6331
+AFGD,Financials,6331
+AFGE,Financials,6331
+AFJK,Financials,6770
+AFJKR,Financials,6770
+AFJKU,Financials,6770
+AFL,Financials,6321
+AFRI,Consumer Staples,2040
+AFRIW,Consumer Staples,2040
+AFRM,Financials,6141
+AFYA,Consumer Discretionary,8200
+AG,Materials,1040
+AGBK,Financials,6029
+AGCC,Industrials,5180
+AGCO,Industrials,3523
+AGCUU,Financials,6770
+AGEN,Health Care,2836
+AGI,Materials,1040
+AGIG,Energy,1311
+AGIO,Health Care,2834
+AGL,Health Care,8090
+AGM,Financials,6111
+AGM.A,Financials,6111
+AGMB,Health Care,2836
+AGMH,Information Technology,7371
+AGN,Health Care,2834
+AGNC,Real Estate,6798
+AGNCL,Real Estate,6798
+AGNCM,Real Estate,6798
+AGNCN,Real Estate,6798
+AGNCO,Real Estate,6798
+AGNCP,Real Estate,6798
+AGNCZ,Real Estate,6798
+AGNT,Real Estate,6531
+AGO,Financials,6351
+AGPU,Financials,6199
+AGQ,Financials,6221
+AGRO,Consumer Staples,0100
+AGRZ,Consumer Staples,0100
+AGX,Industrials,1700
+AGYS,Information Technology,7373
+AHCO,Health Care,8082
+AHG,Industrials,7389
+AHMA,Consumer Discretionary,7900
+AHR,Real Estate,6798
+AHRT,Real Estate,6500
+AHT,Real Estate,6798
+AI,Information Technology,7372
+AIAI,Information Technology,7374
+AIB,Financials,6221
+AIBZ,Financials,6199
+AIDX,Industrials,8734
+AIFA,Consumer Discretionary,7900
+AIFC,Financials,6221
+AIFF,Information Technology,7372
+AIFU,Financials,6411
+AIG,Financials,6331
+AII,Financials,6331
+AIIA,Financials,6770
+AIIO,Consumer Discretionary,3711
+AIIOW,Consumer Discretionary,3711
+AIIR,Consumer Staples,2100
+AIM,Health Care,2836
+AIMD,Information Technology,3577
+AIMDW,Information Technology,3577
+AIMT,Health Care,2834
+AIN,Consumer Discretionary,2221
+AIOK,Industrials,4412
+AIOS,Information Technology,7373
+AIOT,Information Technology,3669
+AIP,Information Technology,3674
+AIQ,Health Care,8071
+AIQD,Financials,6029
+AIQU,Financials,6029
+AIR,Industrials,3720
+AIRE,Real Estate,6500
+AIRG,Information Technology,3663
+AIRI,Industrials,3728
+AIRJ,Industrials,3585
+AIRJW,Industrials,3585
+AIRO,Industrials,3721
+AIRS,Health Care,8011
+AIRT,Industrials,4513
+AIRTP,Industrials,4513
+AISP,Information Technology,7372
+AISPW,Information Technology,7372
+AIT,Industrials,5080
+AIV,Real Estate,6798
+AIXI,Information Technology,7372
+AIZ,Financials,6399
+AIZN,Financials,6399
+AJG,Financials,6411
+AKA,Consumer Discretionary,5961
+AKAM,Industrials,7389
+AKAN,Communication Services,4899
+AKBA,Health Care,2834
+AKO.A,Consumer Staples,2086
+AKO.B,Consumer Staples,2086
+AKR,Real Estate,6798
+AKS,Materials,3312
+AKTS,Health Care,2834
+AKTX,Health Care,2834
+ALAB,Information Technology,3674
+ALAR,Information Technology,7372
+ALB,Materials,2821
+ALC,Health Care,3851
+ALCO,Real Estate,6519
+ALDF,Financials,6770
+ALDFU,Financials,6770
+ALDFW,Financials,6770
+ALDR,Health Care,2834
+ALDX,Health Care,2834
+ALEC,Health Care,2836
+ALF,Financials,6770
+ALFUU,Financials,6770
+ALFUW,Financials,6770
+ALG,Industrials,3523
+ALGM,Information Technology,3674
+ALGN,Health Care,3842
+ALGS,Health Care,2836
+ALGT,Industrials,4512
+ALH,Industrials,3580
+ALHC,Financials,6324
+ALIS,Information Technology,7374
+ALISR,Information Technology,7374
+ALISU,Information Technology,7374
+ALIT,Industrials,7389
+ALK,Industrials,4512
+ALKS,Health Care,2834
+ALKT,Information Technology,7372
+ALL,Financials,6331
+ALLE,Industrials,7381
+ALLO,Health Care,2836
+ALLR,Health Care,2834
+ALLT,Information Technology,3576
+ALLY,Financials,6022
+ALM,Materials,1000
+ALMR,Information Technology,3826
+ALMS,Health Care,2834
+ALMU,Information Technology,3674
+ALNT,Information Technology,3825
+ALNY,Health Care,2834
+ALOV,Financials,6770
+ALOVU,Financials,6770
+ALOVW,Financials,6770
+ALOY,Materials,1000
+ALP,Financials,6199
+ALPS,Health Care,8000
+ALPX,Financials,6770
+ALPXR,Financials,6770
+ALPXU,Financials,6770
+ALPXW,Financials,6770
+ALRM,Information Technology,7372
+ALRS,Financials,6021
+ALSK,Communication Services,4813
+ALSN,Consumer Discretionary,3714
+ALT,Health Care,2834
+ALTA,Financials,6022
+ALTG,Industrials,5084
+ALTI,Financials,6282
+ALTO,Materials,2860
+ALTS,Financials,6221
+ALUB,Financials,6770
+ALV,Consumer Discretionary,3714
+ALVO,Health Care,2836
+ALVOW,Health Care,2836
+ALX,Real Estate,6798
+ALXN,Health Care,2834
+ALXO,Health Care,2834
+ALZN,Health Care,2834
+AM,Utilities,4922
+AMAC,Financials,6770
+AMACU,Financials,6770
+AMACW,Financials,6770
+AMAG,Health Care,2834
+AMAL,Financials,6022
+AMAN,Financials,6770
+AMAT,Information Technology,3674
+AMBA,Information Technology,3674
+AMBO,Consumer Discretionary,8200
+AMBP,Industrials,3411
+AMBQ,Information Technology,3674
+AMBR,Financials,6199
+AMC,Communication Services,7830
+AMCI,Consumer Discretionary,5700
+AMCR,Consumer Discretionary,3990
+AMCX,Communication Services,4841
+AMD,Information Technology,3674
+AME,Information Technology,3823
+AMG,Financials,6282
+AMGN,Health Care,2836
+AMH,Real Estate,6798
+AMID,Utilities,4922
+AMIX,Health Care,3841
+AMJB,Financials,6021
+AMKR,Information Technology,3674
+AMLX,Health Care,2834
+AMMA,Information Technology,7374
+AMN,Industrials,7363
+AMOD,Financials,6794
+AMODW,Financials,6794
+AMP,Financials,6282
+AMPG,Information Technology,3669
+AMPGZ,Information Technology,3669
+AMPH,Health Care,2834
+AMPL,Information Technology,7372
+AMPX,Industrials,3690
+AMPY,Energy,1311
+AMR,Energy,1221
+AMRB,Financials,6022
+AMRC,Industrials,1700
+AMRN,Health Care,2834
+AMRO,Materials,3390
+AMRX,Health Care,2834
+AMRZ,Materials,3241
+AMS,Health Care,8071
+AMSC,Industrials,3621
+AMSF,Financials,6331
+AMSS,Consumer Staples,2080
+AMST,Information Technology,7372
+AMT,Real Estate,6798
+AMTB,Financials,6021
+AMTD,Financials,6199
+AMTM,Industrials,7389
+AMTX,Materials,2860
+AMUB,Financials,6021
+AMWL,Industrials,7389
+AMX,Communication Services,4813
+AMZN,Consumer Discretionary,5961
+AN,Consumer Discretionary,5500
+ANAB,Health Care,2834
+ANAT,Financials,6311
+ANCX,Financials,6035
+ANDE,Industrials,5150
+ANDG,Industrials,7389
+ANDV,Energy,2911
+ANDX,Industrials,4610
+ANET,Information Technology,3576
+ANF,Consumer Discretionary,5651
+ANGH,Communication Services,4899
+ANGHW,Communication Services,4899
+ANGI,Industrials,7310
+ANGO,Health Care,3841
+ANGX,Communication Services,7812
+ANH,Real Estate,6798
+ANIK,Health Care,3841
+ANIP,Health Care,2834
+ANIX,Health Care,2834
+ANL,Health Care,2834
+ANNA,Energy,1311
+ANNAW,Energy,1311
+ANNX,Health Care,2834
+ANPA,Industrials,7380
+ANRO,Health Care,2834
+ANTA,Financials,6221
+ANTX,Health Care,2834
+ANVS,Health Care,2834
+AOI,Industrials,5150
+AOMD,Real Estate,6500
+AOMN,Real Estate,6500
+AOMR,Real Estate,6500
+AON,Financials,6411
+AORT,Health Care,3841
+AOS,Consumer Discretionary,3630
+AOSL,Information Technology,3674
+AOUT,Consumer Discretionary,3949
+AP,Industrials,3561
+APA,Energy,1311
+APAC,Financials,6770
+APACR,Financials,6770
+APACU,Financials,6770
+APAM,Financials,6282
+APC,Energy,5172
+APD,Materials,2810
+APEI,Consumer Discretionary,8200
+APG,Industrials,7340
+APH,Information Technology,3678
+API,Information Technology,7372
+APLD,Information Technology,7374
+APLE,Real Estate,6798
+APLM,Health Care,2834
+APLMW,Health Care,2834
+APMC,Financials,6770
+APMCR,Financials,6770
+APMCU,Financials,6770
+APMD,Health Care,2834
+APO,Financials,6282
+APOG,Materials,3231
+APOS,Financials,6282
+APP,Information Technology,7370
+APPF,Information Technology,7372
+APPN,Information Technology,7372
+APPS,Financials,6794
+APRE,Health Care,2834
+APT,Health Care,3842
+APTS,Real Estate,6798
+APTV,Consumer Discretionary,3714
+APU,Consumer Discretionary,5990
+APUR,Financials,6770
+APURR,Financials,6770
+APUS,Health Care,2834
+APVO,Health Care,2834
+APWC,Materials,3357
+APXT,Financials,6770
+APXTU,Financials,6770
+APXTW,Financials,6770
+APYX,Health Care,3841
+AQB,Consumer Staples,0900
+AQMS,Materials,3341
+AQN,Utilities,4911
+AQNB,Utilities,4911
+AQST,Health Care,2834
+AR,Energy,1311
+ARA,Health Care,8090
+ARAI,Industrials,7340
+ARAY,Health Care,3841
+ARBB,Information Technology,7373
+ARBE,Information Technology,7373
+ARBK,Financials,6199
+ARCB,Industrials,4213
+ARCI,Financials,6770
+ARCIU,Financials,6770
+ARCIW,Financials,6770
+ARCL,Financials,6159
+ARCLR,Financials,6159
+ARCLU,Financials,6159
+ARCLW,Financials,6159
+ARCO,Consumer Discretionary,5812
+ARCT,Health Care,2834
+ARCX,Energy,5171
+ARDT,Health Care,8062
+ARDX,Health Care,2834
+ARE,Real Estate,6798
+AREC,Energy,1220
+ARES,Financials,6282
+ARGX,Health Care,2836
+ARHS,Consumer Discretionary,5712
+ARI,Real Estate,6798
+ARIA,Health Care,2836
+ARIS,Materials,1040
+ARKB,Financials,6221
+ARKO,Consumer Staples,5412
+ARKR,Consumer Discretionary,5812
+ARL,Real Estate,6510
+ARLO,Industrials,7381
+ARLP,Energy,1221
+ARM,Information Technology,3674
+ARMK,Consumer Discretionary,5812
+ARMP,Health Care,2836
+ARNA,Health Care,2834
+AROC,Utilities,4922
+AROW,Financials,6021
+ARQ,Materials,2890
+ARQL,Health Care,2834
+ARQQ,Information Technology,7372
+ARQT,Health Care,2834
+ARR,Real Estate,6798
+ARRS,Information Technology,3663
+ARRY,Information Technology,3674
+ARTC,Financials,6770
+ARTCU,Financials,6770
+ARTCW,Financials,6770
+ARTL,Health Care,2834
+ARTNA,Utilities,4941
+ARTV,Health Care,2836
+ARTW,Industrials,3523
+ARTX,Industrials,3690
+ARVN,Health Care,2834
+ARW,Industrials,5065
+ARWR,Health Care,2834
+ARX,Financials,6411
+ARXS,Industrials,3728
+ARYA,Information Technology,3826
+AS,Consumer Discretionary,2300
+ASAN,Information Technology,7372
+ASB,Financials,6022
+ASBA,Financials,6022
+ASBP,Health Care,2834
+ASBPW,Health Care,2834
+ASC,Industrials,4412
+ASFI,Financials,6153
+ASH,Industrials,5160
+ASIC,Financials,6331
+ASIX,Materials,2821
+ASLE,Industrials,5080
+ASM,Materials,1000
+ASMB,Health Care,2834
+ASML,Industrials,3559
+ASND,Health Care,2834
+ASO,Consumer Discretionary,5940
+ASPC,Financials,6770
+ASPCR,Financials,6770
+ASPCU,Financials,6770
+ASPI,Materials,2890
+ASPN,Industrials,5030
+ASPS,Industrials,7380
+ASPSW,Industrials,7380
+ASPSZ,Industrials,7380
+ASR,Industrials,4581
+ASRV,Financials,6021
+ASST,Financials,6199
+AST,Health Care,2836
+ASTC,Information Technology,3826
+ASTE,Industrials,3531
+ASTH,Industrials,8742
+ASTI,Information Technology,3674
+ASTL,Materials,3312
+ASTS,Communication Services,4899
+ASUR,Information Technology,7373
+ASV,Industrials,3531
+ASX,Information Technology,3674
+ASYS,Industrials,3559
+AT,Financials,6021
+ATAT,Consumer Discretionary,7011
+ATCH,Financials,6199
+ATCX,Materials,1040
+ATEC,Health Care,3841
+ATEN,Information Technology,3576
+ATER,Consumer Discretionary,3634
+ATEX,Communication Services,4813
+ATGL,Information Technology,7371
+ATH,Financials,6311
+ATHE,Health Care,2834
+ATHM,Information Technology,7374
+ATHN,Industrials,7389
+ATHR,Information Technology,7372
+ATHS,Financials,6311
+ATI,Materials,3317
+ATLC,Financials,6141
+ATLCL,Financials,6141
+ATLCP,Financials,6141
+ATLCZ,Financials,6141
+ATLO,Financials,6021
+ATLQ,Financials,6770
+ATLQR,Financials,6770
+ATLQU,Financials,6770
+ATLQW,Financials,6770
+ATLX,Materials,1400
+ATMP,Financials,6029
+ATMU,Consumer Discretionary,3714
+ATNI,Communication Services,4813
+ATNM,Health Care,2834
+ATO,Utilities,4924
+ATOM,Information Technology,3674
+ATOS,Health Care,2834
+ATPC,Health Care,8000
+ATR,Materials,3089
+ATRA,Health Care,2836
+ATRC,Health Care,3841
+ATRO,Industrials,3728
+ATRS,Health Care,3841
+ATS,Industrials,3569
+ATTO,Health Care,2836
+ATTT,Consumer Discretionary,3630
+ATXG,Industrials,7330
+ATYR,Health Care,2836
+AU,Materials,1040
+AUB,Financials,6022
+AUBN,Financials,6022
+AUC,Industrials,8742
+AUDC,Information Technology,3661
+AUGO,Materials,1000
+AUID,Information Technology,7372
+AUNA,Health Care,8011
+AUPH,Health Care,2834
+AUR,Information Technology,7373
+AURA,Health Care,2836
+AURE,Financials,6199
+AUROW,Information Technology,7373
+AUST,Materials,1040
+AUTL,Health Care,2836
+AUTO,Information Technology,7370
+AUUD,Information Technology,7374
+AUXX,Materials,1040
+AVA,Utilities,4931
+AVAH,Health Care,8082
+AVAL,Financials,6029
+AVAT,Financials,6199
+AVAV,Industrials,3721
+AVBC,Financials,6036
+AVBH,Financials,6022
+AVBP,Health Care,2834
+AVD,Materials,2870
+AVDR,Health Care,2834
+AVEX,Industrials,3721
+AVGO,Information Technology,3674
+AVIR,Health Care,2834
+AVLN,Health Care,2834
+AVNT,Materials,2821
+AVNW,Information Technology,3663
+AVO,Consumer Staples,0700
+AVPT,Information Technology,7372
+AVR,Health Care,3842
+AVT,Industrials,5065
+AVTR,Information Technology,3826
+AVTX,Health Care,2834
+AVX,Financials,6199
+AVXL,Health Care,2836
+AVY,Materials,2670
+AWI,Materials,3089
+AWK,Utilities,4941
+AWR,Utilities,4941
+AWRE,Information Technology,7372
+AWX,Industrials,4953
+AX,Financials,6035
+AXE,Industrials,5063
+AXG,Financials,6211
+AXGN,Health Care,3845
+AXIL,Consumer Staples,2844
+AXIN,Financials,6770
+AXINR,Financials,6770
+AXINU,Financials,6770
+AXNX,Industrials,7389
+AXON,Industrials,3480
+AXP,Financials,6199
+AXR,Real Estate,6552
+AXS,Financials,6331
+AXSM,Health Care,2834
+AXTA,Materials,2851
+AXTI,Information Technology,3674
+AYA,Materials,1040
+AYI,Industrials,3640
+AYR,Industrials,7359
+AYTU,Health Care,2834
+AZ,Industrials,3569
+AZI,Consumer Discretionary,7500
+AZIO,Consumer Discretionary,3714
+AZN,Health Care,2834
+AZO,Consumer Discretionary,5531
+AZTA,Industrials,3559
+AZUL,Industrials,4512
+AZZ,Industrials,3470
+B,Materials,1040
+BA,Industrials,3721
+BABA,Industrials,7389
+BAC,Financials,6021
+BACC,Financials,6770
+BACCR,Financials,6770
+BACCU,Financials,6770
+BAER,Industrials,7389
+BAERW,Industrials,7389
+BAFN,Financials,6022
+BAH,Industrials,8742
+BAK,Materials,2860
+BALL,Industrials,3411
+BALY,Consumer Discretionary,7011
+BAM,Financials,6282
+BANC,Financials,6021
+BAND,Information Technology,7372
+BANF,Financials,6021
+BANFP,Financials,6021
+BANL,Energy,5172
+BANR,Financials,6022
+BAOS,Industrials,7389
+BAP,Financials,6029
+BAR,Financials,6221
+BARK,Consumer Discretionary,5990
+BATL,Energy,1311
+BATRA,Consumer Discretionary,7900
+BATRK,Consumer Discretionary,7900
+BAVA,Financials,6221
+BAX,Health Care,3841
+BB,Information Technology,7372
+BBAI,Information Technology,7372
+BBAR,Financials,6029
+BBCI,Industrials,7389
+BBCIW,Industrials,7389
+BBCP,Industrials,1700
+BBD,Financials,6022
+BBDO,Financials,6022
+BBGI,Communication Services,4832
+BBIO,Health Care,2834
+BBLG,Health Care,3842
+BBLS,Energy,1311
+BBNX,Health Care,3841
+BBOT,Health Care,2834
+BBOX,Information Technology,3576
+BBSI,Industrials,7363
+BBT,Financials,6036
+BBUC,Industrials,1700
+BBVA,Financials,6029
+BBW,Consumer Discretionary,5945
+BBWI,Consumer Discretionary,5990
+BBY,Consumer Discretionary,5731
+BC,Industrials,3510
+BCAL,Financials,6021
+BCAX,Health Care,2834
+BCBP,Financials,6035
+BCC,Industrials,5030
+BCCQ,Financials,6770
+BCCQU,Financials,6770
+BCCQW,Financials,6770
+BCDA,Health Care,2836
+BCE,Communication Services,4813
+BCG,Financials,6199
+BCGWW,Financials,6199
+BCH,Financials,6029
+BCHT,Information Technology,3829
+BCML,Financials,6022
+BCO,Industrials,4731
+BCOR,Financials,6199
+BCPC,Materials,2800
+BCRX,Health Care,2836
+BCS,Financials,6029
+BCSS,Financials,6770
+BCTX,Health Care,2834
+BCTXL,Health Care,2834
+BCTXZ,Health Care,2834
+BCYC,Health Care,2834
+BDAI,Information Technology,7372
+BDC,Materials,3357
+BDCI,Financials,6770
+BDCIU,Financials,6770
+BDCIW,Financials,6770
+BDCX,Financials,6021
+BDCZ,Financials,6021
+BDL,Consumer Discretionary,5812
+BDMD,Health Care,3841
+BDMDW,Health Care,3841
+BDN,Real Estate,6798
+BDRY,Financials,6221
+BDSI,Health Care,2834
+BDSX,Health Care,8071
+BDTX,Health Care,2836
+BDX,Health Care,3841
+BE,Industrials,3620
+BEAG,Information Technology,7372
+BEAGR,Information Technology,7372
+BEAGU,Information Technology,7372
+BEAM,Health Care,2836
+BEAT,Health Care,3841
+BEATW,Health Care,3841
+BEBE,Financials,6770
+BEEM,Industrials,3690
+BEEP,Real Estate,6500
+BEKE,Real Estate,6531
+BELFA,Information Technology,3677
+BELFB,Information Technology,3677
+BEN,Financials,6282
+BENF,Financials,6199
+BENFW,Financials,6199
+BEP,Utilities,4911
+BEPC,Utilities,4911
+BEPH,Utilities,4911
+BEPI,Utilities,4911
+BEPJ,Utilities,4911
+BERZ,Financials,6029
+BESS,Utilities,4911
+BETA,Industrials,3721
+BETR,Financials,6163
+BETRW,Financials,6163
+BF.A,Consumer Staples,2080
+BF.B,Consumer Staples,2080
+BFAM,Industrials,8351
+BFC,Financials,6021
+BFH,Financials,6141
+BFLY,Health Care,3844
+BFRG,Health Care,2834
+BFRGW,Health Care,2834
+BFRI,Health Care,2834
+BFRIW,Health Care,2834
+BFS,Real Estate,6798
+BFST,Financials,6022
+BG,Consumer Staples,2070
+BGC,Financials,6200
+BGDE,Financials,6199
+BGIN,Financials,6199
+BGL,Materials,1000
+BGLC,Health Care,8071
+BGLWW,Materials,1000
+BGM,Health Care,2834
+BGMS,Industrials,5099
+BGS,Consumer Staples,2000
+BGSF,Industrials,7363
+BGSI,Consumer Discretionary,7500
+BH,Consumer Discretionary,5812
+BH.A,Consumer Discretionary,5812
+BHAV,Financials,6770
+BHAVR,Financials,6770
+BHAVU,Financials,6770
+BHB,Financials,6022
+BHBK,Financials,6022
+BHC,Health Care,2834
+BHE,Information Technology,3672
+BHF,Financials,6311
+BHFAL,Financials,6311
+BHFAM,Financials,6311
+BHFAN,Financials,6311
+BHFAO,Financials,6311
+BHFAP,Financials,6311
+BHM,Real Estate,6798
+BHP,Materials,1000
+BHR,Real Estate,6798
+BHRB,Financials,6021
+BHST,Health Care,2834
+BHVN,Health Care,2834
+BHYP,Financials,6221
+BIAF,Health Care,8731
+BIAFW,Health Care,8731
+BID,Financials,6770
+BIDU,Information Technology,7370
+BIDWR,Financials,6770
+BIDWU,Financials,6770
+BIIB,Health Care,2836
+BIII,Communication Services,4899
+BILI,Information Technology,7374
+BILL,Information Technology,7372
+BIO,Information Technology,3826
+BIO.B,Information Technology,3826
+BIOA,Health Care,2834
+BIOS,Health Care,8082
+BIOT,Consumer Staples,2844
+BIOTW,Consumer Staples,2844
+BIOX,Materials,2870
+BIP,Industrials,4400
+BIPC,Utilities,4923
+BIPH,Industrials,4400
+BIPI,Industrials,4400
+BIPJ,Industrials,4400
+BIRD,Information Technology,7374
+BIRK,Consumer Discretionary,3140
+BITA,Financials,6221
+BITB,Financials,6221
+BITW,Financials,6221
+BIVI,Health Care,2834
+BIVIW,Health Care,2834
+BIXI,Financials,6770
+BIXIU,Financials,6770
+BIXIW,Financials,6770
+BIYA,Industrials,7361
+BJ,Consumer Discretionary,5331
+BJDX,Health Care,3841
+BJRI,Consumer Discretionary,5812
+BKD,Health Care,8050
+BKE,Consumer Discretionary,5651
+BKEP,Industrials,4610
+BKH,Utilities,4911
+BKHA,Health Care,2836
+BKHAR,Health Care,2836
+BKHAU,Health Care,2836
+BKJ,Financials,6022
+BKKT,Financials,6199
+BKNG,Industrials,4700
+BKR,Industrials,3533
+BKS,Consumer Discretionary,5940
+BKSY,Information Technology,3663
+BKTI,Information Technology,3663
+BKU,Financials,6035
+BKV,Energy,1311
+BKYI,Information Technology,7372
+BL,Information Technology,7372
+BLBD,Consumer Discretionary,3713
+BLCO,Health Care,3851
+BLDP,Industrials,3620
+BLDR,Consumer Discretionary,5211
+BLIN,Information Technology,7372
+BLIV,Information Technology,7373
+BLK,Financials,6211
+BLKB,Information Technology,7372
+BLLN,Health Care,8071
+BLMN,Consumer Discretionary,5812
+BLMT,Financials,6022
+BLND,Information Technology,7370
+BLNE,Financials,6162
+BLNK,Industrials,3690
+BLRK,Financials,6770
+BLRKU,Financials,6770
+BLRKW,Financials,6770
+BLRX,Health Care,2834
+BLSH,Financials,6199
+BLSM,Health Care,2834
+BLTE,Health Care,2834
+BLUW,Financials,6770
+BLUWU,Financials,6770
+BLUWW,Financials,6770
+BLX,Financials,6029
+BLZE,Information Technology,7372
+BLZR,Financials,6770
+BLZRU,Financials,6770
+BLZRW,Financials,6770
+BMA,Financials,6029
+BMBL,Information Technology,7370
+BMCH,Consumer Discretionary,5211
+BMEA,Health Care,2834
+BMGL,Health Care,8011
+BMHL,Financials,6199
+BMI,Information Technology,3824
+BMM,Materials,1000
+BMMX,Materials,1000
+BMNP,Financials,6199
+BMNR,Financials,6199
+BMO,Financials,6029
+BMR,Information Technology,7372
+BMRA,Health Care,2835
+BMRC,Financials,6022
+BMRN,Health Care,2834
+BMTC,Financials,6022
+BMY,Health Care,2834
+BN,Real Estate,6512
+BNAI,Information Technology,7373
+BNAIW,Information Technology,7373
+BNC,Financials,6199
+BNCWW,Financials,6199
+BNCWZ,Financials,6199
+BNED,Consumer Discretionary,5940
+BNGO,Information Technology,3826
+BNH,Real Estate,6512
+BNJ,Real Estate,6512
+BNKD,Financials,6029
+BNKK,Consumer Staples,2844
+BNKU,Financials,6029
+BNL,Real Estate,6798
+BNO,Financials,6221
+BNR,Health Care,8071
+BNS,Financials,6022
+BNT,Financials,6399
+BNTC,Health Care,2834
+BNTX,Health Care,2836
+BNY,Financials,6022
+BOBS,Consumer Discretionary,5712
+BOC,Real Estate,6510
+BOCH,Financials,6022
+BODI,Consumer Discretionary,5960
+BOF,Consumer Staples,2000
+BOH,Financials,6022
+BOIL,Financials,6221
+BOKF,Financials,6021
+BOLD,Health Care,2834
+BOLT,Health Care,2834
+BON,Health Care,2833
+BOOM,Materials,3390
+BOOT,Consumer Discretionary,5661
+BORR,Energy,1381
+BOSC,Information Technology,3576
+BOTJ,Financials,6022
+BOW,Financials,6331
+BOX,Information Technology,7372
+BOXL,Consumer Discretionary,8200
+BP,Energy,2911
+BPAC,Financials,6770
+BPACR,Financials,6770
+BPACU,Financials,6770
+BPFH,Financials,6022
+BPL,Industrials,4610
+BPMP,Industrials,4610
+BPOP,Financials,6022
+BPOPM,Financials,6022
+BPRN,Financials,6022
+BPYPM,Real Estate,6500
+BPYPN,Real Estate,6500
+BPYPO,Real Estate,6500
+BPYPP,Real Estate,6500
+BPYU,Real Estate,6798
+BQ,Consumer Discretionary,5990
+BR,Industrials,7389
+BRAG,Information Technology,7377
+BRAI,Information Technology,7374
+BRBI,Financials,6199
+BRBR,Consumer Staples,2000
+BRBS,Financials,6022
+BRC,Consumer Discretionary,3990
+BRCB,Consumer Discretionary,5810
+BRCC,Consumer Staples,2080
+BREW,Consumer Staples,2082
+BREZ,Financials,6770
+BREZR,Financials,6770
+BRFH,Consumer Staples,2030
+BRIA,Consumer Discretionary,2300
+BRID,Consumer Staples,2013
+BRK.A,Financials,6331
+BRK.B,Financials,6331
+BRKH,Financials,6770
+BRKHU,Financials,6770
+BRKHW,Financials,6770
+BRKL,Financials,6035
+BRKR,Information Technology,3826
+BRKRP,Information Technology,3826
+BRLS,Consumer Staples,2000
+BRLSW,Consumer Staples,2000
+BRLT,Consumer Discretionary,3910
+BRN,Energy,1311
+BRNX,Industrials,3433
+BRO,Financials,6411
+BROS,Consumer Discretionary,5810
+BRPAU,Health Care,2834
+BRPM,Industrials,5084
+BRRKU,Financials,6770
+BRRR,Financials,6221
+BRSL,Consumer Discretionary,7990
+BRSP,Real Estate,6798
+BRT,Real Estate,6798
+BRTM,Financials,6770
+BRTMU,Financials,6770
+BRTMW,Financials,6770
+BRTX,Health Care,8090
+BRUN,Information Technology,7374
+BRVE,Health Care,2834
+BRX,Real Estate,6798
+BRZD,Financials,6029
+BRZE,Information Technology,7372
+BRZL,Financials,6029
+BSAA,Consumer Discretionary,8200
+BSAAR,Consumer Discretionary,8200
+BSAAU,Consumer Discretionary,8200
+BSAC,Financials,6029
+BSBK,Financials,6036
+BSBR,Financials,6029
+BSEM,Health Care,2836
+BSET,Consumer Discretionary,2511
+BSIN,Energy,1311
+BSM,Energy,1311
+BSOL,Financials,6221
+BSP,Information Technology,7370
+BSRR,Financials,6022
+BSRT,Real Estate,6798
+BSVN,Financials,6022
+BSX,Health Care,3841
+BSY,Information Technology,7372
+BTBD,Consumer Discretionary,5812
+BTBDW,Consumer Discretionary,5812
+BTBT,Financials,6199
+BTC,Financials,6221
+BTCK,Financials,6221
+BTCO,Financials,6221
+BTCS,Financials,6199
+BTCT,Financials,6199
+BTCW,Financials,6221
+BTDR,Financials,6199
+BTE,Energy,1381
+BTG,Materials,1040
+BTGO,Financials,6199
+BTI,Consumer Staples,2111
+BTLN,Information Technology,7371
+BTMD,Health Care,2833
+BTOC,Industrials,4220
+BTQ,Information Technology,7370
+BTSG,Health Care,8082
+BTSGU,Health Care,8082
+BTTC,Information Technology,7371
+BTU,Energy,1221
+BUD,Consumer Staples,2082
+BUDA,Consumer Staples,2080
+BULL,Financials,6211
+BULLW,Financials,6211
+BULZ,Financials,6029
+BUR,Financials,6199
+BURL,Consumer Discretionary,5311
+BURU,Industrials,3690
+BUSE,Financials,6022
+BUSEP,Financials,6022
+BUUU,Consumer Discretionary,7900
+BV,Consumer Staples,0700
+BVC,Financials,6282
+BVFL,Financials,6035
+BVN,Materials,1000
+BVS,Health Care,3841
+BW,Industrials,3433
+BWA,Consumer Discretionary,3714
+BWAY,Health Care,3841
+BWB,Financials,6022
+BWBBP,Financials,6022
+BWEN,Materials,3360
+BWET,Financials,6221
+BWFG,Financials,6022
+BWIN,Financials,6411
+BWIV,Financials,6770
+BWLP,Industrials,4700
+BWMN,Industrials,8742
+BWMX,Consumer Discretionary,5961
+BWXT,Industrials,3510
+BX,Financials,6282
+BXBL,Consumer Discretionary,1520
+BXC,Industrials,5031
+BXDC,Real Estate,6500
+BXG,Real Estate,6531
+BXMT,Real Estate,6798
+BXP,Real Estate,6798
+BY,Financials,6022
+BYAH,Consumer Staples,2840
+BYD,Consumer Discretionary,7011
+BYFC,Financials,6035
+BYND,Consumer Staples,2000
+BYRN,Industrials,3690
+BYSI,Health Care,2834
+BZ,Information Technology,7370
+BZAI,Information Technology,3674
+BZAIW,Information Technology,3674
+BZFD,Communication Services,4899
+BZFDW,Communication Services,4899
+BZUN,Consumer Discretionary,5961
+C,Financials,6021
+CAAP,Industrials,4581
+CAAS,Consumer Discretionary,3714
+CABA,Health Care,2836
+CABO,Communication Services,4841
+CABR,Consumer Staples,2844
+CAC,Financials,6021
+CACC,Financials,6141
+CACI,Information Technology,7373
+CADE,Financials,6021
+CADL,Health Care,2836
+CAE,Industrials,3690
+CAES,Financials,6770
+CAG,Consumer Staples,2000
+CAH,Health Care,5122
+CAI,Health Care,8071
+CAII,Financials,6770
+CAIIU,Financials,6770
+CAIIW,Financials,6770
+CAKE,Consumer Discretionary,5812
+CAL,Consumer Discretionary,3140
+CALC,Health Care,2834
+CALM,Consumer Staples,0200
+CALX,Communication Services,4899
+CALY,Consumer Discretionary,3949
+CAMP,Health Care,2834
+CAMT,Information Technology,3827
+CAN,Financials,6199
+CANE,Financials,6221
+CANF,Health Care,2834
+CANG,Financials,6199
+CAPL,Energy,5172
+CAPN,Financials,6770
+CAPNR,Financials,6770
+CAPNU,Financials,6770
+CAPR,Health Care,2834
+CAPS,Industrials,5030
+CAQ,Financials,6770
+CAQUU,Financials,6770
+CAQUW,Financials,6770
+CAR,Consumer Discretionary,7510
+CARB,Information Technology,7374
+CARD,Financials,6029
+CARE,Financials,6021
+CARG,Information Technology,7374
+CARL,Health Care,3841
+CARO,Financials,6022
+CARR,Industrials,3585
+CARS,Information Technology,7374
+CART,Industrials,7389
+CARU,Financials,6029
+CAS,Industrials,5051
+CAS.U,Financials,6770
+CASH,Financials,6021
+CASS,Industrials,7389
+CAST,Information Technology,7374
+CASY,Consumer Discretionary,5500
+CAT,Industrials,3531
+CATL,Financials,6770
+CATLR,Financials,6770
+CATLU,Financials,6770
+CATM,Industrials,7389
+CATO,Consumer Discretionary,5621
+CATX,Health Care,2834
+CATY,Financials,6022
+CAVA,Consumer Discretionary,5812
+CAVM,Information Technology,3674
+CB,Financials,6331
+CBAN,Financials,6022
+CBAT,Industrials,3690
+CBB,Communication Services,4813
+CBFV,Financials,6022
+CBIO,Health Care,2834
+CBK,Financials,6022
+CBL,Real Estate,6798
+CBLL,Health Care,3845
+CBM,Health Care,2834
+CBMG,Health Care,2836
+CBNA,Financials,6021
+CBNK,Financials,6021
+CBOE,Financials,6200
+CBPX,Materials,3270
+CBRE,Real Estate,6500
+CBRL,Consumer Discretionary,5812
+CBRS,Information Technology,3674
+CBSH,Financials,6022
+CBT,Materials,2890
+CBU,Financials,6021
+CBUS,Materials,2870
+CBZ,Industrials,7389
+CC,Materials,2800
+CCAQ,Financials,6770
+CCAQU,Financials,6770
+CCAQW,Financials,6770
+CCB,Financials,6022
+CCBG,Financials,6022
+CCC,Information Technology,7372
+CCCC,Health Care,2836
+CCCT,Financials,6770
+CCCTU,Financials,6770
+CCCTW,Financials,6770
+CCEC,Industrials,4412
+CCEL,Health Care,8090
+CCEP,Consumer Staples,2086
+CCG,Financials,6411
+CCGWW,Financials,6411
+CCHH,Consumer Discretionary,5812
+CCI,Real Estate,6798
+CCII,Financials,6770
+CCIIU,Financials,6770
+CCIIW,Financials,6770
+CCJ,Materials,1090
+CCK,Industrials,3411
+CCL,Industrials,4400
+CCLD,Information Technology,7372
+CCM,Health Care,8011
+CCNE,Financials,6022
+CCNEP,Financials,6022
+CCOI,Communication Services,4899
+CCR,Energy,1220
+CCS,Consumer Discretionary,1531
+CCSB,Financials,6035
+CCSI,Information Technology,7372
+CCTG,Industrials,3640
+CCU,Consumer Staples,2082
+CCXI,Industrials,3569
+CCXIU,Industrials,3569
+CCXIW,Industrials,3569
+CCZ,Communication Services,4841
+CD,Financials,6199
+CDE,Materials,1040
+CDIO,Health Care,2835
+CDIOW,Health Care,2835
+CDK,Industrials,7389
+CDLR,Industrials,4412
+CDLX,Information Technology,7370
+CDNA,Health Care,8071
+CDNL,Industrials,1600
+CDNS,Information Technology,7372
+CDOR,Real Estate,6798
+CDP,Real Estate,6798
+CDR,Real Estate,6798
+CDRE,Health Care,3842
+CDRO,Consumer Discretionary,7990
+CDROW,Consumer Discretionary,7990
+CDT,Health Care,2834
+CDTG,Industrials,4950
+CDTTW,Health Care,2834
+CDW,Consumer Discretionary,5961
+CDXS,Materials,2860
+CDZI,Utilities,4941
+CDZIP,Utilities,4941
+CE,Materials,2820
+CEF,Financials,6221
+CEFD,Financials,6021
+CEG,Utilities,4911
+CELC,Health Care,8071
+CELG,Health Care,2834
+CELH,Consumer Staples,2086
+CELU,Health Care,2834
+CELZ,Health Care,2836
+CENN,Consumer Discretionary,3711
+CENT,Industrials,5190
+CENTA,Industrials,5190
+CENX,Materials,3334
+CEPF,Financials,6770
+CEPL,Industrials,3510
+CEPO,Financials,6770
+CEPS,Financials,6770
+CEPU,Utilities,4911
+CEPV,Financials,6770
+CERN,Information Technology,7373
+CERS,Health Care,3841
+CERT,Information Technology,7372
+CETX,Industrials,1700
+CETY,Utilities,4924
+CEVA,Information Technology,7370
+CF,Materials,2870
+CFBK,Financials,6021
+CFFI,Financials,6022
+CFFN,Financials,6035
+CFG,Financials,6022
+CFR,Financials,6021
+CG,Financials,6282
+CGABL,Financials,6282
+CGAU,Materials,1040
+CGC,Health Care,2833
+CGCF,Financials,6770
+CGCFU,Financials,6770
+CGCFW,Financials,6770
+CGEM,Health Care,2836
+CGEN,Health Care,2836
+CGNT,Information Technology,7372
+CGNX,Information Technology,3823
+CGON,Health Care,2836
+CGTL,Industrials,5045
+CGTX,Health Care,2836
+CHA,Consumer Discretionary,5810
+CHAD,Financials,6199
+CHAI,Communication Services,4812
+CHAR,Financials,6770
+CHARR,Financials,6770
+CHARU,Financials,6770
+CHCI,Real Estate,6500
+CHCO,Financials,6021
+CHCT,Real Estate,6798
+CHD,Consumer Staples,2840
+CHDN,Consumer Discretionary,7948
+CHE,Health Care,8082
+CHEC,Financials,6770
+CHECU,Financials,6770
+CHECW,Financials,6770
+CHEF,Consumer Staples,5141
+CHGA,Information Technology,7371
+CHGG,Consumer Discretionary,8200
+CHH,Consumer Discretionary,7011
+CHKE,Consumer Discretionary,2330
+CHKP,Information Technology,7372
+CHMA,Health Care,2834
+CHMG,Financials,6022
+CHMI,Real Estate,6798
+CHNR,Materials,1040
+CHPG,Financials,6770
+CHPGR,Financials,6770
+CHPGU,Financials,6770
+CHPT,Industrials,3690
+CHR,Information Technology,7374
+CHRD,Energy,1311
+CHRN,Industrials,3569
+CHRS,Health Care,2836
+CHRW,Industrials,4731
+CHSCL,Industrials,5150
+CHSCM,Industrials,5150
+CHSCN,Industrials,5150
+CHSCO,Industrials,5150
+CHSCP,Industrials,5150
+CHSN,Consumer Staples,2000
+CHSP,Real Estate,6798
+CHT,Communication Services,4812
+CHTR,Communication Services,4841
+CHTRP,Communication Services,4841
+CHWM,Materials,1400
+CHWY,Consumer Discretionary,5961
+CHYM,Financials,6199
+CI,Financials,6324
+CIA,Financials,6311
+CIB,Financials,6029
+CIEN,Information Technology,3661
+CIFC,Financials,6199
+CIFR,Financials,6199
+CIG,Utilities,4911
+CIG.C,Utilities,4911
+CIGI,Real Estate,6500
+CIGL,Industrials,7381
+CIIT,Information Technology,3576
+CIM,Real Estate,6798
+CIMN,Real Estate,6798
+CIMO,Real Estate,6798
+CIMP,Real Estate,6798
+CINF,Financials,6331
+CING,Health Care,2834
+CINGW,Health Care,2834
+CINT,Information Technology,7371
+CIR,Industrials,3490
+CIRC,Industrials,7363
+CISO,Industrials,8742
+CISS,Industrials,4412
+CIT,Financials,6021
+CITR,Materials,2800
+CIVB,Financials,6022
+CIVI,Energy,1311
+CIX,Industrials,3420
+CJ,Energy,1389
+CJMB,Industrials,7389
+CKH,Industrials,4412
+CKX,Energy,1311
+CL,Consumer Staples,2844
+CLAR,Consumer Discretionary,3949
+CLB,Energy,1389
+CLBK,Financials,6035
+CLBR,Financials,6770
+CLBT,Information Technology,7372
+CLDB,Financials,6035
+CLDI,Health Care,2836
+CLDR,Information Technology,7372
+CLDS,Industrials,7311
+CLDT,Real Estate,6798
+CLDX,Health Care,2835
+CLF,Materials,1000
+CLFD,Information Technology,3661
+CLGN,Health Care,3842
+CLGX,Information Technology,7374
+CLH,Industrials,4955
+CLIK,Industrials,7361
+CLIR,Information Technology,3823
+CLLS,Health Care,2836
+CLMA,Financials,6211
+CLMB,Industrials,5045
+CLMT,Energy,2911
+CLNE,Utilities,4932
+CLNK,Financials,6221
+CLNN,Health Care,2834
+CLNS,Financials,6282
+CLOV,Financials,6324
+CLPR,Real Estate,6798
+CLPS,Information Technology,7372
+CLPT,Health Care,3841
+CLRB,Health Care,2834
+CLRO,Information Technology,3661
+CLS,Information Technology,3672
+CLSK,Financials,6199
+CLSKW,Financials,6199
+CLST,Financials,6035
+CLUB,Consumer Discretionary,7997
+CLVT,Information Technology,7374
+CLW,Materials,2631
+CLWT,Industrials,5040
+CLX,Consumer Staples,2842
+CLYM,Health Care,2834
+CM,Financials,6029
+CMBT,Industrials,4412
+CMC,Materials,3312
+CMCL,Materials,1040
+CMCM,Information Technology,7372
+CMCO,Industrials,3531
+CMCSA,Communication Services,4841
+CMCT,Real Estate,6798
+CMD,Health Care,3841
+CMDB,Industrials,4400
+CME,Financials,6200
+CMG,Consumer Discretionary,5812
+CMI,Industrials,3510
+CMMB,Health Care,2834
+CMND,Health Care,2834
+CMO,Real Estate,6798
+CMP,Materials,1400
+CMPI,Health Care,2836
+CMPR,Communication Services,2750
+CMPS,Health Care,2834
+CMPX,Health Care,2836
+CMRC,Information Technology,7372
+CMRE,Industrials,4412
+CMS,Utilities,4931
+CMSA,Utilities,4931
+CMSC,Utilities,4931
+CMSD,Utilities,4931
+CMT,Materials,3089
+CMTG,Real Estate,6500
+CMTL,Information Technology,3663
+CMTV,Financials,6021
+CNA,Financials,6331
+CNBKA,Financials,6022
+CNC,Financials,6324
+CNCK,Financials,6199
+CNCKW,Financials,6199
+CNDT,Industrials,7389
+CNET,Information Technology,7370
+CNEY,Materials,2860
+CNF,Financials,6199
+CNH,Industrials,3531
+CNI,Industrials,4011
+CNK,Communication Services,7830
+CNL,Materials,1040
+CNM,Industrials,5099
+CNMD,Health Care,3845
+CNNE,Consumer Discretionary,5810
+CNO,Financials,6321
+CNOB,Financials,6022
+CNOBP,Financials,6022
+CNP,Utilities,4911
+CNQ,Energy,1311
+CNR,Energy,1220
+CNS,Financials,6282
+CNSP,Health Care,2834
+CNST,Health Care,2834
+CNSY,Health Care,3841
+CNTB,Health Care,2834
+CNTN,Financials,6199
+CNTX,Health Care,2834
+CNTY,Consumer Discretionary,7011
+CNVS,Communication Services,7841
+CNX,Energy,1311
+CNXC,Industrials,7389
+CNXM,Utilities,4922
+CNXN,Industrials,5045
+CNXU,Health Care,3842
+COAG,Health Care,2836
+COCHW,Health Care,3842
+COCO,Consumer Staples,2080
+COCP,Health Care,2834
+CODA,Industrials,3812
+CODI,Consumer Discretionary,2510
+CODX,Health Care,3841
+COE,Consumer Discretionary,8200
+COEP,Financials,6199
+COF,Financials,6021
+COFS,Financials,6022
+COGT,Health Care,2834
+COHN,Financials,6211
+COHR,Information Technology,3827
+COHU,Information Technology,3825
+COIN,Financials,6199
+COKE,Consumer Staples,2086
+COLB,Financials,6022
+COLD,Real Estate,6798
+COLL,Health Care,2834
+COLM,Consumer Discretionary,2300
+COMP,Real Estate,6531
+CON,Health Care,8093
+CONE,Real Estate,6798
+COO,Health Care,3851
+COOK,Consumer Discretionary,3630
+COOL,Health Care,2836
+COOT,Consumer Staples,2070
+COOTW,Consumer Staples,2070
+COP,Energy,2911
+COPL,Financials,6770
+COPR,Materials,1000
+COR,Health Care,5122
+CORE,Consumer Staples,5141
+CORN,Financials,6221
+CORT,Health Care,2834
+CORZ,Financials,6199
+CORZW,Financials,6199
+CORZZ,Financials,6199
+COSM,Health Care,5122
+COSO,Financials,6022
+COST,Consumer Discretionary,5331
+COTV,Industrials,7389
+COTY,Consumer Staples,2844
+COUR,Information Technology,7372
+COYA,Health Care,2834
+CP,Industrials,4011
+CPA,Industrials,4512
+CPAC,Materials,3241
+CPAH,Information Technology,7372
+CPAI,Financials,6770
+CPAY,Industrials,7389
+CPB,Consumer Staples,2000
+CPBI,Financials,6035
+CPER,Financials,6221
+CPF,Financials,6022
+CPHC,Consumer Discretionary,7948
+CPHI,Health Care,2834
+CPIX,Health Care,2834
+CPK,Utilities,4923
+CPLG,Real Estate,6798
+CPNG,Consumer Discretionary,5961
+CPOP,Consumer Discretionary,7900
+CPRI,Consumer Discretionary,3100
+CPRT,Consumer Discretionary,5500
+CPS,Consumer Discretionary,3714
+CPSH,Materials,3260
+CPSS,Financials,6199
+CPST,Industrials,3510
+CPT,Real Estate,6798
+CQH,Utilities,4924
+CQP,Utilities,4924
+CR,Industrials,3490
+CRAC,Financials,6770
+CRACR,Financials,6770
+CRACW,Financials,6770
+CRAI,Industrials,8111
+CRAN,Financials,6770
+CRANR,Financials,6770
+CRANU,Financials,6770
+CRAQ,Financials,6770
+CRAQR,Financials,6770
+CRAQU,Financials,6770
+CRBD,Financials,6311
+CRBG,Financials,6311
+CRBP,Health Care,2834
+CRBU,Health Care,2836
+CRC,Energy,1311
+CRCL,Financials,6199
+CRCM,Consumer Discretionary,7200
+CRCT,Industrials,3559
+CRD.A,Financials,6411
+CRD.B,Financials,6411
+CRDF,Health Care,2836
+CRDL,Health Care,2836
+CRDO,Information Technology,3674
+CRE,Communication Services,2750
+CRESY,Real Estate,6500
+CREX,Information Technology,7373
+CRGO,Industrials,4731
+CRGOW,Industrials,4731
+CRGY,Energy,1311
+CRH,Materials,3241
+CRHM,Health Care,8000
+CRI,Consumer Discretionary,2300
+CRIS,Health Care,2836
+CRK,Energy,1311
+CRL,Health Care,8731
+CRM,Information Technology,7372
+CRMD,Health Care,2834
+CRML,Materials,1000
+CRMLW,Materials,1000
+CRMT,Consumer Discretionary,5500
+CRNC,Information Technology,7372
+CRNT,Information Technology,3663
+CRON,Health Care,2833
+CROX,Materials,3021
+CRS,Materials,3312
+CRSP,Health Care,2836
+CRSR,Information Technology,3577
+CRT,Financials,6792
+CRTO,Industrials,7311
+CRUS,Information Technology,3674
+CRVL,Financials,6411
+CRVO,Health Care,2834
+CRVS,Health Care,2834
+CRWD,Information Technology,7372
+CRWS,Consumer Discretionary,2211
+CRWV,Information Technology,7372
+CRY,Health Care,3841
+CRZO,Energy,1311
+CSAI,Information Technology,7370
+CSBR,Health Care,2836
+CSCO,Information Technology,3576
+CSFL,Financials,6021
+CSGP,Industrials,7389
+CSHR,Financials,6211
+CSHRW,Financials,6211
+CSIQ,Information Technology,3674
+CSL,Materials,3060
+CSLT,Information Technology,7374
+CSOD,Information Technology,7372
+CSPI,Information Technology,7373
+CSPR,Consumer Discretionary,2510
+CSQR,Information Technology,7370
+CSR,Real Estate,6798
+CSRA,Information Technology,7373
+CSS,Communication Services,2771
+CSTE,Materials,3281
+CSTL,Health Care,8071
+CSTM,Materials,3341
+CSV,Consumer Discretionary,7200
+CSW,Materials,2891
+CSX,Industrials,4011
+CTAA,Financials,6770
+CTAAR,Financials,6770
+CTAAU,Financials,6770
+CTAS,Consumer Discretionary,2320
+CTB,Consumer Discretionary,3011
+CTBI,Financials,6022
+CTEK,Industrials,7389
+CTEV,Industrials,7389
+CTGG,Communication Services,4813
+CTGO,Materials,1040
+CTHH,Communication Services,4813
+CTKB,Information Technology,3826
+CTM,Industrials,8742
+CTMX,Health Care,2834
+CTNM,Health Care,2834
+CTNT,Industrials,5010
+CTO,Real Estate,6798
+CTOR,Health Care,2834
+CTOS,Industrials,7359
+CTRE,Real Estate,6798
+CTRI,Utilities,4923
+CTRM,Industrials,4412
+CTRN,Consumer Discretionary,5600
+CTS,Information Technology,3672
+CTSH,Information Technology,7371
+CTSO,Health Care,3841
+CTT,Real Estate,6798
+CTV,Information Technology,7372
+CTVA,Consumer Staples,0100
+CTW,Information Technology,7374
+CTWO,Financials,6199
+CTXR,Health Care,2834
+CTY,Health Care,2834
+CUB,Financials,6770
+CUBB,Financials,6022
+CUBE,Real Estate,6798
+CUBI,Financials,6022
+CUBWU,Financials,6770
+CUBWW,Financials,6770
+CUE,Health Care,2834
+CULP,Consumer Discretionary,2211
+CUO,Materials,3270
+CUPR,Health Care,3842
+CUR,Health Care,2836
+CURB,Real Estate,6500
+CURI,Communication Services,7812
+CURR,Industrials,7389
+CURV,Consumer Discretionary,5600
+CURX,Health Care,2834
+CUVL,Industrials,8880
+CUZ,Real Estate,6798
+CV,Health Care,3845
+CVA,Utilities,4991
+CVBF,Financials,6022
+CVCO,Materials,2451
+CVE,Energy,1311
+CVEO,Consumer Discretionary,7000
+CVGI,Consumer Discretionary,3714
+CVI,Energy,2911
+CVKD,Health Care,2834
+CVLG,Industrials,4213
+CVLT,Information Technology,7372
+CVM,Health Care,2836
+CVNA,Consumer Discretionary,5500
+CVON,Information Technology,7372
+CVR,Industrials,3540
+CVRR,Energy,2911
+CVRS,Health Care,3841
+CVRX,Health Care,3841
+CVS,Consumer Staples,5912
+CVSA,Consumer Discretionary,8200
+CVU,Industrials,3728
+CVV,Industrials,3559
+CVX,Energy,2911
+CW,Industrials,3590
+CWAY,Financials,6035
+CWBC,Financials,6022
+CWCO,Utilities,4941
+CWD,Real Estate,6500
+CWEN,Utilities,4911
+CWH,Consumer Discretionary,5500
+CWK,Real Estate,6500
+CWST,Industrials,4953
+CWT,Utilities,4941
+CX,Materials,3241
+CXAI,Information Technology,7372
+CXAIW,Information Technology,7372
+CXDO,Communication Services,4813
+CXII,Financials,6770
+CXIIU,Financials,6770
+CXIIW,Financials,6770
+CXM,Information Technology,7372
+CXO,Energy,1311
+CXP,Real Estate,6798
+CXT,Industrials,3490
+CXW,Real Estate,6798
+CY,Information Technology,3674
+CYAB,Information Technology,7372
+CYCU,Information Technology,7371
+CYCUW,Information Technology,7371
+CYD,Industrials,3510
+CYH,Health Care,8062
+CYN,Information Technology,7371
+CYPH,Health Care,2834
+CYRX,Health Care,2834
+CYTK,Health Care,2834
+CYTX,Health Care,3841
+CZFC,Financials,6021
+CZFS,Financials,6022
+CZNC,Financials,6022
+CZR,Consumer Discretionary,7011
+CZWI,Financials,6035
+D,Utilities,4911
+DAAQ,Financials,6022
+DAAQU,Financials,6022
+DAAQW,Financials,6022
+DAC,Industrials,4412
+DAIC,Information Technology,7373
+DAICW,Information Technology,7373
+DAIO,Information Technology,3825
+DAKT,Consumer Discretionary,3990
+DAL,Industrials,4512
+DAN,Consumer Discretionary,3714
+DAO,Consumer Discretionary,8200
+DAR,Consumer Staples,2070
+DARE,Health Care,2834
+DASH,Industrials,7389
+DATA,Information Technology,7372
+DAVA,Information Technology,7371
+DAVE,Financials,6199
+DAVEW,Financials,6199
+DAVI,Health Care,3841
+DB,Financials,6022
+DBA,Financials,6221
+DBB,Financials,6221
+DBC,Financials,6221
+DBCA,Financials,6770
+DBCAU,Financials,6770
+DBCAW,Financials,6770
+DBD,Information Technology,3578
+DBE,Financials,6221
+DBGI,Consumer Discretionary,5600
+DBI,Consumer Discretionary,5661
+DBO,Financials,6221
+DBP,Financials,6221
+DBVT,Health Care,2836
+DBX,Information Technology,7372
+DC,Materials,1000
+DCBG,Financials,6021
+DCBO,Information Technology,7372
+DCGO,Health Care,8000
+DCH,Consumer Discretionary,3714
+DCI,Industrials,3564
+DCM,Industrials,5065
+DCO,Industrials,3728
+DCOM,Financials,6021
+DCOY,Health Care,2834
+DCT,Information Technology,7372
+DCTH,Health Care,3841
+DCX,Consumer Discretionary,3711
+DD,Materials,2821
+DDC,Consumer Staples,2000
+DDD,Information Technology,7372
+DDE,Consumer Discretionary,7011
+DDI,Information Technology,7374
+DDL,Consumer Discretionary,5961
+DDMX,Financials,6770
+DDOG,Information Technology,7372
+DDS,Consumer Discretionary,5311
+DDT,Consumer Discretionary,5311
+DE,Industrials,3523
+DEA,Real Estate,6798
+DEC,Energy,1311
+DECK,Materials,3021
+DEFT,Financials,6199
+DEI,Real Estate,6798
+DELL,Information Technology,3571
+DEO,Consumer Staples,2080
+DERM,Health Care,2834
+DETX,Industrials,3812
+DFDV,Financials,6199
+DFDVW,Financials,6199
+DFH,Consumer Discretionary,1531
+DFIN,Industrials,7380
+DFLI,Industrials,3690
+DFLIW,Industrials,3690
+DFNS,Industrials,8742
+DFNSW,Industrials,8742
+DFRG,Consumer Discretionary,5812
+DFSC,Information Technology,7372
+DFSCW,Information Technology,7372
+DFTX,Health Care,2833
+DG,Consumer Discretionary,5331
+DGAC,Financials,6770
+DGICA,Financials,6331
+DGICB,Financials,6331
+DGII,Information Technology,3576
+DGLY,Information Technology,3663
+DGNX,Information Technology,7374
+DGP,Financials,6022
+DGSE,Consumer Discretionary,5944
+DGX,Health Care,8071
+DGXX,Financials,6199
+DGZ,Financials,6022
+DH,Information Technology,7372
+DHC,Real Estate,6798
+DHCNI,Real Estate,6798
+DHCNL,Real Estate,6798
+DHI,Consumer Discretionary,1531
+DHR,Information Technology,3823
+DHT,Industrials,4412
+DHX,Industrials,7389
+DIBS,Consumer Discretionary,5961
+DICE,Health Care,2834
+DIN,Consumer Discretionary,5812
+DINO,Industrials,4610
+DIOD,Information Technology,3674
+DIS,Consumer Discretionary,7990
+DISCK,Communication Services,4841
+DIT,Consumer Staples,5141
+DJCO,Communication Services,2711
+DJP,Financials,6029
+DJT,Information Technology,7370
+DJTWW,Information Technology,7370
+DK,Energy,2911
+DKI,Information Technology,7372
+DKL,Industrials,4610
+DKNG,Consumer Discretionary,7990
+DKS,Consumer Discretionary,5940
+DLB,Financials,6794
+DLHC,Industrials,7363
+DLNG,Industrials,4400
+DLO,Industrials,7389
+DLPH,Consumer Discretionary,3714
+DLPN,Consumer Discretionary,7200
+DLR,Real Estate,6798
+DLTH,Consumer Discretionary,5600
+DLTR,Consumer Discretionary,5331
+DLX,Communication Services,2780
+DLXY,Energy,5172
+DM,Industrials,3559
+DMAA,Financials,6770
+DMAAR,Financials,6770
+DMAAU,Financials,6770
+DMAC,Health Care,2834
+DMAX,Health Care,2834
+DMC,Consumer Staples,0100
+DMII,Financials,6770
+DMIIR,Financials,6770
+DMIIU,Financials,6770
+DMLP,Energy,1311
+DMRA,Health Care,2834
+DMRC,Information Technology,7373
+DNA,Health Care,2836
+DNB,Industrials,7320
+DNBF,Financials,6021
+DNLI,Health Care,2836
+DNMX,Financials,6770
+DNMXU,Financials,6770
+DNMXW,Financials,6770
+DNN,Materials,1090
+DNOW,Industrials,3533
+DNTH,Health Care,2834
+DNUT,Consumer Staples,5400
+DOC,Real Estate,6798
+DOCN,Information Technology,7370
+DOCS,Information Technology,7371
+DOCU,Information Technology,7372
+DOGZ,Consumer Discretionary,3990
+DOLE,Consumer Staples,0100
+DOMH,Financials,6211
+DOO,Industrials,3790
+DORM,Consumer Discretionary,3714
+DOUG,Real Estate,6531
+DOV,Industrials,3530
+DOVA,Health Care,2834
+DOW,Materials,2821
+DOX,Information Technology,7371
+DOYU,Information Technology,7370
+DPC,Materials,3360
+DPLO,Consumer Staples,5912
+DPRO,Industrials,3721
+DPU,Industrials,7389
+DPZ,Consumer Staples,5140
+DQ,Information Technology,3674
+DRAM,Materials,1000
+DRD,Materials,1040
+DRDB,Financials,6770
+DRDBU,Financials,6770
+DRDBW,Financials,6770
+DRH,Real Estate,6798
+DRI,Consumer Discretionary,5812
+DRIO,Health Care,3841
+DRK,Financials,6199
+DRMA,Health Care,2834
+DRNA,Health Care,2834
+DRS,Industrials,3812
+DRTS,Health Care,3841
+DRTSW,Health Care,3841
+DRUG,Health Care,2834
+DRVN,Consumer Discretionary,7500
+DSAC,Financials,6770
+DSACU,Financials,6770
+DSACW,Financials,6770
+DSC,Information Technology,7370
+DSGN,Health Care,2834
+DSGR,Industrials,5080
+DSGX,Information Technology,7372
+DSP,Information Technology,7370
+DSPG,Information Technology,3674
+DSS,Materials,2650
+DSSI,Industrials,4700
+DSWL,Materials,3089
+DSX,Industrials,4412
+DSY,Materials,2670
+DSYWW,Materials,2670
+DT,Information Technology,7372
+DTB,Utilities,4911
+DTCX,Information Technology,7374
+DTE,Utilities,4911
+DTG,Utilities,4911
+DTI,Industrials,3533
+DTIL,Health Care,2836
+DTK,Utilities,4911
+DTM,Utilities,4922
+DTRM,Information Technology,7372
+DTSQ,Financials,6770
+DTSQR,Financials,6770
+DTSQU,Financials,6770
+DTSS,Information Technology,7372
+DTST,Information Technology,7374
+DTW,Utilities,4911
+DUK,Utilities,4931
+DUKB,Utilities,4931
+DUKR,Industrials,3721
+DUKRW,Industrials,3721
+DUKU,Utilities,4931
+DULL,Financials,6029
+DUO,Real Estate,6500
+DUOL,Information Technology,7372
+DUOT,Information Technology,7372
+DV,Information Technology,7370
+DVA,Health Care,8090
+DVLT,Industrials,7389
+DVMT,Information Technology,3571
+DVN,Energy,1311
+DWDP,Materials,2821
+DWIN.U,Health Care,8731
+DWSN,Energy,1382
+DWTX,Health Care,2834
+DX,Real Estate,6798
+DXC,Information Technology,7374
+DXCM,Health Care,3841
+DXF,Financials,6199
+DXLG,Consumer Discretionary,5651
+DXPE,Industrials,5084
+DXST,Industrials,4950
+DY,Industrials,1623
+DYAI,Health Care,2836
+DYN,Health Care,2834
+DYNC,Financials,6770
+DYNCU,Financials,6770
+DYNCW,Financials,6770
+DYOR,Financials,6770
+DYORU,Financials,6770
+DYORW,Financials,6770
+DZZ,Financials,6022
+E,Energy,1311
+EAF,Industrials,3620
+EAGL,Consumer Discretionary,7000
+EAI,Utilities,4911
+EARN,Real Estate,6798
+EAT,Consumer Discretionary,5812
+EBAY,Industrials,7389
+EBC,Financials,6035
+EBF,Communication Services,2761
+EBMT,Financials,6022
+EBON,Financials,6200
+EBS,Health Care,2834
+EBSB,Financials,6021
+EC,Energy,1311
+ECA,Energy,1311
+ECBK,Financials,6036
+ECG,Consumer Discretionary,1531
+ECHO,Communication Services,4899
+ECL,Consumer Staples,2840
+ECO,Industrials,4412
+ECOL,Industrials,4953
+ECOR,Health Care,3845
+ECPG,Financials,6153
+ECVT,Materials,2800
+ECX,Information Technology,7373
+ECXWW,Information Technology,7373
+ECYT,Health Care,2834
+ED,Utilities,4931
+EDBL,Consumer Staples,0100
+EDBLW,Consumer Staples,0100
+EDGE,Health Care,2834
+EDHL,Industrials,7310
+EDIT,Health Care,2836
+EDN,Utilities,4911
+EDR,Real Estate,6798
+EDRY,Industrials,4400
+EDSA,Health Care,2834
+EDTK,Consumer Discretionary,8200
+EDU,Consumer Discretionary,8200
+EDUC,Industrials,5190
+EDVA,Consumer Staples,2080
+EE,Utilities,4924
+EEFT,Financials,6099
+EEI,Industrials,8711
+EEIQ,Consumer Discretionary,8200
+EEP,Industrials,4610
+EFC,Real Estate,6500
+EFII,Information Technology,3576
+EFOI,Industrials,3640
+EFOR,Industrials,7363
+EFSC,Financials,6022
+EFSCP,Financials,6022
+EFSI,Financials,6022
+EFTY,Industrials,8742
+EFX,Industrials,7320
+EFXT,Industrials,3560
+EG,Financials,6331
+EGAN,Information Technology,7372
+EGBN,Financials,6022
+EGC,Energy,1311
+EGG,Industrials,8742
+EGHA,Financials,6770
+EGHAR,Financials,6770
+EGHAU,Financials,6770
+EGHT,Information Technology,7374
+EGL,Industrials,8711
+EGLE,Industrials,4412
+EGO,Materials,1040
+EGOV,Industrials,7389
+EGP,Real Estate,6798
+EGY,Energy,1311
+EH,Industrials,3728
+EHC,Health Care,8060
+EHGO,Industrials,7359
+EHLD,Industrials,4412
+EHTH,Financials,6411
+EIDX,Health Care,2834
+EIG,Financials,6331
+EIGI,Information Technology,7372
+EIKN,Health Care,2836
+EIX,Utilities,4911
+EJH,Consumer Discretionary,7600
+EL,Consumer Staples,2844
+ELA,Consumer Discretionary,5944
+ELAB,Health Care,2834
+ELAN,Health Care,2834
+ELBM,Materials,1400
+ELC,Utilities,4911
+ELDN,Health Care,2834
+ELE,Materials,1040
+ELF,Consumer Staples,2844
+ELLA,Real Estate,6798
+ELLO,Utilities,4911
+ELMD,Health Care,3845
+ELME,Real Estate,6798
+ELMT,Industrials,3490
+ELOG,Industrials,4731
+ELON,Information Technology,3576
+ELOX,Health Care,2836
+ELPC,Utilities,4911
+ELPW,Industrials,3690
+ELS,Real Estate,6798
+ELTK,Information Technology,3672
+ELTX,Health Care,2834
+ELUT,Health Care,2836
+ELV,Financials,6324
+ELVA,Industrials,3690
+ELVN,Health Care,2834
+ELVR,Materials,1400
+ELWT,Communication Services,4899
+EMA,Utilities,4911
+EMAT,Industrials,3690
+EMBC,Health Care,3841
+EMBJ,Industrials,3721
+EME,Industrials,1731
+EMES,Materials,1400
+EMI,Health Care,3841
+EMIS,Financials,6770
+EMISR,Financials,6770
+EML,Industrials,3420
+EMN,Materials,2821
+EMP,Utilities,4911
+EMPD,Financials,6199
+EMR,Industrials,3600
+EMSF,Financials,6199
+ENB,Industrials,4610
+ENBL,Utilities,4922
+ENFC,Financials,6036
+ENGN,Health Care,2836
+ENGNW,Health Care,2836
+ENGS,Industrials,1731
+ENHA,Consumer Discretionary,7990
+ENIC,Utilities,4911
+ENJ,Utilities,4931
+ENLT,Utilities,4911
+ENLV,Financials,6199
+ENO,Utilities,4931
+ENOV,Health Care,3842
+ENPH,Information Technology,3674
+ENR,Industrials,3690
+ENRD,Information Technology,7373
+ENRDW,Information Technology,7373
+ENS,Industrials,3690
+ENSC,Health Care,2834
+ENSG,Health Care,8051
+ENTA,Health Care,2834
+ENTG,Materials,3089
+ENTL,Health Care,3841
+ENTX,Health Care,2836
+ENVA,Financials,6141
+ENVB,Health Care,2834
+ENVX,Industrials,3690
+EOCN,Health Care,2834
+EOG,Energy,1311
+EOLS,Health Care,2834
+EONR,Energy,1311
+EOSE,Industrials,3690
+EOSEW,Industrials,3690
+EP,Energy,1311
+EPAC,Industrials,3590
+EPAM,Information Technology,7371
+EPAY,Information Technology,7372
+EPC,Consumer Staples,2844
+EPD,Utilities,4922
+EPM,Energy,1311
+EPOW,Industrials,3690
+EPR,Real Estate,6798
+EPRT,Real Estate,6798
+EPRX,Health Care,2834
+EPSM,Industrials,5180
+EPSN,Energy,1311
+EPZM,Health Care,2834
+EQ,Health Care,2834
+EQBK,Financials,6022
+EQH,Financials,6411
+EQIX,Real Estate,6798
+EQM,Utilities,4922
+EQNR,Energy,2911
+EQPT,Industrials,7359
+EQT,Energy,1311
+EQX,Materials,1040
+ERAS,Health Care,2834
+ERIC,Information Technology,3663
+ERIE,Financials,6411
+ERII,Industrials,3559
+ERNA,Health Care,2834
+ERNAW,Health Care,2834
+ERO,Materials,1000
+EROC,Industrials,3620
+EROK,Financials,6792
+ES,Utilities,4911
+ESAB,Industrials,3569
+ESBA,Real Estate,6798
+ESCA,Consumer Discretionary,3949
+ESE,Information Technology,3669
+ESEA,Industrials,4412
+ESI,Materials,2890
+ESIO,Industrials,3690
+ESL,Information Technology,3823
+ESLA,Health Care,2836
+ESLAW,Health Care,2836
+ESLT,Industrials,3728
+ESND,Industrials,5110
+ESNT,Financials,6351
+ESOA,Industrials,1623
+ESP,Information Technology,3679
+ESQ,Financials,6029
+ESRT,Real Estate,6798
+ESRX,Consumer Staples,5912
+ESS,Real Estate,6798
+ESSC,Consumer Discretionary,3711
+ESTA,Health Care,3842
+ESTC,Information Technology,7372
+ESXB,Financials,6022
+ESYN,Health Care,5122
+ET,Utilities,4922
+ETD,Consumer Discretionary,2511
+ETFC,Financials,6035
+ETH,Financials,6221
+ETHA,Financials,6221
+ETHB,Financials,6221
+ETHE,Financials,6221
+ETHV,Financials,6221
+ETHW,Financials,6199
+ETN,Industrials,3590
+ETON,Health Care,2834
+ETOR,Financials,6211
+ETP,Industrials,4610
+ETR,Utilities,4911
+ETRA,Health Care,2836
+ETS,Industrials,4210
+ETSS,Financials,6770
+ETSY,Industrials,7389
+ETTX,Health Care,2834
+EU,Materials,1090
+EUDA,Health Care,8000
+EUDAW,Health Care,8000
+EUO,Financials,6221
+EURK,Industrials,4400
+EURKR,Industrials,4400
+EURKU,Industrials,4400
+EV,Financials,6282
+EVAC,Financials,6770
+EVAX,Health Care,2836
+EVC,Communication Services,4833
+EVCM,Information Technology,7372
+EVER,Information Technology,7370
+EVEX,Industrials,3721
+EVGN,Materials,2870
+EVGO,Consumer Discretionary,7500
+EVH,Industrials,8741
+EVHC,Health Care,8011
+EVI,Consumer Discretionary,7200
+EVLV,Information Technology,3577
+EVMN,Health Care,2834
+EVO,Health Care,2834
+EVOX,Financials,6770
+EVOXU,Financials,6770
+EVOXW,Financials,6770
+EVR,Financials,6282
+EVRG,Utilities,4931
+EVTC,Information Technology,7374
+EVTL,Industrials,3721
+EW,Health Care,3842
+EWAV,Financials,6770
+EWAVR,Financials,6770
+EWAVU,Financials,6770
+EWBC,Financials,6022
+EWTX,Health Care,2834
+EXC,Utilities,4931
+EXE,Energy,1311
+EXEL,Health Care,2836
+EXFY,Information Technology,7372
+EXK,Materials,1040
+EXLS,Industrials,7389
+EXOD,Financials,6199
+EXOZ,Health Care,2836
+EXP,Materials,3241
+EXPD,Industrials,4731
+EXPE,Industrials,4700
+EXPO,Industrials,8742
+EXR,Real Estate,6798
+EXTR,Information Technology,3576
+EXYN,Information Technology,7372
+EXYNW,Information Technology,7372
+EYE,Health Care,3851
+EYEG,Health Care,2834
+EYES,Health Care,3845
+EYPT,Information Technology,3826
+EZBC,Financials,6221
+EZET,Financials,6221
+EZGO,Consumer Discretionary,3751
+EZPW,Consumer Discretionary,5900
+EZPZ,Financials,6221
+EZRA,Financials,6411
+F,Consumer Discretionary,3711
+FA,Information Technology,7374
+FABC,Communication Services,4899
+FAC,Industrials,3690
+FACT,Industrials,3728
+FACTU,Industrials,3728
+FACTW,Industrials,3728
+FACWW,Industrials,3690
+FAF,Financials,6361
+FAMI,Consumer Staples,2033
+FANG,Energy,1311
+FAST,Consumer Discretionary,5200
+FATE,Health Care,2836
+FATN,Information Technology,7372
+FB,Information Technology,7370
+FBDT,Industrials,3480
+FBGL,Consumer Discretionary,1520
+FBIN,Materials,2430
+FBIO,Health Care,2834
+FBIOP,Health Care,2834
+FBIZ,Financials,6022
+FBK,Financials,6022
+FBLA,Financials,6036
+FBLG,Health Care,2834
+FBM,Industrials,5030
+FBNC,Financials,6022
+FBP,Financials,6022
+FBRT,Real Estate,6798
+FBSS,Financials,6022
+FBTC,Financials,6221
+FBYD,Consumer Discretionary,7990
+FBYDP,Consumer Discretionary,7990
+FBYDW,Consumer Discretionary,7990
+FC,Industrials,8741
+FCAP,Financials,6035
+FCB,Financials,6021
+FCBC,Financials,6022
+FCBM,Financials,6022
+FCBP,Financials,6022
+FCCO,Financials,6022
+FCCY,Financials,6035
+FCEL,Industrials,3620
+FCF,Financials,6021
+FCFS,Consumer Discretionary,5900
+FCHL,Consumer Discretionary,7990
+FCN,Industrials,8742
+FCNCA,Financials,6022
+FCNCN,Financials,6022
+FCNCO,Financials,6022
+FCNCP,Financials,6022
+FCPT,Real Estate,6798
+FCRS,Financials,6770
+FCSC,Health Care,2834
+FCUV,Information Technology,3823
+FCX,Materials,1000
+FDBC,Financials,6021
+FDC,Industrials,7389
+FDMM,Financials,6770
+FDMMU,Financials,6770
+FDMMW,Financials,6770
+FDMT,Health Care,2836
+FDS,Information Technology,7370
+FDSB,Financials,6035
+FDX,Industrials,4513
+FDXF,Industrials,4513
+FE,Utilities,4911
+FEAM,Materials,1400
+FEBO,Consumer Discretionary,3634
+FEDU,Consumer Discretionary,8200
+FEIM,Information Technology,3825
+FELE,Industrials,3621
+FEMY,Health Care,3841
+FENC,Health Care,2836
+FENG,Communication Services,4833
+FER,Industrials,1600
+FERA,Financials,6770
+FERAR,Financials,6770
+FERAU,Financials,6770
+FERG,Industrials,5070
+FET,Industrials,3533
+FETH,Financials,6199
+FF,Materials,2860
+FFAI,Consumer Discretionary,3711
+FFBC,Financials,6021
+FFIN,Financials,6022
+FFIV,Information Technology,3576
+FFKT,Financials,6021
+FFR,Financials,6199
+FG,Financials,6311
+FGBI,Financials,6035
+FGBIP,Financials,6035
+FGC,Financials,6199
+FGCPP,Financials,6199
+FGDL,Financials,6221
+FGI,Industrials,3430
+FGII,Financials,6770
+FGIIU,Financials,6770
+FGIIW,Financials,6770
+FGIWW,Industrials,3430
+FGL,Industrials,1700
+FGN,Financials,6311
+FGSN,Financials,6311
+FHB,Financials,6022
+FHI,Financials,6282
+FHN,Financials,6021
+FHTX,Health Care,2834
+FIBK,Financials,6022
+FICO,Industrials,7389
+FIEE,Information Technology,7372
+FIG,Information Technology,7372
+FIGR,Financials,6163
+FIGS,Consumer Discretionary,2300
+FIGX,Financials,6770
+FIGXU,Financials,6770
+FIGXW,Financials,6770
+FINV,Financials,6163
+FINW,Financials,6022
+FIP,Industrials,4011
+FIRY,Information Technology,7374
+FIS,Industrials,7389
+FISI,Financials,6021
+FISK,Real Estate,6798
+FISN,Utilities,4911
+FISV,Industrials,7389
+FIT,Industrials,5190
+FITB,Financials,6022
+FIVE,Consumer Discretionary,5331
+FIVN,Information Technology,7374
+FIX,Industrials,1731
+FIXX,Health Care,2834
+FIZZ,Consumer Staples,2086
+FJDI,Financials,6770
+FJDIR,Financials,6770
+FJDIU,Financials,6770
+FJDIW,Financials,6770
+FJET,Industrials,4512
+FKWL,Information Technology,3661
+FLD,Financials,6199
+FLDDW,Financials,6199
+FLEX,Information Technology,3672
+FLG,Financials,6036
+FLGT,Health Care,8071
+FLL,Consumer Discretionary,7011
+FLLCU,Financials,6770
+FLNA,Health Care,2834
+FLNC,Industrials,3690
+FLNG,Industrials,4400
+FLNT,Industrials,7310
+FLO,Consumer Staples,2000
+FLOC,Industrials,3533
+FLOW,Industrials,3540
+FLR,Industrials,1600
+FLS,Industrials,3561
+FLSC,Financials,6770
+FLUT,Information Technology,7370
+FLUX,Industrials,3690
+FLWS,Consumer Discretionary,5990
+FLX,Industrials,4210
+FLXN,Health Care,2834
+FLXS,Consumer Discretionary,2510
+FLY,Industrials,3760
+FLYD,Financials,6029
+FLYE,Consumer Discretionary,3711
+FLYU,Financials,6029
+FLYW,Industrials,7389
+FLYX,Industrials,4522
+FMAC,Financials,6770
+FMACR,Financials,6770
+FMACU,Financials,6770
+FMAO,Financials,6035
+FMBH,Financials,6022
+FMBI,Financials,6021
+FMC,Materials,2800
+FMCIU,Consumer Staples,2090
+FMFC,Consumer Discretionary,3100
+FMNB,Financials,6022
+FMS,Health Care,8090
+FMST,Materials,1090
+FMSTW,Materials,1090
+FMX,Consumer Staples,2086
+FN,Information Technology,3661
+FNB,Financials,6021
+FNBG,Financials,6022
+FND,Consumer Discretionary,5211
+FNF,Financials,6361
+FNGD,Financials,6029
+FNGO,Financials,6029
+FNGR,Information Technology,7372
+FNGS,Financials,6029
+FNGU,Financials,6029
+FNKO,Consumer Discretionary,3944
+FNLC,Financials,6021
+FNRN,Financials,6035
+FNUC,Materials,1090
+FNV,Materials,1040
+FNWB,Financials,6036
+FNWD,Financials,6035
+FOA,Financials,6162
+FOCL,Health Care,3845
+FOE,Materials,2851
+FOFO,Industrials,8742
+FOIL,Materials,3390
+FOMX,Health Care,2833
+FOR,Real Estate,6500
+FORM,Information Technology,3674
+FORR,Industrials,8700
+FORTY,Information Technology,7371
+FOSL,Industrials,3873
+FOUR,Industrials,7389
+FOX,Communication Services,4833
+FOXA,Communication Services,4833
+FOXF,Consumer Discretionary,3751
+FOXX,Information Technology,3576
+FOXXW,Information Technology,3576
+FPH,Real Estate,6500
+FPI,Real Estate,6798
+FPRX,Health Care,2834
+FPS,Industrials,3620
+FR,Real Estate,6798
+FRAF,Financials,6022
+FRBT,Financials,6022
+FRD,Materials,3310
+FRGT,Industrials,4731
+FRHC,Financials,6211
+FRME,Financials,6021
+FRMEP,Financials,6021
+FRMI,Real Estate,6798
+FRMM,Financials,6199
+FRNM,Health Care,8071
+FRO,Industrials,4412
+FROG,Information Technology,7372
+FRPH,Real Estate,6500
+FRPT,Consumer Staples,2040
+FRSH,Information Technology,7372
+FRST,Financials,6022
+FRSX,Information Technology,7372
+FRT,Real Estate,6798
+FRTA,Materials,3272
+FRTT,Materials,2870
+FRVO,Utilities,4911
+FSB,Financials,6022
+FSBC,Financials,6022
+FSBW,Financials,6036
+FSHP,Financials,6770
+FSHPR,Financials,6770
+FSHPU,Financials,6770
+FSI,Materials,2890
+FSLR,Information Technology,3674
+FSLY,Information Technology,7372
+FSM,Materials,1040
+FSNN,Information Technology,7372
+FSOL,Financials,6221
+FSP,Real Estate,6798
+FSRVU,Industrials,7359
+FSS,Consumer Discretionary,3711
+FSTR,Industrials,5051
+FSUN,Financials,6021
+FSV,Real Estate,6500
+FTAI,Industrials,7350
+FTAIM,Industrials,7350
+FTCI,Information Technology,3674
+FTDR,Industrials,7340
+FTEK,Industrials,3564
+FTFT,Industrials,7389
+FTH,Health Care,2834
+FTHA,Financials,6770
+FTHAU,Financials,6770
+FTHAW,Financials,6770
+FTHM,Real Estate,6531
+FTI,Industrials,3533
+FTK,Materials,2890
+FTLF,Health Care,2833
+FTNT,Information Technology,3577
+FTNW,Communication Services,4813
+FTRA,Financials,6770
+FTRE,Health Care,8071
+FTS,Utilities,4911
+FTSI,Energy,1389
+FTSV,Health Care,2834
+FTV,Information Technology,3823
+FTW,Energy,1311
+FUBO,Communication Services,7812
+FUFU,Financials,6199
+FUFUW,Financials,6199
+FUL,Materials,2891
+FULC,Health Care,2834
+FULT,Financials,6021
+FULTP,Financials,6021
+FUN,Consumer Discretionary,7900
+FUNC,Financials,6021
+FURY,Materials,1040
+FUSB,Financials,6022
+FUSE,Information Technology,7373
+FUSEW,Information Technology,7373
+FUTU,Financials,6211
+FVAV,Financials,6770
+FVCB,Financials,6022
+FVN,Information Technology,7373
+FVNNR,Information Technology,7373
+FVNNU,Information Technology,7373
+FVR,Real Estate,6798
+FVRR,Industrials,7389
+FWAC,Financials,6770
+FWACR,Financials,6770
+FWACU,Financials,6770
+FWACW,Financials,6770
+FWDI,Financials,6199
+FWONA,Communication Services,4833
+FWONK,Communication Services,4833
+FWRD,Industrials,4731
+FWRG,Consumer Discretionary,5812
+FXA,Financials,6221
+FXAC,Financials,6770
+FXACU,Financials,6770
+FXACW,Financials,6770
+FXB,Financials,6221
+FXC,Financials,6221
+FXE,Financials,6221
+FXF,Financials,6221
+FXHO,Industrials,3600
+FXNC,Financials,6022
+FXY,Financials,6221
+G,Industrials,8742
+GABC,Financials,6022
+GAIA,Communication Services,7812
+GALT,Health Care,2834
+GAME,Consumer Discretionary,7900
+GANX,Health Care,2834
+GAP,Consumer Discretionary,5651
+GASS,Industrials,4412
+GATX,Industrials,4700
+GAU,Materials,1400
+GAUZ,Industrials,3690
+GAVA,Financials,6221
+GBCI,Financials,6022
+GBFH,Financials,6022
+GBLI,Financials,6331
+GBNK,Financials,6022
+GBR,Energy,1311
+GBTC,Financials,6221
+GBUG,Financials,6029
+GBX,Industrials,3743
+GCAP,Financials,6221
+GCBC,Financials,6036
+GCDT,Industrials,3585
+GCGR,Financials,6770
+GCGRU,Financials,6770
+GCGRW,Financials,6770
+GCL,Information Technology,7372
+GCLWW,Information Technology,7372
+GCMG,Financials,6282
+GCO,Consumer Discretionary,5661
+GCP,Materials,2800
+GCT,Consumer Discretionary,5961
+GCTS,Information Technology,3674
+GD,Industrials,3730
+GDC,Industrials,5050
+GDDY,Information Technology,7373
+GDEV,Information Technology,7371
+GDHG,Consumer Discretionary,7990
+GDLC,Financials,6221
+GDOG,Financials,6221
+GDOT,Financials,6199
+GDP,Energy,1311
+GDRX,Information Technology,7374
+GDS,Information Technology,7370
+GDTC,Health Care,2834
+GDXD,Financials,6029
+GDXU,Financials,6029
+GDYN,Information Technology,7372
+GE,Industrials,3600
+GEF,Industrials,3412
+GEF.B,Industrials,3412
+GEG,Information Technology,7372
+GEGGL,Information Technology,7372
+GEHC,Health Care,3844
+GEL,Industrials,4610
+GELS,Health Care,2834
+GEMI,Financials,6199
+GEN,Information Technology,7372
+GENB,Health Care,2834
+GENC,Industrials,3531
+GENI,Consumer Discretionary,7990
+GENK,Consumer Discretionary,5812
+GENVR,Information Technology,7372
+GEO,Consumer Discretionary,1520
+GEOS,Information Technology,3829
+GERN,Health Care,2834
+GEV,Industrials,3600
+GEVO,Materials,2860
+GFAI,Industrials,7381
+GFED,Financials,6022
+GFF,Industrials,3442
+GFI,Materials,1040
+GFL,Industrials,4953
+GFN,Industrials,7359
+GFNCP,Industrials,7359
+GFR,Energy,1311
+GFS,Information Technology,3674
+GFUZ,Utilities,4911
+GFUZW,Utilities,4911
+GGAL,Financials,6029
+GGB,Materials,3310
+GGG,Industrials,3561
+GGP,Real Estate,6798
+GGR,Consumer Discretionary,3711
+GGROW,Consumer Discretionary,3711
+GH,Health Care,8071
+GHC,Consumer Discretionary,8200
+GHDX,Health Care,8071
+GHG,Consumer Discretionary,7011
+GHI,Financials,6199
+GHM,Industrials,3560
+GHRS,Health Care,2834
+GHXI,Financials,6770
+GHXIU,Financials,6770
+GHXIW,Financials,6770
+GIB,Industrials,8742
+GIBO,Information Technology,7372
+GIBOW,Information Technology,7372
+GIC,Industrials,5084
+GIFT,Consumer Discretionary,5961
+GIGL,Consumer Discretionary,5810
+GIGM,Information Technology,7370
+GIII,Consumer Discretionary,2300
+GIK.U,Consumer Discretionary,3711
+GIL,Consumer Discretionary,2300
+GILD,Health Care,2836
+GILT,Information Technology,3663
+GIPR,Real Estate,6798
+GIS,Consumer Staples,2040
+GITS,Information Technology,7370
+GIW,Financials,6770
+GIWWR,Financials,6770
+GIWWU,Financials,6770
+GIX,Financials,6770
+GIX.U,Health Care,8000
+GIXI,Information Technology,7372
+GIXXR,Financials,6770
+GIXXU,Financials,6770
+GJH,Financials,6189
+GJO,Financials,6189
+GJP,Financials,6189
+GJR,Financials,6189
+GJS,Financials,6189
+GJT,Financials,6189
+GKOS,Health Care,3841
+GL,Financials,6311
+GLACU,Industrials,3560
+GLAS,Health Care,2833
+GLBE,Information Technology,7372
+GLBL,Financials,6282
+GLBS,Industrials,4412
+GLD,Financials,6221
+GLDG,Materials,1040
+GLDI,Financials,6211
+GLDM,Financials,6221
+GLE,Information Technology,7374
+GLED,Financials,6770
+GLIBA,Communication Services,4841
+GLIBK,Communication Services,4841
+GLL,Financials,6221
+GLND,Energy,1381
+GLNDW,Energy,1381
+GLNG,Industrials,4400
+GLNK,Financials,6221
+GLOB,Information Technology,7374
+GLOO,Information Technology,7374
+GLP,Energy,5171
+GLPI,Real Estate,6798
+GLRE,Financials,6331
+GLSI,Health Care,2834
+GLSPU,Information Technology,7372
+GLTR,Financials,6221
+GLUE,Health Care,2836
+GLUU,Information Technology,7371
+GLW,Materials,3357
+GLXG,Industrials,8700
+GLXY,Financials,6211
+GM,Consumer Discretionary,3711
+GMAB,Health Care,2834
+GMAN,Consumer Discretionary,5600
+GME,Consumer Discretionary,5734
+GMED,Health Care,3841
+GMEX,Consumer Discretionary,3949
+GMHS,Information Technology,7374
+GMM,Information Technology,7370
+GMRS,Industrials,4700
+GMTL,Materials,1000
+GNBC,Financials,6021
+GNE,Utilities,4931
+GNK,Industrials,4412
+GNL,Real Estate,6798
+GNLN,Industrials,5099
+GNLX,Health Care,2834
+GNMK,Health Care,3841
+GNMX,Health Care,2836
+GNPX,Health Care,2834
+GNRC,Industrials,3621
+GNS,Information Technology,7372
+GNSS,Consumer Discretionary,3651
+GNTA,Health Care,2836
+GNTX,Consumer Discretionary,3714
+GNW,Financials,6311
+GO,Consumer Staples,5411
+GOAI,Information Technology,7370
+GOGO,Communication Services,4899
+GOLD,Industrials,5094
+GOLF,Consumer Discretionary,3949
+GOOD,Real Estate,6519
+GOODN,Real Estate,6519
+GOODO,Real Estate,6519
+GOOG,Information Technology,7370
+GOOGL,Information Technology,7370
+GOOGM,Information Technology,7370
+GOOGN,Information Technology,7370
+GOOS,Consumer Discretionary,2300
+GORO,Materials,1040
+GOSS,Health Care,2834
+GOTU,Consumer Discretionary,8200
+GOVX,Health Care,2834
+GOW,Industrials,3533
+GP,Consumer Discretionary,3713
+GPAC,Financials,6770
+GPACU,Financials,6770
+GPACW,Financials,6770
+GPAT,Financials,6770
+GPATU,Financials,6770
+GPATW,Financials,6770
+GPC,Industrials,5013
+GPCR,Health Care,2834
+GPGI,Financials,6199
+GPI,Consumer Discretionary,5500
+GPJA,Utilities,4911
+GPK,Materials,2650
+GPMT,Real Estate,6798
+GPN,Industrials,7389
+GPOR,Energy,1311
+GPRE,Materials,2860
+GPRK,Energy,1311
+GPRO,Industrials,3861
+GPT,Real Estate,6798
+GPUS,Industrials,3533
+GPX,Consumer Discretionary,8200
+GRA,Materials,2800
+GRAB,Industrials,7389
+GRABW,Industrials,7389
+GRAL,Health Care,8071
+GRAN,Financials,6199
+GRBK,Consumer Discretionary,1531
+GRC,Industrials,3561
+GRCE,Health Care,2834
+GRDN,Consumer Staples,5912
+GRDX,Utilities,4931
+GRFS,Health Care,2834
+GRI,Health Care,2834
+GRML,Health Care,2836
+GRMLW,Health Care,2836
+GRMN,Industrials,3812
+GRN,Financials,6029
+GRND,Information Technology,7370
+GRNQ,Industrials,8742
+GRNT,Energy,1311
+GRO,Materials,1400
+GROV,Consumer Discretionary,5961
+GROW,Financials,6282
+GROY,Materials,1040
+GRPN,Industrials,7311
+GRRR,Information Technology,7372
+GRRRW,Information Technology,7372
+GRSD,Consumer Discretionary,7990
+GRUB,Industrials,7389
+GRVY,Information Technology,7374
+GRWG,Consumer Discretionary,5200
+GS,Financials,6211
+GSAT,Communication Services,4899
+GSB,Information Technology,7372
+GSBC,Financials,6022
+GSG,Financials,6221
+GSHD,Financials,6411
+GSHR,Financials,6770
+GSHRU,Financials,6770
+GSHRW,Financials,6770
+GSIT,Information Technology,3674
+GSIW,Financials,6200
+GSK,Health Care,2834
+GSKY,Industrials,7389
+GSL,Industrials,4412
+GSM,Materials,1000
+GSOL,Financials,6221
+GSRF,Financials,6770
+GSRFR,Financials,6770
+GSRFU,Financials,6770
+GSRV,Financials,6770
+GSRVR,Financials,6770
+GSRVU,Financials,6770
+GSUI,Financials,6221
+GSUN,Consumer Discretionary,8200
+GT,Consumer Discretionary,3011
+GTBP,Health Care,2834
+GTE,Energy,1311
+GTEC,Industrials,3560
+GTEN,Financials,6770
+GTENU,Financials,6770
+GTENW,Financials,6770
+GTERA,Financials,6770
+GTERR,Financials,6770
+GTERU,Financials,6770
+GTERW,Financials,6770
+GTES,Industrials,3560
+GTIM,Consumer Discretionary,5812
+GTLB,Information Technology,7372
+GTM,Information Technology,7372
+GTN,Communication Services,4833
+GTN.A,Communication Services,4833
+GTS,Financials,6321
+GTX,Consumer Discretionary,3714
+GTY,Real Estate,6500
+GTYH,Information Technology,7374
+GUAC,Financials,6770
+GUACU,Financials,6770
+GUACW,Financials,6770
+GURE,Materials,2800
+GUTS,Health Care,3841
+GV,Industrials,1623
+GVA,Industrials,1600
+GVH,Industrials,4731
+GWAV,Industrials,5051
+GWB,Financials,6022
+GWPH,Health Care,2834
+GWR,Industrials,4011
+GWRE,Information Technology,7372
+GWRS,Utilities,4941
+GWW,Industrials,5000
+GXAI,Information Technology,7372
+GXO,Industrials,4700
+GXRP,Financials,6221
+GYGY,Information Technology,7372
+GYRE,Health Care,2834
+GYRO,Real Estate,6512
+H,Consumer Discretionary,7011
+HABT,Consumer Discretionary,5812
+HACQ,Financials,6770
+HACQU,Financials,6770
+HACQW,Financials,6770
+HAE,Health Care,3841
+HAFC,Financials,6021
+HAFN,Industrials,4700
+HAIN,Consumer Staples,2000
+HAL,Energy,1389
+HALO,Health Care,2836
+HAO,Industrials,7311
+HAPN,Financials,6141
+HAS,Consumer Discretionary,3944
+HASI,Financials,6799
+HAVA,Financials,6770
+HAVAR,Financials,6770
+HAVAU,Financials,6770
+HAWK,Information Technology,7374
+HAYW,Industrials,3580
+HBAN,Financials,6021
+HBANL,Financials,6021
+HBANM,Financials,6021
+HBANP,Financials,6021
+HBANZ,Financials,6021
+HBB,Consumer Discretionary,3634
+HBCP,Financials,6036
+HBIO,Information Technology,3826
+HBK,Financials,6035
+HBM,Materials,1000
+HBMD,Financials,6022
+HBNB,Consumer Discretionary,7011
+HBNC,Financials,6022
+HBP,Industrials,5030
+HBT,Financials,6022
+HCA,Health Care,8062
+HCAC,Materials,3341
+HCACR,Materials,3341
+HCACU,Materials,3341
+HCAI,Consumer Discretionary,3990
+HCAT,Information Technology,7370
+HCC,Energy,1220
+HCCH,Utilities,4932
+HCCOU,Health Care,8090
+HCHL,Consumer Discretionary,5812
+HCI,Financials,6331
+HCIC,Financials,6770
+HCICR,Financials,6770
+HCICU,Financials,6770
+HCKT,Industrials,8742
+HCM,Health Care,2834
+HCMA,Financials,6770
+HCMAU,Financials,6770
+HCMAW,Financials,6770
+HCSG,Health Care,8050
+HCWB,Health Care,2834
+HD,Consumer Discretionary,5211
+HDB,Financials,6029
+HDL,Consumer Discretionary,5812
+HDLB,Financials,6021
+HDP,Information Technology,7372
+HDRN,Utilities,4911
+HDRNW,Utilities,4911
+HDS,Industrials,5000
+HDSN,Industrials,5080
+HE,Utilities,4911
+HEI,Industrials,3724
+HEI.A,Industrials,3724
+HELE,Consumer Discretionary,3634
+HELP,Health Care,2834
+HEPS,Consumer Discretionary,5961
+HERE,Consumer Discretionary,5945
+HESM,Energy,1311
+HF,Real Estate,6519
+HFBC,Financials,6022
+HFBL,Financials,6035
+HFFG,Consumer Staples,5140
+HFWA,Financials,6036
+HG,Financials,6331
+HGBL,Industrials,7389
+HGTY,Financials,6411
+HGV,Consumer Discretionary,7000
+HH,Health Care,8090
+HHH,Real Estate,6798
+HHS,Industrials,7331
+HIFR,Real Estate,6798
+HIG,Financials,6331
+HIHO,Industrials,3490
+HII,Industrials,3730
+HIMS,Health Care,8011
+HIMX,Information Technology,3674
+HIND,Health Care,2834
+HIPO,Financials,6331
+HIT,Financials,6411
+HITI,Consumer Discretionary,5990
+HIVE,Financials,6199
+HIW,Real Estate,6798
+HKD,Financials,6199
+HL,Materials,1400
+HLF,Health Care,5122
+HLI,Financials,6282
+HLIO,Industrials,3490
+HLIT,Information Technology,3663
+HLLY,Consumer Discretionary,3714
+HLMN,Industrials,3420
+HLN,Consumer Staples,2844
+HLNE,Financials,6282
+HLP,Industrials,3569
+HLSQ,Information Technology,7372
+HLT,Consumer Discretionary,7011
+HLTH,Health Care,8062
+HLXC,Financials,6770
+HMC,Consumer Discretionary,3711
+HMG,Real Estate,6798
+HMH,Industrials,3533
+HMHC,Communication Services,2731
+HMN,Financials,6331
+HMR,Industrials,4412
+HMSY,Industrials,7389
+HMTA,Financials,6022
+HMY,Materials,1040
+HNGE,Information Technology,7374
+HNI,Consumer Discretionary,2522
+HNNA,Financials,6282
+HNRG,Utilities,4911
+HNST,Consumer Discretionary,5961
+HNVR,Financials,6022
+HODL,Financials,6221
+HODO,Financials,6199
+HOFT,Consumer Discretionary,2510
+HOG,Consumer Discretionary,3751
+HOLO,Information Technology,7370
+HOLOW,Information Technology,7370
+HOMB,Financials,6022
+HOME,Consumer Discretionary,5700
+HON,Industrials,3724
+HONA,Industrials,3724
+HOOD,Financials,6211
+HOPE,Financials,6021
+HOS,Energy,1389
+HOST,Consumer Staples,5411
+HOUR,Consumer Discretionary,5961
+HOV,Consumer Discretionary,1531
+HOVNP,Consumer Discretionary,1531
+HOVR,Industrials,3721
+HOVRW,Industrials,3721
+HOWL,Health Care,2834
+HP,Energy,1381
+HPAI,Information Technology,7372
+HPAIW,Information Technology,7372
+HPE,Information Technology,3570
+HPK,Energy,1381
+HPP,Real Estate,6500
+HPQ,Information Technology,3570
+HPR,Energy,1311
+HQ,Information Technology,7371
+HQI,Industrials,7363
+HQWWW,Information Technology,7371
+HQY,Industrials,7389
+HR,Real Estate,6798
+HRB,Consumer Discretionary,7200
+HRC,Health Care,3841
+HRI,Industrials,7350
+HRL,Consumer Staples,2011
+HRMY,Health Care,2834
+HROW,Health Care,2834
+HRTG,Financials,6331
+HRTX,Health Care,2834
+HSAI,Industrials,3569
+HSBC,Financials,6035
+HSCS,Financials,6199
+HSCSW,Financials,6199
+HSDT,Financials,6199
+HSHP,Industrials,4412
+HSIC,Industrials,5047
+HSLV,Materials,1040
+HST,Real Estate,6798
+HSTM,Information Technology,7370
+HSY,Consumer Staples,2060
+HTB,Financials,6035
+HTCO,Industrials,4412
+HTCR,Information Technology,7374
+HTFL,Health Care,3841
+HTH,Financials,6022
+HTHT,Consumer Discretionary,7011
+HTLD,Industrials,4213
+HTLM,Consumer Discretionary,5712
+HTO,Utilities,4941
+HTOO,Industrials,3590
+HTT,Financials,6199
+HTZ,Consumer Discretionary,7510
+HTZWW,Consumer Discretionary,7510
+HUBB,Information Technology,3670
+HUBC,Information Technology,3576
+HUBCW,Information Technology,3576
+HUBCZ,Information Technology,3576
+HUBG,Industrials,4731
+HUBS,Information Technology,7372
+HUCK,Information Technology,7372
+HUDI,Materials,3317
+HUHU,Materials,3360
+HUIZ,Financials,6411
+HUM,Financials,6324
+HUMA,Health Care,2836
+HUN,Materials,2800
+HURA,Health Care,2834
+HURC,Information Technology,3823
+HURN,Industrials,8742
+HUT,Financials,6199
+HUYA,Information Technology,7370
+HVMC,Financials,6770
+HVMCU,Financials,6770
+HVMCW,Financials,6770
+HVT,Consumer Discretionary,5712
+HVT.A,Consumer Discretionary,5712
+HWBK,Financials,6021
+HWC,Financials,6022
+HWCC,Industrials,5063
+HWCPZ,Financials,6022
+HWKN,Industrials,5160
+HWM,Materials,3350
+HXHX,Industrials,4210
+HXL,Materials,2821
+HY,Industrials,3537
+HYFM,Industrials,5190
+HYFT,Health Care,2834
+HYGD,Financials,6029
+HYGU,Financials,6029
+HYLN,Consumer Discretionary,3713
+HYMC,Materials,1040
+HYNE,Financials,6036
+HYPD,Financials,6199
+HYPG,Financials,6221
+HYPR,Health Care,3845
+HZO,Consumer Discretionary,5531
+IA,Information Technology,7371
+IAC,Information Technology,7370
+IACO,Financials,6770
+IACOU,Financials,6770
+IACOW,Financials,6770
+IACQ,Financials,6770
+IACQU,Financials,6770
+IACQW,Financials,6770
+IAG,Materials,1040
+IAM,Health Care,2836
+IART,Health Care,3841
+IAU,Financials,6221
+IAUM,Financials,6221
+IAUX,Materials,1040
+IBAC,Health Care,8731
+IBACR,Health Care,8731
+IBCP,Financials,6022
+IBEX,Information Technology,7374
+IBG,Consumer Staples,2080
+IBIO,Health Care,2834
+IBIT,Financials,6221
+IBKC,Financials,6022
+IBKR,Financials,6211
+IBM,Information Technology,3570
+IBN,Financials,6029
+IBO,Health Care,2834
+IBP,Consumer Discretionary,1520
+IBRX,Health Care,2836
+IBTA,Industrials,7310
+ICBK,Financials,6022
+ICCC,Health Care,2835
+ICCM,Health Care,3841
+ICE,Financials,6200
+ICFI,Industrials,8742
+ICG,Information Technology,3674
+ICHR,Information Technology,3674
+ICL,Materials,2870
+ICLR,Health Care,8731
+ICON,Industrials,4412
+ICU,Health Care,3841
+ICUCW,Health Care,3841
+ICUI,Health Care,3841
+IDA,Utilities,4911
+IDAC,Financials,6770
+IDACU,Financials,6770
+IDACW,Financials,6770
+IDAI,Information Technology,7372
+IDCC,Financials,6794
+IDN,Information Technology,7372
+IDR,Materials,1040
+IDSA,Industrials,5090
+IDT,Communication Services,4813
+IDTI,Information Technology,3674
+IDXX,Health Care,2835
+IDYA,Health Care,2834
+IE,Materials,1000
+IEAG,Financials,6770
+IEAGR,Financials,6770
+IEAGU,Financials,6770
+IEC,Information Technology,3672
+IEP,Energy,2911
+IESC,Industrials,1731
+IEX,Industrials,3561
+IFBD,Information Technology,7372
+IFED,Financials,6021
+IFF,Materials,2860
+IFRX,Health Care,2834
+IFS,Financials,6029
+IGAC,Financials,6770
+IGACR,Financials,6770
+IGACU,Financials,6770
+IGC,Health Care,2834
+IGIC,Financials,6399
+IH,Consumer Discretionary,8200
+IHG,Consumer Discretionary,7011
+IHRT,Communication Services,4832
+IHS,Communication Services,4812
+IHT,Real Estate,6798
+III,Industrials,8742
+IIIN,Materials,3310
+IIIV,Information Technology,7372
+IIPR,Real Estate,6500
+IKT,Health Care,2836
+ILAG,Consumer Discretionary,2540
+ILG,Real Estate,6531
+ILLU,Financials,6770
+ILLUU,Financials,6770
+ILLUW,Financials,6770
+ILMN,Information Technology,3826
+ILPT,Real Estate,6798
+IMA,Health Care,2836
+IMAX,Industrials,3861
+IMC,Materials,1000
+IMCC,Health Care,2833
+IMCR,Health Care,2836
+IMDX,Health Care,2835
+IMDZ,Health Care,2834
+IMI,Information Technology,3674
+IMKTA,Consumer Staples,5411
+IMMP,Health Care,2834
+IMMR,Information Technology,3577
+IMMU,Health Care,2835
+IMMX,Health Care,2834
+IMNM,Health Care,2834
+IMNN,Health Care,2834
+IMO,Energy,2911
+IMOS,Information Technology,3674
+IMPP,Industrials,4412
+IMPPP,Industrials,4412
+IMPV,Information Technology,7372
+IMRN,Health Care,2834
+IMRX,Health Care,2834
+IMSR,Industrials,3443
+IMSRW,Industrials,3443
+IMTE,Consumer Discretionary,3651
+IMTX,Health Care,2836
+IMUX,Health Care,2834
+IMVT,Health Care,2836
+IMXI,Industrials,7389
+INAB,Health Care,2836
+INAC,Financials,6770
+INACR,Financials,6770
+INACU,Financials,6770
+INBK,Financials,6022
+INBKZ,Financials,6022
+INBS,Health Care,3841
+INBX,Health Care,2836
+INCR,Health Care,2834
+INCY,Health Care,8731
+INDB,Financials,6022
+INDI,Information Technology,3674
+INDO,Energy,1311
+INDP,Health Care,2834
+INDV,Health Care,2834
+INEO,Industrials,5010
+INFO,Information Technology,7370
+INFQ,Information Technology,7374
+INFU,Health Care,3841
+INFY,Information Technology,7371
+ING,Financials,6029
+INGM,Industrials,5045
+INGN,Health Care,3842
+INGR,Consumer Staples,2040
+INHD,Consumer Discretionary,5990
+INIO,Industrials,3621
+INKT,Health Care,2836
+INLF,Industrials,3569
+INLX,Information Technology,7372
+INM,Health Care,2834
+INMB,Health Care,2836
+INMD,Health Care,3845
+INN,Real Estate,6798
+INNV,Health Care,8000
+INO,Health Care,2834
+INOD,Information Technology,7374
+INOV,Information Technology,7374
+INR,Energy,1311
+INSE,Information Technology,7372
+INSG,Information Technology,3669
+INSM,Health Care,2834
+INSP,Health Care,3841
+INST,Information Technology,7372
+INSW,Industrials,4400
+INT,Energy,5172
+INTA,Information Technology,7372
+INTC,Information Technology,3674
+INTG,Real Estate,6513
+INTJ,Industrials,8742
+INTL,Financials,6200
+INTR,Financials,6029
+INTS,Health Care,2836
+INTT,Information Technology,3825
+INTU,Information Technology,7372
+INTX,Information Technology,7374
+INTZ,Information Technology,3576
+INUV,Industrials,7310
+INV,Financials,6770
+INVA,Health Care,2834
+INVE,Information Technology,3577
+INVH,Real Estate,6510
+INVN,Information Technology,3674
+INVX,Industrials,3533
+INVZ,Consumer Discretionary,3714
+INWK,Industrials,7389
+IOND,Financials,6199
+IONQ,Information Technology,7373
+IONR,Materials,1400
+IONS,Health Care,2834
+IOR,Real Estate,6798
+IOSP,Materials,2800
+IOT,Information Technology,7373
+IOTR,Communication Services,4899
+IOTS,Information Technology,3674
+IOVA,Health Care,2836
+IP,Materials,2621
+IPAR,Consumer Staples,2844
+IPAS,Information Technology,7374
+IPB,Financials,6189
+IPDN,Information Technology,7370
+IPFX,Financials,6770
+IPFXU,Financials,6770
+IPFXW,Financials,6770
+IPGP,Information Technology,3674
+IPHA,Health Care,2836
+IPHI,Information Technology,3674
+IPHS,Industrials,5160
+IPHX,Financials,6770
+IPHXU,Financials,6770
+IPHXW,Financials,6770
+IPI,Materials,1400
+IPM,Information Technology,7370
+IPSC,Health Care,2836
+IPST,Consumer Staples,2080
+IPVV,Financials,6770
+IPVVU,Financials,6770
+IPVVW,Financials,6770
+IPWR,Information Technology,3674
+IPX,Materials,1090
+IPXG,Information Technology,7373
+IPXGU,Information Technology,7373
+IPXGW,Information Technology,7373
+IQ,Communication Services,7841
+IQMX,Information Technology,7372
+IQMXW,Information Technology,7372
+IQST,Communication Services,4813
+IQV,Health Care,8731
+IR,Industrials,3560
+IRAB,Financials,6770
+IRD,Health Care,2834
+IRDM,Communication Services,4899
+IREN,Financials,6199
+IRHO,Industrials,7389
+IRHOR,Industrials,7389
+IRHOU,Industrials,7389
+IRIX,Health Care,3845
+IRLA,Health Care,2836
+IRM,Real Estate,6798
+IRMD,Health Care,3841
+IRON,Health Care,2834
+IRS,Real Estate,6552
+IRT,Real Estate,6798
+IRTC,Health Care,3841
+IRWD,Health Care,2834
+ISBA,Financials,6022
+ISBC,Financials,6022
+ISNR,Financials,6770
+ISNRU,Financials,6770
+ISNRW,Financials,6770
+ISOU,Materials,1090
+ISPC,Health Care,8731
+ISPR,Consumer Staples,2111
+ISRG,Health Care,3842
+ISTR,Financials,6022
+IT,Industrials,8741
+ITG,Industrials,1623
+ITGR,Health Care,3845
+ITHA,Financials,6770
+ITHAU,Financials,6770
+ITHAW,Financials,6770
+ITIC,Financials,6361
+ITOC,Health Care,3845
+ITP,Materials,2670
+ITRG,Materials,1040
+ITRI,Information Technology,3825
+ITRN,Industrials,5065
+ITT,Industrials,3561
+ITUB,Financials,6022
+ITUS,Health Care,2834
+ITW,Industrials,3560
+IVA,Health Care,2834
+IVDA,Information Technology,7372
+IVDAW,Information Technology,7372
+IVF,Health Care,3841
+IVR,Real Estate,6798
+IVT,Real Estate,6798
+IVTY,Health Care,3841
+IVVD,Health Care,2836
+IVZ,Financials,6282
+IX,Financials,6159
+IXHL,Health Care,2834
+IZEA,Industrials,7310
+IZM,Consumer Discretionary,5731
+J,Industrials,1600
+JACK,Consumer Discretionary,5812
+JACS,Financials,6770
+JAG,Energy,1311
+JAGU,Materials,1000
+JAGX,Health Care,2834
+JAKK,Consumer Discretionary,3944
+JAN,Real Estate,6798
+JANX,Health Care,2834
+JATT,Financials,6770
+JAX,Consumer Discretionary,5812
+JAZZ,Health Care,2834
+JBDI,Industrials,3412
+JBGS,Real Estate,6798
+JBHT,Industrials,4213
+JBI,Industrials,3442
+JBIO,Health Care,2834
+JBK,Financials,6189
+JBL,Information Technology,3672
+JBLU,Industrials,4512
+JBS,Consumer Staples,2011
+JBSS,Consumer Staples,2060
+JBTM,Industrials,3550
+JCAP,Financials,6153
+JCI,Industrials,3585
+JCSE,Consumer Discretionary,3990
+JCTC,Consumer Discretionary,5211
+JD,Consumer Discretionary,5990
+JDZG,Consumer Discretionary,8200
+JEF,Financials,6211
+JELD,Materials,2430
+JEM,Consumer Discretionary,5600
+JENA,Financials,6770
+JETD,Financials,6029
+JETU,Financials,6029
+JF,Information Technology,7370
+JFIN,Financials,6199
+JFU,Financials,6199
+JG,Information Technology,7370
+JHX,Materials,3272
+JILL,Consumer Discretionary,2330
+JJSF,Consumer Staples,2052
+JKHY,Information Technology,7373
+JKS,Information Technology,3674
+JL,Consumer Discretionary,5600
+JLHL,Industrials,8711
+JLL,Real Estate,6531
+JMBA,Consumer Discretionary,5810
+JMIA,Consumer Discretionary,5961
+JMKE,Consumer Discretionary,5812
+JMP,Financials,6211
+JMSB,Financials,6022
+JNJ,Health Care,2834
+JNP,Health Care,2834
+JOB,Industrials,7361
+JOBY,Industrials,3721
+JOE,Real Estate,6552
+JONE,Financials,6770
+JONER,Financials,6770
+JONEU,Financials,6770
+JOUT,Consumer Discretionary,3949
+JOYY,Information Technology,7374
+JPM,Financials,6021
+JPND,Financials,6029
+JPNU,Financials,6029
+JRSH,Consumer Discretionary,2300
+JRVR,Financials,6331
+JSM,Financials,6211
+JSPR,Health Care,2836
+JTAI,Industrials,4522
+JTPY,Financials,6770
+JTTT,Financials,6770
+JUNS,Health Care,2834
+JVA,Consumer Staples,2090
+JWEL,Consumer Discretionary,5960
+JXG,Industrials,5000
+JXN,Financials,6311
+JYD,Industrials,4731
+JYNT,Financials,6794
+JZ,Consumer Discretionary,8200
+JZXN,Consumer Discretionary,5500
+KAI,Industrials,3550
+KALA,Health Care,2834
+KALU,Materials,3350
+KAPA,Health Care,2834
+KARD,Health Care,2834
+KARO,Information Technology,7372
+KAZR,Industrials,1700
+KB,Financials,6029
+KBH,Consumer Discretionary,1531
+KBLMU,Financials,6199
+KBON,Financials,6770
+KBONU,Financials,6770
+KBONW,Financials,6770
+KBR,Industrials,1600
+KBSX,Consumer Discretionary,3949
+KC,Information Technology,7372
+KCHV,Financials,6770
+KCHVR,Financials,6770
+KCHVU,Financials,6770
+KD,Information Technology,7373
+KDK,Information Technology,7373
+KDKRW,Information Technology,7373
+KDMN,Health Care,2834
+KDP,Consumer Staples,2080
+KE,Information Technology,3672
+KEEL,Financials,6199
+KELYA,Industrials,7363
+KELYB,Industrials,7363
+KEM,Information Technology,3670
+KEN,Utilities,4911
+KEP,Utilities,4911
+KEQU,Information Technology,3821
+KEX,Industrials,4400
+KEY,Financials,6021
+KEYS,Information Technology,3823
+KEYW,Information Technology,7373
+KEYY,Financials,6770
+KEYYU,Financials,6770
+KEYYW,Financials,6770
+KFFB,Financials,6035
+KFII,Financials,6770
+KFIIR,Financials,6770
+KFIIU,Financials,6770
+KFRC,Industrials,7363
+KFY,Industrials,7361
+KG,Financials,6331
+KGC,Materials,1040
+KGEI,Energy,1311
+KGS,Utilities,4922
+KHC,Consumer Staples,2030
+KIDS,Health Care,3841
+KIDZ,Consumer Discretionary,8200
+KIDZW,Consumer Discretionary,8200
+KIM,Real Estate,6798
+KIN,Health Care,2834
+KIND,Information Technology,7370
+KINS,Financials,6331
+KITT,Industrials,3569
+KITTW,Industrials,3569
+KKR,Financials,6282
+KKRS,Financials,6282
+KKRT,Financials,6282
+KLAC,Information Technology,3827
+KLAR,Financials,6199
+KLC,Industrials,8351
+KLIC,Information Technology,3674
+KLRA,Health Care,2834
+KLRS,Health Care,2836
+KLTR,Information Technology,7372
+KLXE,Energy,1389
+KLXI,Industrials,3720
+KMB,Materials,2670
+KMDA,Health Care,2834
+KMI,Utilities,4922
+KMPB,Financials,6331
+KMPR,Financials,6331
+KMRK,Consumer Discretionary,3944
+KMT,Industrials,3541
+KMTS,Health Care,3841
+KMX,Consumer Discretionary,5500
+KN,Consumer Discretionary,3651
+KNDI,Consumer Discretionary,3714
+KNF,Materials,1400
+KNL,Consumer Discretionary,2590
+KNOP,Industrials,4400
+KNRX,Information Technology,7370
+KNSA,Health Care,2834
+KNSL,Financials,6331
+KNTK,Utilities,4922
+KNX,Industrials,4213
+KO,Consumer Staples,2080
+KOD,Health Care,2836
+KODK,Industrials,3861
+KOF,Consumer Staples,2086
+KOLD,Financials,6221
+KOOL,Information Technology,3821
+KOP,Materials,2400
+KOPN,Information Technology,3674
+KOS,Energy,1311
+KOSS,Consumer Discretionary,3651
+KOYN,Financials,6770
+KOYNU,Financials,6770
+KOYNW,Financials,6770
+KPET,Financials,6770
+KPLT,Industrials,7359
+KPRX,Health Care,2834
+KPTI,Health Care,2834
+KR,Consumer Staples,5411
+KRA,Materials,2821
+KRAQ,Financials,6770
+KRAQU,Financials,6770
+KRAQW,Financials,6770
+KRC,Real Estate,6798
+KREF,Real Estate,6798
+KRG,Real Estate,6798
+KRKR,Industrials,7389
+KRMD,Health Care,3841
+KRMN,Industrials,3728
+KRNT,Industrials,3555
+KRNY,Financials,6035
+KRO,Materials,2810
+KROS,Health Care,2834
+KRP,Energy,1311
+KRRO,Health Care,2834
+KRSA,Health Care,2834
+KRSP,Financials,6770
+KRT,Materials,3089
+KRUS,Consumer Discretionary,5812
+KRYS,Health Care,2836
+KSCP,Information Technology,3669
+KSPI,Industrials,7389
+KSS,Consumer Discretionary,5311
+KSU,Industrials,4011
+KT,Communication Services,4813
+KTB,Consumer Discretionary,2320
+KTCC,Information Technology,3672
+KTH,Financials,6189
+KTN,Financials,6189
+KTOS,Industrials,3760
+KTTA,Health Care,2834
+KTWO,Financials,6770
+KTWOR,Financials,6770
+KTWOU,Financials,6770
+KULR,Information Technology,3670
+KURA,Health Care,2834
+KUST,Information Technology,3663
+KVHI,Communication Services,4899
+KVUE,Consumer Staples,2844
+KVYO,Information Technology,7372
+KWR,Energy,2990
+KWY,Financials,6331
+KXIN,Consumer Discretionary,5500
+KYIV,Communication Services,4812
+KYIVW,Communication Services,4812
+KYMR,Health Care,2836
+KYNB,Health Care,2834
+KYTX,Health Care,2836
+KZIA,Health Care,2834
+L,Financials,6331
+LAB,Health Care,2834
+LABL,Communication Services,2750
+LABT,Health Care,2834
+LAC,Materials,1000
+LAD,Consumer Discretionary,5500
+LADR,Real Estate,6798
+LAES,Information Technology,3674
+LAFA,Financials,6770
+LAFAR,Financials,6770
+LAFAU,Financials,6770
+LAKE,Health Care,3842
+LAMR,Real Estate,6798
+LAND,Real Estate,6798
+LANDO,Real Estate,6798
+LANDP,Real Estate,6798
+LANV,Consumer Discretionary,2300
+LAR,Materials,1000
+LARK,Financials,6021
+LASE,Industrials,3690
+LASR,Information Technology,3674
+LATA,Financials,6770
+LATAU,Financials,6770
+LATAW,Financials,6770
+LAUR,Consumer Discretionary,8200
+LAW,Information Technology,7372
+LAWR,Information Technology,7370
+LAZ,Financials,6282
+LAZR,Consumer Discretionary,3714
+LB,Financials,6792
+LBGJ,Industrials,3580
+LBRT,Energy,1389
+LBRX,Health Care,2834
+LBTYA,Communication Services,4841
+LBTYB,Communication Services,4841
+LBTYK,Communication Services,4841
+LCAP,Information Technology,7374
+LCCC,Financials,6770
+LCCCR,Financials,6770
+LCCCU,Financials,6770
+LCFY,Information Technology,7370
+LCFYW,Information Technology,7370
+LCID,Consumer Discretionary,3711
+LCII,Consumer Discretionary,3714
+LCLN,Financials,6282
+LCNB,Financials,6021
+LCTX,Health Care,2836
+LCU,Materials,1000
+LCUT,Industrials,3420
+LDI,Financials,6199
+LDL,Consumer Discretionary,3714
+LDOS,Information Technology,7373
+LE,Consumer Discretionary,5651
+LEA,Consumer Discretionary,3714
+LEAF,Information Technology,7374
+LECO,Industrials,3540
+LEDRU,Financials,6770
+LEDS,Information Technology,3674
+LEE,Communication Services,2711
+LEGH,Materials,2451
+LEGN,Health Care,2834
+LEGO,Financials,6770
+LEN,Consumer Discretionary,1520
+LEN.B,Consumer Discretionary,1520
+LENS,Health Care,3841
+LENZ,Health Care,2836
+LEU,Materials,1400
+LEVI,Consumer Discretionary,2300
+LEVL,Financials,6022
+LEXX,Health Care,2834
+LFAC,Financials,6770
+LFACU,Financials,6770
+LFACW,Financials,6770
+LFCR,Health Care,2834
+LFMD,Health Care,8011
+LFMDP,Health Care,8011
+LFS,Consumer Discretionary,8200
+LFST,Health Care,8000
+LFT,Real Estate,6798
+LFTO,Information Technology,7374
+LFUS,Industrials,3613
+LFVN,Health Care,2834
+LFWD,Health Care,3842
+LGCL,Information Technology,7370
+LGCY,Consumer Discretionary,8200
+LGHL,Financials,6211
+LGIH,Consumer Discretionary,1531
+LGL,Information Technology,3679
+LGN,Industrials,1700
+LGND,Health Care,2834
+LGO,Materials,1400
+LGPS,Consumer Discretionary,1531
+LGVN,Health Care,2834
+LH,Health Care,8071
+LHAI,Real Estate,6531
+LHX,Industrials,3812
+LI,Consumer Discretionary,3711
+LICN,Industrials,8742
+LIDR,Consumer Discretionary,3714
+LIF,Information Technology,7374
+LIFE,Financials,6411
+LII,Industrials,3585
+LILA,Communication Services,4841
+LILAK,Communication Services,4841
+LILAP,Communication Services,4841
+LIME,Information Technology,7372
+LIMN,Health Care,2836
+LIMNW,Health Care,2836
+LIN,Materials,2810
+LINC,Consumer Discretionary,8200
+LIND,Industrials,4700
+LINE,Real Estate,6798
+LINK,Information Technology,3577
+LION,Communication Services,7812
+LIQT,Industrials,3590
+LITB,Consumer Discretionary,5961
+LITE,Information Technology,3669
+LITS,Health Care,2834
+LIVE,Consumer Discretionary,5900
+LIVN,Health Care,3845
+LJPC,Health Care,2836
+LKFN,Financials,6022
+LKFT,Health Care,2834
+LKQ,Industrials,5010
+LKSP,Financials,6770
+LKSPR,Financials,6770
+LKSPU,Financials,6770
+LLY,Health Care,2834
+LLYVA,Consumer Discretionary,7900
+LLYVK,Consumer Discretionary,7900
+LM,Financials,6282
+LMAT,Health Care,3841
+LMB,Industrials,1700
+LMND,Financials,6331
+LMNR,Consumer Staples,0100
+LMNX,Health Care,3841
+LMRI,Health Care,8071
+LMRK,Real Estate,6519
+LMT,Industrials,3760
+LNAI,Health Care,2834
+LNC,Financials,6311
+LND,Consumer Staples,0100
+LNG,Utilities,4924
+LNKS,Information Technology,3670
+LNN,Industrials,3523
+LNSR,Health Care,3841
+LNT,Utilities,4931
+LNTH,Health Care,2835
+LNZA,Materials,2860
+LNZAW,Materials,2860
+LOACU,Financials,6770
+LOAN,Real Estate,6798
+LOAR,Industrials,3728
+LOB,Financials,6022
+LOBO,Consumer Discretionary,3751
+LOCL,Consumer Staples,0100
+LOCO,Consumer Discretionary,5812
+LODE,Materials,2860
+LOGI,Information Technology,3577
+LOGM,Information Technology,7372
+LOMA,Materials,3241
+LONA,Health Care,2836
+LOOP,Materials,2800
+LOPE,Consumer Discretionary,8200
+LORL,Information Technology,3663
+LOT,Consumer Discretionary,3711
+LOTWW,Consumer Discretionary,3711
+LOVE,Consumer Discretionary,5712
+LOVIU,Financials,6770
+LOW,Consumer Discretionary,5211
+LOXO,Health Care,2834
+LPA,Real Estate,6500
+LPAA,Financials,6770
+LPAAU,Financials,6770
+LPAAW,Financials,6770
+LPBB,Industrials,3443
+LPBBU,Industrials,3443
+LPBBW,Industrials,3443
+LPCN,Health Care,2834
+LPCV,Financials,6770
+LPCVU,Financials,6770
+LPCVW,Financials,6770
+LPG,Industrials,4412
+LPL,Information Technology,3679
+LPLA,Financials,6200
+LPTH,Information Technology,3674
+LPX,Materials,2400
+LQ,Consumer Discretionary,7011
+LQDA,Health Care,2834
+LQDD,Financials,6029
+LQDT,Industrials,7389
+LQDU,Financials,6029
+LRCX,Industrials,3559
+LRE,Consumer Discretionary,1531
+LRMR,Health Care,2834
+LRN,Consumer Discretionary,8200
+LSAK,Financials,6099
+LSBK,Financials,6035
+LSCC,Information Technology,3674
+LSE,Industrials,3533
+LSF,Consumer Staples,2000
+LSPD,Information Technology,7372
+LSTA,Health Care,2834
+LSTR,Industrials,4213
+LTBR,Materials,2810
+LTC,Real Estate,6798
+LTCC,Financials,6221
+LTGO,Health Care,2834
+LTGR,Financials,6770
+LTGRU,Financials,6770
+LTGRW,Financials,6770
+LTH,Consumer Discretionary,7997
+LTM,Industrials,4512
+LTRN,Health Care,2834
+LTRX,Information Technology,3576
+LTRYW,Information Technology,7372
+LTS,Financials,6211
+LTXB,Financials,6035
+LU,Financials,6199
+LUB,Consumer Discretionary,5812
+LUCD,Health Care,3841
+LUCK,Consumer Discretionary,7900
+LUCY,Health Care,3851
+LUCYW,Health Care,3851
+LUD,Materials,3317
+LULU,Consumer Discretionary,2300
+LUMN,Communication Services,4813
+LUNG,Health Care,3841
+LUNR,Industrials,3812
+LUV,Industrials,4512
+LUXE,Consumer Discretionary,5961
+LVGO,Information Technology,7370
+LVLU,Consumer Discretionary,5961
+LVO,Consumer Discretionary,5812
+LVS,Consumer Discretionary,7011
+LVWR,Consumer Discretionary,3751
+LW,Consumer Staples,2030
+LWAC,Financials,6770
+LWACU,Financials,6770
+LWACW,Financials,6770
+LWAY,Consumer Staples,2020
+LWLG,Materials,3080
+LX,Financials,6199
+LXEH,Consumer Discretionary,8200
+LXEO,Health Care,2836
+LXFR,Materials,2810
+LXP,Real Estate,6798
+LXRX,Health Care,2834
+LXU,Materials,2810
+LYB,Materials,2860
+LYCA,Health Care,2836
+LYEL,Health Care,2834
+LYFT,Industrials,7389
+LYG,Financials,6029
+LYNX,Industrials,3812
+LYTS,Industrials,3640
+LYV,Consumer Discretionary,7900
+LZ,Information Technology,7374
+LZB,Consumer Discretionary,2510
+LZM,Materials,1000
+LZMH,Information Technology,7371
+M,Consumer Discretionary,5311
+MA,Industrials,7389
+MAA,Real Estate,6798
+MAAS,Financials,6282
+MAC,Real Estate,6798
+MACI,Industrials,7389
+MACIU,Industrials,7389
+MACIW,Industrials,7389
+MACQ,Information Technology,7370
+MAGH,Industrials,1731
+MAGN,Materials,2621
+MAIA,Health Care,2834
+MAIR,Industrials,3564
+MAKO,Materials,1040
+MAMA,Consumer Staples,2013
+MAMO,Industrials,3790
+MAN,Industrials,7363
+MANE,Health Care,2834
+MANH,Information Technology,7372
+MANT,Industrials,8741
+MANU,Consumer Discretionary,7900
+MAR,Consumer Discretionary,7011
+MARA,Financials,6199
+MARPS,Financials,6792
+MAS,Industrials,3430
+MASK,Information Technology,7371
+MASS,Information Technology,3826
+MAT,Consumer Discretionary,3942
+MATH,Financials,6199
+MATR,Information Technology,7373
+MATV,Materials,2621
+MATW,Materials,3360
+MATX,Industrials,4400
+MAX,Industrials,7389
+MAYS,Real Estate,6512
+MAZE,Health Care,2836
+MB,Consumer Discretionary,5812
+MBAI,Information Technology,7373
+MBBC,Financials,6036
+MBC,Consumer Discretionary,2511
+MBFI,Financials,6021
+MBGL,Industrials,7389
+MBI,Financials,6351
+MBII,Materials,2870
+MBIN,Financials,6022
+MBINL,Financials,6022
+MBINM,Financials,6022
+MBINN,Financials,6022
+MBIO,Health Care,2834
+MBLY,Information Technology,7372
+MBNKO,Financials,6199
+MBOT,Health Care,3841
+MBRX,Health Care,2834
+MBTF,Financials,6021
+MBUU,Industrials,3730
+MBVI,Financials,6770
+MBVIU,Financials,6770
+MBVIW,Financials,6770
+MBWM,Financials,6022
+MBX,Health Care,2834
+MC,Financials,6282
+MCACU,Consumer Discretionary,5900
+MCADU,Information Technology,7372
+MCAH,Financials,6770
+MCAHR,Financials,6770
+MCAHU,Financials,6770
+MCB,Financials,6022
+MCBS,Financials,6022
+MCD,Consumer Discretionary,5812
+MCEP,Energy,1311
+MCF,Energy,1311
+MCFT,Industrials,3730
+MCGA,Financials,6199
+MCGAU,Financials,6199
+MCGAW,Financials,6199
+MCHB,Financials,6022
+MCHP,Information Technology,3674
+MCHPP,Information Technology,3674
+MCHX,Information Technology,7372
+MCK,Health Care,5122
+MCO,Industrials,7320
+MCRB,Health Care,2834
+MCRI,Consumer Discretionary,7011
+MCRN,Industrials,3559
+MCRP,Consumer Discretionary,3714
+MCS,Communication Services,7830
+MCTA,Health Care,8090
+MCVT,Financials,6199
+MCX,Information Technology,7372
+MCY,Financials,6331
+MD,Health Care,8060
+MDA,Industrials,3760
+MDAI,Health Care,3841
+MDAIW,Health Care,3841
+MDB,Information Technology,7372
+MDBH,Financials,6199
+MDCO,Health Care,2834
+MDCX,Health Care,2834
+MDCXW,Health Care,2834
+MDGL,Health Care,2834
+MDIA,Communication Services,4832
+MDLA,Information Technology,7370
+MDLN,Health Care,3841
+MDLZ,Consumer Staples,2000
+MDP,Communication Services,2721
+MDRR,Real Estate,6798
+MDSO,Information Technology,7372
+MDT,Health Care,3845
+MDU,Utilities,4924
+MDWD,Health Care,2833
+MDXG,Health Care,3841
+MDXH,Health Care,8071
+MEC,Industrials,3460
+MED,Consumer Staples,2090
+MEDP,Health Care,8731
+MEDS,Health Care,5122
+MEET,Industrials,7310
+MEGL,Financials,6199
+MEI,Information Technology,3678
+MELI,Industrials,7389
+MENS,Health Care,2834
+MEOH,Materials,2860
+MERC,Materials,2611
+MESH,Financials,6770
+MESHU,Financials,6770
+MESHW,Financials,6770
+MESO,Health Care,2836
+MET,Financials,6311
+META,Information Technology,7370
+METC,Energy,1220
+METCB,Energy,1220
+METCI,Energy,1220
+METCZ,Energy,1220
+MEVO,Financials,6770
+MEVOU,Financials,6770
+MEVOW,Financials,6770
+MF,Information Technology,7370
+MFA,Real Estate,6798
+MFAN,Real Estate,6798
+MFAO,Real Estate,6798
+MFC,Financials,6311
+MFG,Financials,6021
+MFI,Information Technology,7371
+MFIN,Financials,6199
+MFNC,Financials,6022
+MFP,Industrials,3580
+MFSF,Financials,6022
+MG,Industrials,8711
+MGA,Consumer Discretionary,3714
+MGEE,Utilities,4900
+MGIH,Communication Services,2750
+MGLD,Financials,6199
+MGLN,Health Care,8060
+MGM,Consumer Discretionary,7011
+MGN,Consumer Staples,0200
+MGNI,Information Technology,7370
+MGNX,Health Care,2834
+MGP,Real Estate,6798
+MGPI,Industrials,5180
+MGR,Financials,6282
+MGRB,Financials,6282
+MGRC,Industrials,7359
+MGRD,Financials,6282
+MGRE,Financials,6282
+MGRT,Information Technology,7371
+MGRX,Health Care,8090
+MGTX,Health Care,2836
+MGX,Health Care,2836
+MGY,Energy,1311
+MGYR,Financials,6035
+MH,Communication Services,2741
+MHH,Industrials,8742
+MHK,Consumer Discretionary,2273
+MHLA,Financials,6331
+MHNC,Financials,6331
+MHO,Consumer Discretionary,1531
+MI,Financials,6199
+MIAC,Financials,6770
+MIACU,Financials,6770
+MIACW,Financials,6770
+MIAX,Financials,6211
+MIC,Energy,5172
+MICC,Consumer Staples,2024
+MIDD,Industrials,3580
+MIK,Consumer Discretionary,5945
+MIND,Industrials,3812
+MINE,Materials,1000
+MINI,Industrials,3443
+MIR,Information Technology,3829
+MIRA,Health Care,2834
+MIRM,Health Care,2834
+MIST,Health Care,2834
+MITK,Information Technology,3577
+MITN,Real Estate,6798
+MITP,Real Estate,6798
+MITQ,Industrials,3861
+MITT,Real Estate,6798
+MJCO,Information Technology,7372
+MKC,Consumer Staples,2090
+MKC.V,Consumer Staples,2090
+MKDW,Industrials,3600
+MKDWW,Industrials,3600
+MKL,Financials,6331
+MKLY,Information Technology,7372
+MKLYR,Information Technology,7372
+MKLYU,Information Technology,7372
+MKSI,Information Technology,3823
+MKTW,Information Technology,7372
+MKTX,Financials,6211
+MKZR,Real Estate,6798
+MLAA,Financials,6770
+MLAAU,Financials,6770
+MLAAW,Financials,6770
+MLAB,Information Technology,3823
+MLCI,Financials,6282
+MLCIL,Financials,6282
+MLCO,Consumer Discretionary,7011
+MLEC,Consumer Staples,2000
+MLECW,Consumer Staples,2000
+MLGO,Information Technology,7371
+MLI,Materials,3350
+MLKN,Consumer Discretionary,2520
+MLM,Materials,1400
+MLNT,Health Care,2834
+MLNX,Information Technology,3674
+MLP,Real Estate,6500
+MLPB,Financials,6021
+MLPR,Financials,6021
+MLR,Consumer Discretionary,3713
+MLSS,Health Care,3842
+MLTX,Health Care,2834
+MLYS,Health Care,2834
+MMA,Industrials,7380
+MMAC,Real Estate,6500
+MMED,Health Care,3841
+MMI,Real Estate,6531
+MMLP,Energy,5171
+MMM,Health Care,3841
+MMS,Industrials,7389
+MMSI,Health Care,3841
+MMTX,Information Technology,7371
+MMTXU,Information Technology,7371
+MMTXW,Information Technology,7371
+MMYT,Industrials,4700
+MN,Financials,6282
+MNDO,Information Technology,7371
+MNDR,Information Technology,7372
+MNDT,Information Technology,3577
+MNDY,Information Technology,7372
+MNGU,Financials,6029
+MNKD,Health Care,2834
+MNOV,Health Care,2834
+MNPR,Health Care,2834
+MNR,Energy,1311
+MNRO,Consumer Discretionary,7500
+MNSB,Financials,6022
+MNSBP,Financials,6022
+MNSO,Consumer Discretionary,5331
+MNST,Consumer Staples,2086
+MNTK,Utilities,4932
+MNTN,Industrials,7310
+MNTS,Industrials,3760
+MNY,Industrials,7389
+MNYWW,Industrials,7389
+MO,Consumer Staples,2111
+MOB,Industrials,3721
+MOBBW,Industrials,3721
+MOBI,Health Care,3841
+MOBL,Information Technology,7372
+MOBX,Information Technology,3674
+MOBXW,Information Technology,3674
+MOD,Consumer Discretionary,3714
+MODD,Health Care,3841
+MOG.A,Industrials,3590
+MOG.B,Industrials,3590
+MOGU,Industrials,7389
+MOH,Financials,6324
+MOLN,Health Care,2836
+MOMO,Information Technology,7372
+MORN,Financials,6282
+MOS,Materials,2870
+MOV,Industrials,3873
+MOVE,Information Technology,7374
+MP,Materials,1000
+MPAA,Consumer Discretionary,3714
+MPB,Financials,6022
+MPC,Energy,2911
+MPLT,Health Care,2834
+MPLX,Industrials,4610
+MPT,Real Estate,6798
+MPTI,Information Technology,3679
+MPU,Communication Services,7812
+MPWR,Information Technology,3674
+MQ,Information Technology,7372
+MR,Energy,1311
+MRAM,Information Technology,3674
+MRBK,Financials,6021
+MRCO,Financials,6770
+MRCOU,Financials,6770
+MRCOW,Financials,6770
+MRCY,Information Technology,3670
+MRDN,Information Technology,7372
+MREO,Health Care,2834
+MRK,Health Care,2834
+MRKR,Health Care,2834
+MRLN,Information Technology,7373
+MRM,Consumer Discretionary,7200
+MRNA,Health Care,2836
+MRNO,Consumer Discretionary,7011
+MRNOW,Consumer Discretionary,7011
+MRP,Real Estate,6500
+MRSH,Financials,6411
+MRT,Consumer Discretionary,7510
+MRTN,Industrials,4213
+MRVI,Health Care,2834
+MRVL,Information Technology,3674
+MRX,Financials,6200
+MS,Financials,6211
+MSA,Health Care,3842
+MSAI,Information Technology,3827
+MSAIW,Information Technology,3827
+MSB,Financials,6795
+MSBF,Financials,6035
+MSBI,Financials,6022
+MSBIP,Financials,6022
+MSBT,Financials,6221
+MSC,Consumer Discretionary,7011
+MSCI,Industrials,7389
+MSEX,Utilities,4941
+MSFT,Information Technology,7372
+MSGE,Consumer Discretionary,7990
+MSGK.WI,Consumer Discretionary,7990
+MSGM,Information Technology,7372
+MSGN,Communication Services,4841
+MSGR.WI,Consumer Discretionary,7990
+MSGS,Consumer Discretionary,7990
+MSGY,Industrials,1700
+MSI,Information Technology,3663
+MSL,Financials,6021
+MSLE,Health Care,2834
+MSM,Industrials,5084
+MSN,Consumer Discretionary,3651
+MSOL,Financials,6221
+MSON,Information Technology,3821
+MSP,Information Technology,7372
+MSS,Consumer Staples,5411
+MSSE,Financials,6221
+MSTR,Financials,6199
+MT,Materials,3312
+MTA,Materials,1040
+MTAK,Financials,6770
+MTAKU,Financials,6770
+MTAKW,Financials,6770
+MTAL,Financials,6770
+MTB,Financials,6022
+MTC,Financials,6211
+MTCH,Information Technology,7370
+MTD,Information Technology,3826
+MTDR,Energy,1311
+MTECU,Information Technology,7374
+MTEK,Information Technology,3669
+MTEKW,Information Technology,3669
+MTEN,Industrials,3442
+MTEX,Health Care,2833
+MTG,Financials,6351
+MTGE,Real Estate,6798
+MTH,Consumer Discretionary,1531
+MTLS,Information Technology,7372
+MTN,Consumer Discretionary,7990
+MTNB,Health Care,2834
+MTNE,Financials,6770
+MTOR,Consumer Discretionary,3714
+MTR,Financials,6792
+MTRN,Industrials,3460
+MTRX,Industrials,1700
+MTSC,Information Technology,3829
+MTSI,Information Technology,3674
+MTUS,Materials,3312
+MTVA,Health Care,2834
+MTW,Industrials,3531
+MTX,Materials,2810
+MTZ,Industrials,1623
+MU,Information Technology,3674
+MUFG,Financials,6029
+MUR,Energy,1311
+MUSA,Consumer Discretionary,5500
+MUX,Materials,1040
+MUZE,Financials,6770
+MUZEU,Financials,6770
+MUZEW,Financials,6770
+MVBF,Financials,6022
+MVIS,Information Technology,3679
+MVRL,Financials,6021
+MVST,Industrials,3690
+MWA,Industrials,3490
+MWC,Information Technology,7371
+MWG,Consumer Discretionary,3990
+MWH,Industrials,1600
+MWYN,Consumer Staples,5141
+MX,Information Technology,3674
+MXC,Energy,1311
+MXCT,Health Care,8731
+MXL,Information Technology,3674
+MXWL,Industrials,3690
+MYE,Materials,3089
+MYFW,Financials,6022
+MYGN,Health Care,2835
+MYL,Health Care,2834
+MYND,Information Technology,3577
+MYO,Health Care,3842
+MYOK,Health Care,2834
+MYPS,Information Technology,7372
+MYRG,Industrials,1623
+MYSE,Communication Services,4822
+MYSZ,Information Technology,7372
+MYX,Financials,6770
+MYXXR,Financials,6770
+MYXXU,Financials,6770
+MYXXW,Financials,6770
+MZTI,Consumer Staples,2030
+MZYX,Financials,6770
+NA,Information Technology,3674
+NAAS,Consumer Discretionary,5990
+NABL,Information Technology,7372
+NAGE,Health Care,2833
+NAII,Health Care,2833
+NAK,Materials,1040
+NAKA,Financials,6199
+NAMI,Consumer Discretionary,8200
+NAMM,Materials,1040
+NAMMW,Materials,1040
+NAMS,Health Care,2834
+NAMSW,Health Care,2834
+NANO,Industrials,3559
+NANOW,Industrials,3559
+NAT,Industrials,4400
+NATH,Consumer Discretionary,5812
+NATL,Information Technology,3578
+NATR,Health Care,2834
+NAUT,Information Technology,3826
+NAV,Consumer Discretionary,3711
+NAVG,Financials,6331
+NAVI,Financials,6211
+NAVN,Information Technology,7372
+NB,Materials,1000
+NBA.U,Information Technology,3663
+NBBK,Financials,6036
+NBHC,Financials,6021
+NBIS,Information Technology,7370
+NBIX,Health Care,2836
+NBL,Energy,1311
+NBLX,Industrials,4610
+NBN,Financials,6022
+NBP,Health Care,2834
+NBR,Energy,1381
+NBRG,Information Technology,7372
+NBRGR,Information Technology,7372
+NBRGU,Information Technology,7372
+NBTB,Financials,6021
+NBTX,Health Care,2834
+NC,Energy,1221
+NCEL,Health Care,2834
+NCEW,Industrials,4731
+NCI,Consumer Discretionary,2300
+NCIQ,Financials,6221
+NCLH,Industrials,4400
+NCMI,Industrials,7310
+NCNA,Health Care,2834
+NCNO,Information Technology,7372
+NCO,Financials,6770
+NCOM,Financials,6021
+NCOOR,Financials,6770
+NCOOU,Financials,6770
+NCOOW,Financials,6770
+NCPL,Financials,6199
+NCPLW,Financials,6199
+NCRA,Consumer Staples,0200
+NCT,Industrials,4412
+NCTY,Financials,6199
+NDAQ,Financials,6200
+NDLS,Consumer Discretionary,5812
+NDRA,Health Care,3845
+NDSN,Industrials,3569
+NE,Energy,1381
+NECB,Financials,6036
+NEE,Utilities,4911
+NEGG,Consumer Discretionary,5990
+NEM,Materials,1040
+NEN,Real Estate,6513
+NEO,Industrials,8734
+NEOG,Health Care,2835
+NEON,Information Technology,3679
+NEOS,Health Care,2834
+NEOV,Industrials,3690
+NEOVW,Industrials,3690
+NEPH,Health Care,3841
+NERV,Health Care,2834
+NES,Energy,1389
+NESR,Energy,1389
+NET,Information Technology,7372
+NEU,Materials,2860
+NEUP,Health Care,2834
+NEWM,Communication Services,2711
+NEWP,Materials,1040
+NEWT,Financials,6021
+NEWTG,Financials,6021
+NEWTH,Financials,6021
+NEWTI,Financials,6021
+NEWTO,Financials,6021
+NEWTP,Financials,6021
+NEXA,Materials,1000
+NEXM,Materials,1000
+NEXN,Information Technology,7370
+NEXR,Consumer Discretionary,5900
+NEXRW,Consumer Discretionary,5900
+NEXT,Utilities,4923
+NFE,Utilities,4924
+NFEGP,Utilities,4924
+NFG,Utilities,4924
+NFGC,Materials,1040
+NFJ,Financials,6163
+NFLX,Communication Services,7841
+NFX,Energy,1311
+NG,Materials,1040
+NGEN,Health Care,2834
+NGG,Utilities,4922
+NGHC,Financials,6331
+NGHT,Consumer Discretionary,7900
+NGL,Utilities,4922
+NGNE,Health Care,2834
+NGS,Energy,1389
+NGVC,Consumer Staples,5411
+NGVT,Materials,2800
+NHC,Health Care,8051
+NHI,Real Estate,6798
+NHIV,Financials,6770
+NHIVU,Financials,6770
+NHIVW,Financials,6770
+NHLD,Financials,6200
+NHP,Real Estate,6798
+NHTC,Industrials,5190
+NI,Utilities,4931
+NIC,Financials,6021
+NICE,Information Technology,7372
+NICM,Materials,1000
+NIKI,Information Technology,3829
+NINE,Energy,1389
+NIO,Consumer Discretionary,3711
+NIOBW,Materials,1000
+NIPG,Consumer Discretionary,7990
+NIQ,Information Technology,7370
+NIU,Consumer Discretionary,3711
+NIVF,Health Care,8090
+NIVFW,Health Care,8090
+NIXX,Information Technology,7371
+NJR,Utilities,4924
+NKE,Materials,3021
+NKLR,Industrials,3443
+NKSH,Financials,6021
+NKTR,Health Care,2834
+NKTX,Health Care,2834
+NL,Materials,2810
+NLOP,Real Estate,6798
+NLY,Real Estate,6798
+NMAD,Health Care,2834
+NMAX,Communication Services,4833
+NMBL,Information Technology,3572
+NMG,Materials,1090
+NMIH,Financials,6351
+NMM,Industrials,4412
+NMP,Financials,6770
+NMPAR,Financials,6770
+NMPAU,Financials,6770
+NMR,Financials,6211
+NMRA,Health Care,2836
+NMRK,Real Estate,6531
+NMTC,Health Care,3841
+NN,Industrials,3812
+NNBR,Industrials,3540
+NNDM,Information Technology,3672
+NNE,Utilities,4911
+NNI,Financials,6141
+NNN,Real Estate,6798
+NNNN,Health Care,2835
+NNOX,Health Care,3844
+NNVC,Health Care,2834
+NOA,Energy,1389
+NOAH,Financials,6282
+NOC,Industrials,3812
+NODK,Financials,6331
+NOEM,Financials,6770
+NOEMR,Financials,6770
+NOEMU,Financials,6770
+NOEMW,Financials,6770
+NOG,Energy,1311
+NOK,Information Technology,3663
+NOMA,Consumer Discretionary,7900
+NOMD,Consumer Staples,2000
+NOV,Industrials,3533
+NOVT,Industrials,3690
+NOVTU,Industrials,3690
+NOW,Information Technology,7372
+NP,Financials,6411
+NPAC,Financials,6770
+NPACU,Financials,6770
+NPACW,Financials,6770
+NPB,Financials,6022
+NPCE,Health Care,3841
+NPK,Industrials,3480
+NPKI,Industrials,7350
+NPO,Materials,3050
+NPT,Industrials,5160
+NPTN,Information Technology,3674
+NPWR,Industrials,3620
+NRC,Health Care,8731
+NRCG,Industrials,4955
+NRDS,Information Technology,7374
+NRDY,Consumer Discretionary,8200
+NRE,Real Estate,6798
+NREF,Real Estate,6798
+NRG,Utilities,4911
+NRGD,Financials,6029
+NRGU,Financials,6029
+NRGV,Industrials,3690
+NRIM,Financials,6035
+NRIX,Health Care,2834
+NRP,Energy,1221
+NRR,Financials,6221
+NRSN,Health Care,2834
+NRSNW,Health Care,2834
+NRT,Financials,6792
+NRUC,Financials,6159
+NRXP,Health Care,2834
+NRXS,Health Care,3845
+NSAI,Financials,6770
+NSAIR,Financials,6770
+NSAIU,Financials,6770
+NSAIW,Financials,6770
+NSC,Industrials,4011
+NSEC,Financials,6311
+NSIT,Consumer Discretionary,5961
+NSP,Industrials,7363
+NSPR,Health Care,3841
+NSRX,Health Care,2834
+NSSC,Information Technology,3669
+NSTR,Communication Services,4899
+NSYS,Information Technology,3679
+NTAP,Information Technology,3572
+NTB,Financials,6029
+NTCL,Information Technology,7372
+NTCT,Information Technology,7373
+NTES,Information Technology,7372
+NTGR,Information Technology,3576
+NTHI,Health Care,2834
+NTIC,Industrials,3470
+NTIP,Financials,6794
+NTLA,Health Care,2835
+NTNX,Information Technology,7372
+NTR,Materials,2870
+NTRA,Health Care,8071
+NTRB,Health Care,3842
+NTRI,Consumer Discretionary,5961
+NTRP,Industrials,4700
+NTRS,Financials,6022
+NTRSO,Financials,6022
+NTSK,Information Technology,7372
+NTST,Real Estate,6798
+NTWK,Information Technology,7372
+NTWO,Industrials,3620
+NTWOU,Industrials,3620
+NTWOW,Industrials,3620
+NU,Financials,6199
+NUAI,Energy,1311
+NUAIW,Energy,1311
+NUAN,Information Technology,7372
+NUCL,Materials,1090
+NUCLW,Materials,1090
+NUE,Materials,3312
+NUR,Information Technology,3576
+NUS,Health Care,5122
+NUTX,Industrials,7389
+NUVB,Health Care,2834
+NUWE,Health Care,3845
+NVA,Materials,1040
+NVAX,Health Care,2836
+NVCR,Health Care,3841
+NVCT,Health Care,2834
+NVDA,Information Technology,3674
+NVEC,Information Technology,3674
+NVGS,Industrials,4412
+NVMI,Information Technology,3827
+NVMM,Information Technology,3669
+NVNO,Health Care,3841
+NVO,Health Care,2834
+NVR,Consumer Discretionary,1531
+NVRI,Industrials,4953
+NVS,Health Care,2834
+NVST,Health Care,3843
+NVT,Industrials,3550
+NVTS,Information Technology,3674
+NVX,Industrials,3690
+NWAX,Financials,6770
+NWBI,Financials,6021
+NWCL,Industrials,3443
+NWCLW,Industrials,3443
+NWE,Utilities,4931
+NWFL,Financials,6022
+NWG,Financials,6029
+NWGL,Materials,2400
+NWHM,Consumer Discretionary,1531
+NWL,Materials,3089
+NWN,Utilities,4924
+NWPX,Materials,3317
+NWS,Communication Services,2711
+NWSA,Communication Services,2711
+NWTG,Consumer Discretionary,3949
+NX,Materials,3350
+NXAT,Communication Services,7819
+NXATW,Communication Services,7819
+NXB,Industrials,3730
+NXDR,Information Technology,7370
+NXDT,Real Estate,6798
+NXE,Materials,1090
+NXEO,Industrials,5160
+NXGL,Health Care,3841
+NXGLW,Health Care,3841
+NXH,Consumer Discretionary,5961
+NXL,Health Care,3845
+NXPI,Information Technology,3674
+NXPL,Communication Services,4813
+NXRT,Real Estate,6798
+NXST,Communication Services,4833
+NXT,Information Technology,3674
+NXTC,Health Care,2834
+NXTM,Health Care,3845
+NXTS,Health Care,2834
+NXTT,Information Technology,7374
+NXXT,Consumer Discretionary,5500
+NYAX,Information Technology,7372
+NYC,Real Estate,6798
+NYRT,Real Estate,6798
+NYT,Communication Services,2711
+NYXH,Health Care,3841
+O,Real Estate,6798
+OABI,Health Care,8731
+OABIW,Health Care,8731
+OACC,Financials,6770
+OACCU,Financials,6770
+OACCW,Financials,6770
+OAK,Financials,6282
+OBA,Financials,6770
+OBAI,Communication Services,4899
+OBAWU,Financials,6770
+OBAWW,Financials,6770
+OBCI,Consumer Staples,2842
+OBE,Energy,1311
+OBIO,Health Care,3841
+OBT,Financials,6022
+OBTC,Financials,6221
+OBX,Health Care,2834
+OC,Materials,3290
+OCAC,Financials,6770
+OCC,Materials,3357
+OCFC,Financials,6021
+OCG,Industrials,7380
+OCGN,Health Care,2836
+OCIP,Materials,2800
+OCLT,Financials,6770
+OCLTR,Financials,6770
+OCLTU,Financials,6770
+OCLTW,Financials,6770
+OCS,Health Care,2834
+OCSAW,Health Care,2834
+OCTV,Information Technology,7372
+OCUL,Health Care,2834
+ODC,Consumer Discretionary,3990
+ODD,Consumer Staples,2844
+ODFL,Industrials,4213
+ODTX,Health Care,2836
+ODYS,Information Technology,7373
+OEC,Materials,2890
+OESX,Industrials,3640
+OFAL,Industrials,8711
+OFG,Financials,6022
+OFIX,Health Care,3841
+OFLX,Industrials,3430
+OFRM,Consumer Staples,2000
+OGC,Materials,1000
+OGCP,Real Estate,6798
+OGE,Utilities,4911
+OGEN,Health Care,2834
+OGG,Materials,1040
+OGGWZ,Materials,1040
+OGI,Health Care,2834
+OGN,Health Care,2834
+OGS,Utilities,4924
+OHAC,Financials,6770
+OHACR,Financials,6770
+OHACU,Financials,6770
+OHI,Real Estate,6798
+OHRP,Health Care,2834
+OI,Materials,3221
+OIG,Financials,6411
+OII,Energy,1389
+OILD,Financials,6029
+OILU,Financials,6029
+OIM,Financials,6770
+OIMAU,Financials,6770
+OIMAW,Financials,6770
+OIO,Industrials,4953
+OIOWW,Industrials,4953
+OIS,Industrials,3533
+OKE,Utilities,4923
+OKLO,Utilities,4911
+OKTA,Information Technology,7372
+OKUR,Health Care,2834
+OKYO,Health Care,2836
+OLB,Industrials,7389
+OLBK,Financials,6022
+OLED,Information Technology,3670
+OLLI,Consumer Discretionary,5331
+OLMA,Health Care,2834
+OLN,Materials,2800
+OLOX,Industrials,5030
+OLP,Real Estate,6798
+OM,Health Care,3845
+OMAB,Industrials,4581
+OMC,Industrials,7311
+OMCL,Information Technology,3571
+OMDA,Health Care,8000
+OMED,Health Care,2834
+OMER,Health Care,2834
+OMEX,Industrials,4400
+OMF,Financials,6141
+OMH,Real Estate,6531
+OMN,Materials,3060
+OMP,Energy,1381
+OMSE,Industrials,3533
+ON,Information Technology,3674
+ONB,Financials,6021
+ONBPO,Financials,6021
+ONBPP,Financials,6021
+ONC,Health Care,2834
+ONCE,Health Care,2836
+ONCH,Financials,6770
+ONCHU,Financials,6770
+ONCHW,Financials,6770
+ONCO,Health Care,2834
+ONCY,Health Care,2834
+ONDK,Financials,6199
+ONDS,Information Technology,3663
+ONEG,Consumer Discretionary,1520
+ONEN,Utilities,4911
+ONEW,Consumer Discretionary,5531
+ONFO,Information Technology,7374
+ONFOW,Information Technology,7374
+ONIT,Financials,6162
+ONL,Real Estate,6798
+ONMD,Health Care,8731
+ONMDW,Health Care,8731
+ONON,Materials,3021
+ONT,Industrials,8742
+ONTO,Information Technology,3829
+ONTX,Health Care,2834
+OOMA,Information Technology,7374
+OPAD,Real Estate,6531
+OPAL,Utilities,4932
+OPBK,Financials,6022
+OPCH,Health Care,8082
+OPEN,Real Estate,6531
+OPENL,Real Estate,6531
+OPENW,Real Estate,6531
+OPENZ,Real Estate,6531
+OPFI,Financials,6199
+OPHC,Financials,6021
+OPHT,Health Care,2834
+OPI,Real Estate,6500
+OPK,Health Care,2834
+OPLN,Consumer Discretionary,5500
+OPNW,Financials,6199
+OPRA,Information Technology,7372
+OPRT,Financials,6199
+OPRX,Industrials,7389
+OPTH,Health Care,2834
+OPTT,Utilities,4911
+OPTU,Communication Services,4841
+OPTX,Information Technology,3827
+OPTXW,Information Technology,3827
+OPXS,Information Technology,3827
+OPY,Financials,6211
+OR,Materials,1040
+ORA,Utilities,4911
+ORBC,Communication Services,4899
+ORBS,Financials,6199
+ORC,Real Estate,6798
+ORCL,Information Technology,7372
+ORGO,Health Care,2834
+ORI,Financials,6351
+ORIC,Health Care,2834
+ORIO,Financials,6199
+ORIQ,Financials,6770
+ORIQU,Financials,6770
+ORIQW,Financials,6770
+ORIT,Financials,6022
+ORKA,Health Care,2834
+ORKT,Information Technology,7372
+ORLY,Consumer Discretionary,5531
+ORM,Real Estate,6798
+ORMP,Health Care,2834
+ORN,Industrials,1600
+ORRF,Financials,6022
+OSBC,Financials,6022
+OSCR,Financials,6324
+OSG,Financials,6351
+OSIS,Information Technology,3674
+OSK,Consumer Discretionary,3711
+OSPN,Information Technology,7373
+OSPR,Financials,6770
+OSPRU,Financials,6770
+OSPRW,Financials,6770
+OSS,Information Technology,3571
+OST,Information Technology,3679
+OSTX,Health Care,2834
+OSUR,Health Care,3841
+OSW,Consumer Discretionary,7997
+OTAI,Financials,6770
+OTEL,Communication Services,4813
+OTEX,Information Technology,7373
+OTGA,Financials,6770
+OTGAU,Financials,6770
+OTGAW,Financials,6770
+OTIS,Industrials,3600
+OTLK,Health Care,2836
+OTLY,Consumer Staples,2000
+OTTR,Utilities,4911
+OUNZ,Financials,6221
+OUST,Industrials,3569
+OUT,Real Estate,6798
+OVBC,Financials,6022
+OVID,Health Care,2834
+OVLY,Financials,6022
+OVV,Energy,1311
+OWL,Financials,6282
+OWLS,Information Technology,7372
+OWLT,Information Technology,3829
+OXBR,Financials,6331
+OXBRW,Financials,6331
+OXFD,Health Care,2835
+OXM,Consumer Discretionary,2320
+OXY,Energy,1311
+OYSE,Financials,6770
+OYSER,Financials,6770
+OYSEU,Financials,6770
+OZ,Real Estate,6500
+P,Information Technology,3572
+PAA,Industrials,4610
+PAAC,Financials,6770
+PAACU,Financials,6770
+PAACW,Financials,6770
+PAAI,Communication Services,4841
+PAAS,Materials,1040
+PAC,Industrials,4581
+PACB,Information Technology,3826
+PACH,Financials,6770
+PACHU,Financials,6770
+PACHW,Financials,6770
+PACK,Materials,2670
+PACQ,Financials,6770
+PACS,Health Care,8051
+PAG,Consumer Discretionary,5500
+PAGP,Industrials,4610
+PAGS,Information Technology,7374
+PAHC,Health Care,2834
+PAII,Financials,6770
+PAL,Industrials,4700
+PALI,Health Care,2836
+PALL,Financials,6221
+PALO,Financials,6770
+PALOU,Financials,6770
+PALOW,Financials,6770
+PAM,Utilities,4911
+PAMT,Industrials,4213
+PAND,Health Care,2834
+PANL,Industrials,4412
+PANW,Information Technology,3577
+PAPL,Financials,6199
+PAR,Information Technology,3578
+PARA,Information Technology,7372
+PARAW,Information Technology,7372
+PARK,Health Care,8090
+PARR,Energy,1311
+PASG,Health Care,2836
+PASW,Consumer Discretionary,2300
+PATH,Information Technology,7372
+PATK,Consumer Discretionary,3714
+PAVM,Health Care,3841
+PAVS,Information Technology,7374
+PAX,Financials,6282
+PAXG,Financials,6770
+PAXGU,Financials,6770
+PAY,Industrials,7389
+PAYC,Information Technology,7372
+PAYM,Consumer Discretionary,3990
+PAYO,Industrials,7389
+PAYP,Industrials,7389
+PAYS,Industrials,7389
+PAYX,Industrials,8700
+PB,Financials,6022
+PBA,Energy,1382
+PBAM,Financials,6021
+PBB,Financials,6036
+PBBI,Financials,6035
+PBCT,Financials,6035
+PBF,Energy,2911
+PBFS,Financials,6036
+PBH,Health Care,2834
+PBHC,Financials,6022
+PBI,Information Technology,3579
+PBIP,Financials,6036
+PBK,Industrials,1700
+PBLS,Health Care,2834
+PBM,Health Care,2834
+PBMWW,Health Care,2834
+PBR,Energy,1311
+PBR.A,Energy,1311
+PBT,Financials,6792
+PBYI,Health Care,2834
+PC,Consumer Discretionary,5812
+PCAP,Financials,6770
+PCAPU,Financials,6770
+PCAPW,Financials,6770
+PCAR,Consumer Discretionary,3711
+PCB,Financials,6022
+PCG,Utilities,4931
+PCLA,Industrials,3640
+PCMI,Consumer Discretionary,5961
+PCOR,Information Technology,7372
+PCPC,Financials,6770
+PCRX,Health Care,2834
+PCSA,Health Care,2834
+PCT,Materials,2821
+PCTTU,Materials,2821
+PCTTW,Materials,2821
+PCTY,Information Technology,7372
+PCVX,Health Care,2836
+PCYO,Utilities,4941
+PD,Information Technology,7372
+PDC,Information Technology,7371
+PDD,Industrials,7389
+PDEX,Health Care,3841
+PDFS,Information Technology,7372
+PDLB,Financials,6035
+PDLI,Health Care,2836
+PDM,Real Estate,6512
+PDS,Energy,1381
+PDSB,Health Care,2834
+PDYN,Information Technology,7372
+PE,Energy,1311
+PEB,Real Estate,6798
+PEBK,Financials,6022
+PEBO,Financials,6022
+PECE,Financials,6770
+PECER,Financials,6770
+PECEU,Financials,6770
+PECEW,Financials,6770
+PECO,Real Estate,6798
+PED,Energy,1311
+PEG,Utilities,4931
+PEGA,Information Technology,7374
+PEGI,Utilities,4911
+PEN,Health Care,3841
+PENG,Information Technology,3674
+PENN,Consumer Discretionary,7011
+PEP,Consumer Staples,2080
+PEPG,Health Care,2834
+PERI,Information Technology,7371
+PESI,Industrials,4955
+PETS,Consumer Staples,5912
+PETZ,Real Estate,6531
+PEW,Consumer Discretionary,5940
+PF,Consumer Staples,2000
+PFAI,Consumer Staples,0700
+PFBI,Financials,6022
+PFE,Health Care,2834
+PFFL,Financials,6021
+PFG,Financials,6321
+PFGC,Consumer Staples,5141
+PFH,Financials,6311
+PFIS,Financials,6021
+PFNX,Health Care,2834
+PFS,Financials,6035
+PFSA,Health Care,3841
+PFSI,Financials,6162
+PG,Consumer Staples,2840
+PGAC,Financials,6770
+PGACR,Financials,6770
+PGACU,Financials,6770
+PGC,Financials,6029
+PGEN,Health Care,2834
+PGLC,Materials,1040
+PGNX,Health Care,2834
+PGNY,Health Care,8090
+PGR,Financials,6331
+PGY,Financials,6199
+PGYWW,Financials,6199
+PH,Industrials,3490
+PHAR,Health Care,2834
+PHAT,Health Care,2834
+PHG,Health Care,3844
+PHI,Communication Services,4813
+PHIN,Consumer Discretionary,3714
+PHIO,Health Care,2834
+PHM,Consumer Discretionary,1531
+PHOE,Industrials,1700
+PHOS,Materials,1400
+PHR,Industrials,7389
+PHUN,Information Technology,7374
+PHVS,Health Care,2834
+PHYS,Financials,6221
+PI,Information Technology,3679
+PICS,Financials,6141
+PII,Industrials,3790
+PIII,Health Care,8000
+PIIIW,Health Care,8000
+PINC,Industrials,8741
+PINE,Real Estate,6798
+PINS,Information Technology,7370
+PIPR,Financials,6211
+PJT,Financials,6282
+PK,Consumer Discretionary,7011
+PKBK,Financials,6022
+PKE,Industrials,3728
+PKG,Materials,2650
+PKOH,Industrials,3460
+PKX,Materials,3312
+PL,Information Technology,3663
+PLAB,Information Technology,3674
+PLAG,Consumer Staples,2030
+PLAN,Information Technology,7372
+PLAY,Consumer Discretionary,5812
+PLBC,Financials,6153
+PLBL,Industrials,5064
+PLBY,Consumer Discretionary,5900
+PLCE,Consumer Discretionary,5651
+PLCI,Financials,6770
+PLCIR,Financials,6770
+PLCIU,Financials,6770
+PLD,Real Estate,6798
+PLG,Materials,1040
+PLGO,Financials,6331
+PLMK,Utilities,4911
+PLMKU,Utilities,4911
+PLMKW,Utilities,4911
+PLMR,Financials,6331
+PLNT,Consumer Discretionary,7997
+PLOW,Industrials,3531
+PLPC,Industrials,1623
+PLRX,Health Care,2834
+PLRZ,Health Care,3841
+PLSE,Health Care,3841
+PLSM,Health Care,3841
+PLTK,Information Technology,7374
+PLTM,Financials,6221
+PLTR,Information Technology,7372
+PLUG,Industrials,3620
+PLUN,Financials,6770
+PLUR,Health Care,2836
+PLUS,Industrials,5045
+PLUT,Financials,6200
+PLX,Health Care,2836
+PLXS,Information Technology,3672
+PLYX,Health Care,2834
+PM,Consumer Staples,2111
+PMA,Industrials,1700
+PMAX,Industrials,7380
+PMBC,Financials,6021
+PMCB,Health Care,2836
+PMEC,Industrials,7340
+PMI,Health Care,3841
+PMN,Health Care,2834
+PMT,Real Estate,6798
+PMTR,Financials,6770
+PMTRU,Financials,6770
+PMTRW,Financials,6770
+PMTS,Communication Services,2750
+PMTU,Real Estate,6798
+PMTV,Real Estate,6798
+PMTW,Real Estate,6798
+PMVP,Health Care,2834
+PN,Industrials,5045
+PNAQ,Financials,6770
+PNBK,Financials,6021
+PNC,Financials,6021
+PNFP,Financials,6021
+PNK,Consumer Discretionary,7011
+PNR,Industrials,3550
+PNRG,Energy,1311
+PNTG,Health Care,8000
+PNW,Utilities,4911
+POAS,Information Technology,3823
+POCI,Health Care,3845
+PODC,Information Technology,7370
+PODD,Health Care,3841
+POET,Information Technology,3674
+POLA,Industrials,3690
+POLE,Financials,6770
+POLEU,Financials,6770
+POLEW,Financials,6770
+POLY,Information Technology,3661
+POM,Consumer Discretionary,5900
+PONO,Financials,6770
+PONOR,Financials,6770
+PONOU,Financials,6770
+PONY,Information Technology,7373
+POOL,Industrials,5090
+POPE,Consumer Staples,0800
+POR,Utilities,4911
+POST,Consumer Staples,2040
+POWI,Information Technology,3674
+POWL,Industrials,3613
+POWW,Industrials,7389
+POWWP,Industrials,7389
+PPBT,Health Care,2834
+PPC,Consumer Staples,2015
+PPD,Health Care,8731
+PPG,Materials,2851
+PPHC,Industrials,8742
+PPIH,Industrials,3564
+PPL,Utilities,4911
+PPLC,Utilities,4911
+PPLI,Information Technology,7370
+PPLT,Financials,6221
+PPSI,Industrials,3690
+PPTA,Materials,1040
+PR,Energy,1311
+PRAA,Financials,6153
+PRAX,Health Care,2834
+PRCH,Financials,6321
+PRCP,Information Technology,3827
+PRCT,Health Care,3841
+PRDO,Consumer Discretionary,8200
+PRE,Health Care,2834
+PRENW,Health Care,2834
+PRFX,Health Care,2834
+PRG,Industrials,7359
+PRGO,Health Care,2834
+PRGS,Information Technology,7372
+PRGX,Industrials,8700
+PRH,Financials,6311
+PRHI,Financials,6331
+PRHIZ,Financials,6331
+PRI,Financials,6311
+PRIM,Industrials,1623
+PRK,Financials,6021
+PRKS,Consumer Discretionary,7990
+PRLB,Industrials,3440
+PRLD,Health Care,2834
+PRM,Materials,2800
+PRMB,Consumer Staples,2080
+PRME,Health Care,2836
+PRNB,Health Care,2834
+PROF,Health Care,3841
+PROK,Health Care,2836
+PROP,Energy,1311
+PROS,Financials,6331
+PROV,Financials,6035
+PRPL,Consumer Discretionary,2510
+PRPO,Information Technology,3826
+PRQR,Health Care,2834
+PRS,Financials,6311
+PRSO,Information Technology,3674
+PRSP,Information Technology,7374
+PRSS,Consumer Discretionary,5900
+PRSU,Consumer Discretionary,7990
+PRT,Energy,1311
+PRTA,Health Care,2834
+PRTH,Industrials,7389
+PRTO,Health Care,2836
+PRTS,Consumer Discretionary,5531
+PRU,Financials,6311
+PRVA,Health Care,8000
+PRVL,Health Care,2836
+PRZO,Industrials,3728
+PS,Financials,6282
+PSA,Real Estate,6798
+PSB,Real Estate,6798
+PSDO,Industrials,5045
+PSFE,Industrials,7389
+PSHG,Industrials,4412
+PSIG,Industrials,4731
+PSIX,Industrials,3510
+PSLV,Financials,6221
+PSMT,Consumer Discretionary,5331
+PSN,Information Technology,7373
+PSNL,Health Care,8071
+PSNY,Consumer Discretionary,3711
+PSNYW,Consumer Discretionary,3711
+PSO,Communication Services,2731
+PSQH,Industrials,7310
+PSQL,Information Technology,7374
+PSQLW,Information Technology,7374
+PSTL,Real Estate,6798
+PSX,Energy,2911
+PSXP,Industrials,4610
+PTAC,Financials,6770
+PTACU,Financials,6770
+PTACW,Financials,6770
+PTC,Information Technology,7372
+PTCT,Health Care,2834
+PTEN,Energy,1381
+PTGX,Health Care,2834
+PTHS,Health Care,2836
+PTIE,Health Care,2834
+PTLA,Health Care,2834
+PTLE,Energy,5172
+PTLO,Consumer Discretionary,5812
+PTN,Health Care,2834
+PTON,Consumer Discretionary,3949
+PTOR,Financials,6770
+PTORU,Financials,6770
+PTORW,Financials,6770
+PTRN,Consumer Discretionary,5961
+PUBM,Information Technology,7370
+PUK,Financials,6311
+PULM,Health Care,2834
+PUMP,Energy,1389
+PURR,Financials,6199
+PUSA,Consumer Discretionary,7997
+PVH,Consumer Discretionary,2320
+PVL,Energy,1311
+PVLA,Health Care,2834
+PW,Real Estate,6798
+PWCM,Financials,6199
+PWP,Financials,6199
+PWR,Industrials,1731
+PXED,Consumer Discretionary,8200
+PXLW,Information Technology,7372
+PXS,Industrials,4412
+PYPD,Health Care,3841
+PYPL,Industrials,7389
+PYT,Financials,6189
+PYXS,Health Care,2834
+PZG,Materials,1000
+PZZA,Consumer Discretionary,5812
+Q,Information Technology,3674
+QADR,Financials,6770
+QADRU,Financials,6770
+QADRW,Financials,6770
+QBTS,Information Technology,7374
+QCLS,Health Care,2835
+QCOM,Information Technology,3663
+QCRH,Financials,6022
+QDEL,Health Care,2835
+QEP,Energy,1311
+QES,Energy,1389
+QETH,Financials,6221
+QFIN,Financials,6199
+QGEN,Health Care,2836
+QH,Industrials,7389
+QLEP,Financials,6770
+QLTI,Health Care,2834
+QLYS,Information Technology,7372
+QMCO,Information Technology,3572
+QMLS,Information Technology,7374
+QNBC,Financials,6022
+QNC,Information Technology,7372
+QNME,Industrials,4731
+QNRX,Health Care,2834
+QNST,Industrials,7389
+QNT,Information Technology,7373
+QNTM,Health Care,2834
+QRED,Financials,6770
+QRHC,Industrials,4953
+QS,Industrials,3690
+QSEA,Financials,6770
+QSEAR,Financials,6770
+QSEAU,Financials,6770
+QSI,Information Technology,3829
+QSOL,Financials,6221
+QSR,Consumer Discretionary,5812
+QTEX,Health Care,3841
+QTI,Health Care,3845
+QTNA,Information Technology,3674
+QTRX,Information Technology,3826
+QTS,Real Estate,6798
+QTTB,Health Care,2834
+QTWO,Information Technology,7372
+QUAD,Communication Services,2750
+QUBT,Information Technology,7372
+QUCY,Health Care,2834
+QUIK,Information Technology,3674
+QUMS,Financials,6770
+QUMSR,Financials,6770
+QUMSU,Financials,6770
+QURE,Health Care,2834
+QVCG,Consumer Discretionary,5961
+QXL,Information Technology,7372
+QXO,Industrials,5030
+R,Consumer Discretionary,7510
+RAC,Financials,6770
+RACC,Health Care,2834
+RACD,Financials,6770
+RACE,Consumer Discretionary,3711
+RADX,Health Care,2834
+RAIL,Industrials,3743
+RAIN,Industrials,3590
+RAINW,Industrials,3590
+RAL,Information Technology,3823
+RAMP,Information Technology,7374
+RANG,Financials,6770
+RANGR,Financials,6770
+RANGU,Financials,6770
+RANI,Health Care,2834
+RAPP,Health Care,2834
+RARE,Health Care,2834
+RARX,Health Care,2834
+RAVE,Consumer Staples,5140
+RAVN,Materials,3081
+RAYA,Industrials,3621
+RBA,Industrials,7389
+RBB,Financials,6022
+RBBN,Information Technology,7373
+RBC,Industrials,3562
+RBCAA,Financials,6022
+RBKB,Financials,6036
+RBLX,Information Technology,7372
+RBNC,Financials,6022
+RBNE,Industrials,4412
+RBRK,Information Technology,7372
+RC,Real Estate,6798
+RCAT,Information Technology,7372
+RCD,Real Estate,6798
+RCEL,Health Care,3841
+RCI,Communication Services,4841
+RCKT,Health Care,2834
+RCKY,Consumer Discretionary,3140
+RCL,Industrials,4400
+RCMT,Industrials,7363
+RCON,Energy,1389
+RCT,Consumer Discretionary,5990
+RCUS,Health Care,2834
+RDAC,Financials,6770
+RDACR,Financials,6770
+RDACU,Financials,6770
+RDAG,Financials,6770
+RDAGU,Financials,6770
+RDAGW,Financials,6770
+RDCM,Information Technology,3577
+RDDT,Information Technology,7374
+RDGT,Consumer Staples,5912
+RDHL,Health Care,2834
+RDI,Communication Services,7830
+RDIB,Communication Services,7830
+RDN,Financials,6351
+RDNT,Health Care,8071
+RDNW,Information Technology,7371
+RDUS,Health Care,2834
+RDVT,Information Technology,7372
+RDW,Industrials,3760
+RDWR,Industrials,7389
+RDY,Health Care,2834
+RDZN,Financials,6411
+RDZNW,Financials,6411
+REA,Materials,1000
+REAL,Consumer Discretionary,5900
+REAX,Real Estate,6531
+REBN,Consumer Discretionary,5812
+RECT,Industrials,3420
+REED,Consumer Staples,2086
+REF,Consumer Discretionary,2330
+REFI,Real Estate,6798
+REFR,Financials,6794
+REG,Real Estate,6798
+REGCO,Real Estate,6798
+REGCP,Real Estate,6798
+REGI,Materials,2860
+REGN,Health Care,2834
+REI,Energy,1311
+REKR,Information Technology,3669
+RELL,Industrials,5065
+RELX,Industrials,7389
+RELY,Industrials,7389
+REN,Energy,1311
+RENT,Consumer Discretionary,5990
+RENX,Industrials,4953
+REPL,Health Care,2836
+REPX,Energy,1311
+RERE,Consumer Discretionary,5990
+RES,Energy,1389
+RESI,Real Estate,6500
+RESN,Information Technology,3674
+RETO,Materials,3290
+REVB,Health Care,2834
+REX,Materials,2860
+REXR,Real Estate,6798
+REYN,Materials,2673
+REZI,Industrials,5072
+RF,Financials,6021
+RFAI,Financials,6770
+RFAIR,Financials,6770
+RFAIU,Financials,6770
+RFAM,Financials,6770
+RFAMR,Financials,6770
+RFAMU,Financials,6770
+RFIL,Information Technology,3678
+RFL,Health Care,2834
+RGA,Financials,6311
+RGC,Health Care,2833
+RGCO,Utilities,4923
+RGEN,Health Care,2836
+RGLD,Financials,6795
+RGNT,Health Care,3842
+RGNX,Health Care,2836
+RGP,Industrials,7389
+RGR,Industrials,3480
+RGS,Consumer Discretionary,7200
+RGTI,Information Technology,7371
+RGTIW,Information Technology,7371
+RH,Consumer Discretionary,5712
+RHI,Industrials,7363
+RHLD,Financials,6199
+RHP,Real Estate,6798
+RIBB,Financials,6770
+RIBBR,Financials,6770
+RIBBU,Financials,6770
+RICK,Consumer Discretionary,5812
+RIG,Energy,1381
+RIGL,Health Care,2834
+RILY,Financials,6282
+RILYG,Financials,6282
+RILYL,Financials,6282
+RILYP,Financials,6282
+RILYT,Financials,6282
+RILYZ,Financials,6282
+RIME,Information Technology,7373
+RIO,Materials,1000
+RIOT,Financials,6199
+RITM,Real Estate,6798
+RIVE,Financials,6021
+RIVN,Consumer Discretionary,3711
+RJET,Industrials,4512
+RJF,Financials,6211
+RKDA,Energy,1311
+RKLB,Industrials,3760
+RKT,Financials,6162
+RKTO,Health Care,2834
+RL,Consumer Discretionary,2320
+RLAY,Health Care,2836
+RLGT,Industrials,4731
+RLH,Consumer Discretionary,7011
+RLI,Financials,6331
+RLJ,Real Estate,6798
+RLJE,Communication Services,7822
+RLMD,Health Care,2834
+RLX,Consumer Staples,2111
+RLYB,Health Care,2834
+RM,Financials,6141
+RMBI,Financials,6022
+RMBS,Information Technology,3674
+RMCF,Consumer Staples,2060
+RMCO,Financials,6794
+RMCOW,Financials,6794
+RMD,Health Care,3841
+RMGN,Industrials,7389
+RMIX,Materials,3272
+RML,Materials,1040
+RMNI,Industrials,7389
+RMR,Industrials,8742
+RMSG,Information Technology,7370
+RMSGW,Information Technology,7370
+RMTI,Health Care,2834
+RNA,Health Care,2834
+RNAC,Health Care,2834
+RNAQ,Financials,6770
+RNAQU,Financials,6770
+RNAQW,Financials,6770
+RNAZ,Health Care,2834
+RNET,Communication Services,4899
+RNG,Information Technology,7374
+RNGR,Energy,1389
+RNGT,Financials,6770
+RNGTU,Financials,6770
+RNGTW,Financials,6770
+RNR,Financials,6331
+RNST,Financials,6022
+RNTX,Health Care,2834
+RNTZ,Industrials,1623
+RNW,Utilities,4911
+RNXT,Health Care,3841
+ROAD,Industrials,1600
+ROAN,Energy,1311
+ROC,Information Technology,7372
+ROCCU,Consumer Discretionary,7900
+ROCK,Materials,3310
+ROCRU,Industrials,1623
+ROG,Materials,2821
+ROIV,Health Care,2834
+ROK,Information Technology,3829
+ROKU,Communication Services,4841
+ROL,Industrials,7340
+ROLR,Consumer Discretionary,7900
+ROMA,Industrials,8742
+ROOT,Financials,6331
+ROP,Information Technology,3823
+ROST,Consumer Discretionary,5651
+ROX,Consumer Staples,2080
+RP,Health Care,3841
+RPAI,Real Estate,6798
+RPAY,Industrials,7389
+RPC,Financials,6282
+RPD,Information Technology,7372
+RPGL,Information Technology,7372
+RPID,Information Technology,3826
+RPM,Materials,2851
+RPRX,Health Care,2834
+RPT,Real Estate,6798
+RR,Industrials,3569
+RRBI,Financials,6022
+RRC,Energy,1311
+RRD,Communication Services,2750
+RREV,Financials,6770
+RREVU,Financials,6770
+RREVW,Financials,6770
+RRGB,Consumer Discretionary,5812
+RRR,Consumer Discretionary,7011
+RRX,Industrials,3569
+RS,Industrials,5051
+RSG,Industrials,4953
+RSI,Consumer Discretionary,7990
+RSKD,Industrials,7389
+RSLS,Health Care,2834
+RSSS,Industrials,7389
+RST,Information Technology,7372
+RSVR,Consumer Discretionary,7900
+RSYS,Information Technology,3577
+RTAC,Financials,6770
+RTACU,Financials,6770
+RTACW,Financials,6770
+RTB,Industrials,8742
+RTL,Real Estate,6798
+RTLR,Utilities,4922
+RTN,Industrials,3812
+RTO,Industrials,8741
+RTSN,Health Care,2834
+RTX,Industrials,3724
+RUBI,Industrials,4400
+RUM,Information Technology,7370
+RUMBW,Information Technology,7370
+RUN,Industrials,1700
+RUSHA,Consumer Discretionary,5500
+RUSHB,Consumer Discretionary,5500
+RVEN,Real Estate,6798
+RVLV,Consumer Discretionary,5961
+RVMD,Health Care,2836
+RVMDW,Health Care,2836
+RVP,Health Care,3841
+RVSB,Financials,6035
+RVSN,Industrials,3743
+RVSNW,Industrials,3743
+RVTY,Information Technology,3826
+RWT,Real Estate,6798
+RWTN,Real Estate,6798
+RWTO,Real Estate,6798
+RWTP,Real Estate,6798
+RWTQ,Real Estate,6798
+RWTS,Real Estate,6798
+RXII,Health Care,2834
+RXO,Industrials,4700
+RXRX,Health Care,2836
+RXST,Health Care,3851
+RXT,Information Technology,7370
+RY,Financials,6029
+RYAAY,Industrials,4512
+RYAM,Materials,2611
+RYAN,Financials,6411
+RYDE,Industrials,7389
+RYET,Information Technology,7372
+RYM,Consumer Staples,0700
+RYN,Real Estate,6798
+RYOJ,Industrials,8742
+RYTM,Health Care,2834
+RYZ,Industrials,5051
+RZAI,Information Technology,7373
+RZC,Financials,6311
+RZLT,Health Care,2834
+RZLV,Information Technology,7370
+RZLVW,Information Technology,7370
+S,Information Technology,7372
+SA,Materials,1040
+SAAQ,Financials,6770
+SAAQU,Financials,6770
+SAAQW,Financials,6770
+SABR,Information Technology,7370
+SABS,Health Care,2836
+SABSW,Health Care,2836
+SAC,Financials,6770
+SACH,Real Estate,6798
+SAFE,Real Estate,6798
+SAFT,Financials,6331
+SAFX,Materials,2860
+SAGT,Information Technology,7372
+SAGU,Financials,6770
+SAH,Consumer Discretionary,5500
+SAIA,Industrials,4213
+SAIC,Information Technology,7373
+SAIH,Financials,6199
+SAIHW,Financials,6199
+SAIL,Information Technology,7372
+SAIQ,Communication Services,4899
+SAM,Consumer Staples,2082
+SAMG,Financials,6282
+SAMO,Financials,6770
+SAN,Financials,6029
+SANA,Health Care,2836
+SANG,Information Technology,7370
+SANM,Information Technology,3672
+SAP,Information Technology,7372
+SARO,Industrials,3724
+SATA,Financials,6199
+SATL,Information Technology,3663
+SATLW,Information Technology,3663
+SATS,Communication Services,4899
+SAUC,Consumer Discretionary,5812
+SB,Industrials,4412
+SBAC,Real Estate,6798
+SBBP,Health Care,2834
+SBBX,Financials,6022
+SBC,Health Care,8011
+SBCF,Financials,6022
+SBCWW,Health Care,8011
+SBE.U,Industrials,3690
+SBET,Financials,6199
+SBFG,Financials,6022
+SBFMW,Health Care,2834
+SBGI,Communication Services,4833
+SBH,Consumer Discretionary,5990
+SBLK,Industrials,4412
+SBMT,Materials,1040
+SBR,Financials,6792
+SBRA,Real Estate,6798
+SBS,Utilities,4941
+SBSI,Financials,6022
+SBSW,Materials,1040
+SBUX,Consumer Discretionary,5810
+SBXE,Financials,6770
+SC,Financials,6141
+SCAG,Consumer Discretionary,3713
+SCAGW,Consumer Discretionary,3713
+SCAT,Financials,6770
+SCATR,Financials,6770
+SCATU,Financials,6770
+SCATW,Financials,6770
+SCCD,Real Estate,6798
+SCCE,Real Estate,6798
+SCCF,Real Estate,6798
+SCCG,Real Estate,6798
+SCCO,Materials,1000
+SCHL,Communication Services,2731
+SCHW,Financials,6211
+SCI,Consumer Discretionary,7200
+SCII,Financials,6770
+SCIIR,Financials,6770
+SCIIU,Financials,6770
+SCIO,Materials,3290
+SCKT,Information Technology,3571
+SCL,Consumer Staples,2840
+SCLX,Health Care,2836
+SCLXW,Health Care,2836
+SCNI,Health Care,2836
+SCNX,Health Care,2834
+SCO,Financials,6221
+SCOP,Financials,6221
+SCOR,Industrials,7389
+SCPQ,Financials,6770
+SCPQU,Financials,6770
+SCPQW,Financials,6770
+SCSC,Industrials,5045
+SCTX,Health Care,2836
+SCWO,Industrials,3621
+SCYX,Health Care,2834
+SCZM,Materials,1040
+SD,Energy,1311
+SDA,Consumer Discretionary,7500
+SDAWW,Consumer Discretionary,7500
+SDEV,Financials,6199
+SDGR,Health Care,2834
+SDHC,Consumer Discretionary,1531
+SDHI,Financials,6770
+SDHIR,Financials,6770
+SDHIU,Financials,6770
+SDI,Consumer Staples,2100
+SDOT,Consumer Discretionary,5810
+SDRL,Energy,1381
+SE,Industrials,7380
+SEAT,Consumer Discretionary,7990
+SEB,Industrials,5150
+SECZ,Financials,6199
+SEDG,Information Technology,3674
+SEED,Consumer Staples,0100
+SEER,Information Technology,3826
+SEG,Consumer Discretionary,7990
+SEGG,Information Technology,7372
+SEI,Industrials,3533
+SEIC,Financials,6211
+SELF,Real Estate,6798
+SEMG,Energy,1389
+SEMI,Information Technology,3674
+SENEA,Consumer Staples,2033
+SENEB,Consumer Staples,2033
+SENS,Information Technology,3823
+SEPN,Health Care,2834
+SER,Health Care,2834
+SERA,Health Care,8071
+SERV,Industrials,3569
+SES,Industrials,3690
+SEV,Consumer Discretionary,3711
+SEVN,Real Estate,6798
+SEZL,Industrials,7389
+SF,Financials,6211
+SFB,Financials,6211
+SFBC,Financials,6035
+SFBS,Financials,6022
+SFD,Consumer Staples,2011
+SFHG,Communication Services,2750
+SFIX,Consumer Discretionary,5961
+SFL,Industrials,4412
+SFLY,Industrials,7384
+SFM,Consumer Staples,5411
+SFNC,Financials,6021
+SFS,Consumer Staples,5411
+SFST,Financials,6021
+SFWL,Industrials,4210
+SG,Consumer Discretionary,5812
+SGA,Communication Services,4832
+SGAMU,Communication Services,7841
+SGB,Financials,6022
+SGC,Consumer Discretionary,2300
+SGHC,Consumer Discretionary,7990
+SGHT,Health Care,3841
+SGI,Consumer Discretionary,2510
+SGLD,Materials,1040
+SGLY,Industrials,4731
+SGML,Materials,1000
+SGMT,Health Care,2834
+SGOL,Financials,6221
+SGP,Health Care,3841
+SGRX,Financials,6199
+SGRY,Health Care,8062
+SGU,Consumer Discretionary,5990
+SHAK,Consumer Discretionary,5810
+SHAZ,Information Technology,7374
+SHBI,Financials,6021
+SHC,Health Care,8090
+SHEL,Energy,1311
+SHEN,Communication Services,4813
+SHFS,Financials,6199
+SHFSW,Financials,6199
+SHG,Financials,6021
+SHIM,Industrials,1600
+SHIP,Industrials,4412
+SHLD,Consumer Discretionary,5311
+SHLM,Materials,2821
+SHLS,Information Technology,3674
+SHMD,Industrials,3590
+SHMDW,Industrials,3590
+SHNY,Financials,6029
+SHO,Consumer Discretionary,7011
+SHOE,Consumer Discretionary,5661
+SHOO,Consumer Discretionary,3140
+SHOP,Information Technology,7372
+SHOS,Consumer Discretionary,5311
+SHOT,Financials,6770
+SHOTR,Financials,6770
+SHOTU,Financials,6770
+SHPH,Health Care,2834
+SHSP,Information Technology,7372
+SHW,Consumer Discretionary,5200
+SI,Health Care,3841
+SIBN,Health Care,3841
+SIC,Consumer Discretionary,1520
+SID,Materials,3310
+SIDU,Communication Services,4812
+SIEB,Financials,6211
+SIF,Industrials,3724
+SIFY,Information Technology,7370
+SIG,Consumer Discretionary,5944
+SIGA,Health Care,2834
+SIGI,Financials,6331
+SIGIP,Financials,6331
+SII,Financials,6199
+SILC,Information Technology,3576
+SILO,Health Care,2834
+SIM,Materials,3312
+SIMA,Financials,6770
+SIMAU,Financials,6770
+SIMAW,Financials,6770
+SIMO,Information Technology,3674
+SIND,Materials,1040
+SINT,Health Care,3841
+SION,Health Care,2834
+SIRI,Communication Services,4832
+SITC,Real Estate,6798
+SITE,Industrials,5040
+SITM,Information Technology,3674
+SIVR,Financials,6221
+SIXD,Industrials,8742
+SJ,Information Technology,7374
+SJM,Consumer Staples,2033
+SJT,Financials,6792
+SKE,Materials,1040
+SKHY,Information Technology,3674
+SKIL,Information Technology,7372
+SKIN,Health Care,3841
+SKIS,Consumer Discretionary,7011
+SKM,Communication Services,4812
+SKT,Real Estate,6798
+SKWD,Financials,6331
+SKY,Materials,2451
+SKYA,Financials,6199
+SKYAW,Financials,6199
+SKYD,Communication Services,4833
+SKYE,Health Care,2834
+SKYH,Real Estate,6500
+SKYQ,Industrials,4955
+SKYW,Industrials,4512
+SKYX,Industrials,3640
+SLAB,Information Technology,3674
+SLB,Energy,1389
+SLBT,Health Care,2836
+SLCT,Financials,6022
+SLDB,Health Care,2836
+SLDE,Financials,6331
+SLDP,Industrials,3690
+SLDPW,Industrials,3690
+SLE,Information Technology,7373
+SLF,Financials,6311
+SLG,Real Estate,6798
+SLGB,Industrials,4731
+SLGL,Health Care,2834
+SLGN,Industrials,3411
+SLI,Materials,2800
+SLM,Financials,6141
+SLMBP,Financials,6141
+SLMT,Financials,6199
+SLN,Health Care,2834
+SLND,Industrials,1600
+SLNG,Utilities,4924
+SLNH,Financials,6199
+SLNHP,Financials,6199
+SLQT,Financials,6411
+SLS,Health Care,2834
+SLSN,Consumer Staples,2844
+SLSR,Materials,1040
+SLV,Financials,6221
+SLVM,Materials,2621
+SLVO,Financials,6211
+SLXN,Health Care,2836
+SLXNW,Health Care,2836
+SM,Energy,1311
+SMA,Real Estate,6798
+SMBC,Financials,6036
+SMBK,Financials,6021
+SMC,Utilities,4922
+SMCI,Information Technology,3571
+SMCIP,Information Technology,3571
+SMED,Industrials,4955
+SMFG,Financials,6029
+SMG,Materials,2870
+SMHB,Financials,6021
+SMHD,Financials,6029
+SMHI,Industrials,4412
+SMHU,Financials,6029
+SMID,Materials,3272
+SMJF,Industrials,5030
+SMMT,Health Care,2834
+SMP,Consumer Discretionary,3714
+SMPL,Consumer Staples,2000
+SMR,Industrials,3443
+SMRT,Information Technology,7373
+SMSI,Information Technology,7372
+SMTA,Real Estate,6798
+SMTC,Information Technology,3674
+SMTI,Health Care,3842
+SMTK,Information Technology,3674
+SMTX,Information Technology,3672
+SMWB,Information Technology,7370
+SMX,Industrials,3590
+SMXT,Industrials,1700
+SMXWW,Industrials,3590
+SN,Consumer Discretionary,3630
+SNA,Industrials,3420
+SNAL,Information Technology,7372
+SNAP,Information Technology,7370
+SND,Materials,1400
+SNDA,Health Care,8050
+SNDK,Information Technology,3572
+SNDL,Health Care,2833
+SNDR,Industrials,4213
+SNDX,Health Care,2834
+SNES,Materials,2870
+SNEX,Financials,6200
+SNFCA,Financials,6199
+SNGX,Health Care,2834
+SNMX,Health Care,8731
+SNN,Health Care,3842
+SNOA,Health Care,3841
+SNOW,Information Technology,7372
+SNPS,Information Technology,7372
+SNR,Real Estate,6798
+SNSC,Information Technology,3674
+SNT,Information Technology,3669
+SNTG,Financials,6199
+SNTI,Health Care,2836
+SNWV,Health Care,3841
+SNX,Industrials,5045
+SNY,Health Care,2834
+SO,Utilities,4911
+SOAR,Industrials,4522
+SOBO,Industrials,4610
+SOC,Energy,1311
+SOCA,Financials,6770
+SOCAU,Financials,6770
+SOCAW,Financials,6770
+SOEZ,Financials,6221
+SOFI,Financials,6199
+SOGP,Information Technology,7370
+SOHU,Information Technology,7374
+SOJC,Utilities,4911
+SOJD,Utilities,4911
+SOJE,Utilities,4911
+SOJF,Utilities,4911
+SOLC,Financials,6221
+SOLS,Materials,2800
+SOLV,Health Care,3841
+SOMN,Utilities,4911
+SON,Materials,2650
+SONM,Information Technology,3661
+SONO,Consumer Discretionary,3651
+SONY,Consumer Discretionary,3651
+SOPH,Information Technology,7374
+SORA,Industrials,5094
+SORN,Financials,6770
+SORNU,Financials,6770
+SORNW,Financials,6770
+SOS,Financials,6200
+SOTK,Industrials,3559
+SOUL,Financials,6770
+SOUN,Information Technology,7372
+SOUNW,Information Technology,7372
+SOWG,Consumer Staples,2000
+SOYB,Financials,6221
+SPA,Information Technology,3672
+SPAI,Information Technology,7372
+SPB,Industrials,3690
+SPCB,Information Technology,3674
+SPCE,Industrials,4700
+SPCX,Information Technology,7370
+SPEG,Financials,6770
+SPEGR,Financials,6770
+SPEGU,Financials,6770
+SPFI,Financials,6022
+SPG,Real Estate,6798
+SPGI,Industrials,7320
+SPH,Consumer Discretionary,5900
+SPHL,Consumer Discretionary,1520
+SPHR,Consumer Discretionary,7900
+SPIN,Utilities,4911
+SPIR,Communication Services,4899
+SPLS,Consumer Discretionary,5940
+SPNT,Financials,6331
+SPOK,Communication Services,4812
+SPOT,Communication Services,4832
+SPPL,Industrials,8744
+SPPP,Financials,6221
+SPRB,Health Care,2834
+SPRC,Health Care,2834
+SPRO,Health Care,2834
+SPRT,Information Technology,7374
+SPRU,Utilities,4911
+SPRY,Health Care,2834
+SPSC,Information Technology,7372
+SPT,Information Technology,7372
+SPTX,Health Care,2834
+SPWH,Consumer Discretionary,5940
+SPWR,Industrials,1700
+SPWRW,Industrials,1700
+SPXC,Industrials,3540
+SPYU,Financials,6029
+SQFT,Real Estate,6798
+SQFTP,Real Estate,6798
+SQFTW,Real Estate,6798
+SQM,Materials,1400
+SQNS,Information Technology,3674
+SR,Utilities,4924
+SRACU,Industrials,3760
+SRAD,Information Technology,7370
+SRBK,Financials,6036
+SRCE,Financials,6022
+SRCI,Energy,1311
+SRE,Utilities,4932
+SREA,Utilities,4932
+SREV,Industrials,7389
+SRFM,Industrials,4522
+SRG,Real Estate,6500
+SRI,Consumer Discretionary,3714
+SRJN,Utilities,4924
+SRL,Financials,6795
+SRPT,Health Care,2834
+SRRA,Health Care,2834
+SRRK,Health Care,2836
+SRTA,Health Care,8000
+SRTM,Real Estate,6531
+SRTS,Health Care,3841
+SRXH,Consumer Staples,2080
+SRZN,Health Care,2836
+SSAC,Information Technology,7372
+SSACR,Information Technology,7372
+SSACU,Information Technology,7372
+SSACW,Information Technology,7372
+SSB,Financials,6022
+SSD,Industrials,3420
+SSEA,Financials,6770
+SSEAR,Financials,6770
+SSEAU,Financials,6770
+SSFN,Financials,6022
+SSII,Health Care,3841
+SSL,Energy,1311
+SSM,Financials,6199
+SSMR,Materials,1040
+SSNC,Information Technology,7372
+SSP,Communication Services,4833
+SSPC,Consumer Discretionary,5990
+SSRM,Financials,6795
+SSS,Real Estate,6798
+SST,Information Technology,7370
+SSTI,Information Technology,7372
+SSTK,Information Technology,7374
+SSYS,Information Technology,3577
+ST,Information Technology,3823
+STAA,Health Care,3851
+STAG,Real Estate,6798
+STAK,Industrials,3533
+STAY,Consumer Discretionary,7011
+STBA,Financials,6022
+STBZ,Financials,6022
+STC,Financials,6361
+STDN,Materials,2810
+STDY,Health Care,2834
+STE,Health Care,3842
+STEM,Information Technology,7373
+STEP,Financials,6282
+STEX,Financials,6200
+STFC,Financials,6331
+STFS,Industrials,7310
+STG,Consumer Discretionary,8200
+STGW,Industrials,7311
+STHO,Real Estate,6519
+STI,Industrials,3690
+STIM,Health Care,3841
+STKE,Financials,6199
+STKH,Consumer Staples,2000
+STKS,Consumer Discretionary,5812
+STL,Financials,6021
+STLA,Consumer Discretionary,3711
+STLD,Materials,3312
+STLN,Health Care,8011
+STLNW,Health Care,8011
+STM,Information Technology,3674
+STML,Health Care,2834
+STMP,Industrials,7389
+STN,Industrials,8711
+STND,Financials,6022
+STNE,Information Technology,7374
+STNG,Industrials,4412
+STNL,Financials,6770
+STOK,Health Care,2834
+STRA,Consumer Discretionary,8200
+STRC,Financials,6199
+STRD,Financials,6199
+STRF,Financials,6199
+STRK,Financials,6199
+STRL,Industrials,1600
+STRN,Industrials,7311
+STRO,Health Care,2836
+STRR,Industrials,7363
+STRRP,Industrials,7363
+STRT,Consumer Discretionary,3714
+STRW,Real Estate,6798
+STRZ,Communication Services,7812
+STT,Financials,6022
+STTK,Health Care,2834
+STUB,Consumer Discretionary,7990
+STVN,Health Care,3841
+STWD,Real Estate,6798
+STX,Information Technology,3572
+STXB,Financials,6022
+STXS,Health Care,3845
+STZ,Consumer Staples,2080
+SU,Energy,2911
+SUGP,Industrials,7381
+SUI,Real Estate,6798
+SUIG,Financials,6199
+SUIS,Financials,6221
+SUJA,Consumer Staples,2080
+SUMA,Financials,6770
+SUMAR,Financials,6770
+SUMAU,Financials,6770
+SUMR,Consumer Discretionary,3990
+SUN,Energy,2911
+SUNB,Industrials,7359
+SUNC,Energy,2911
+SUNE,Information Technology,3674
+SUNS,Real Estate,6798
+SUPN,Health Care,2834
+SUPV,Financials,6029
+SUPX,Industrials,8742
+SURG,Communication Services,4813
+SUZ,Materials,2621
+SVA,Health Care,2834
+SVAQ,Information Technology,7372
+SVAQU,Information Technology,7372
+SVAQW,Information Technology,7372
+SVBI,Financials,6021
+SVC,Real Estate,6798
+SVCC,Financials,6770
+SVCCU,Financials,6770
+SVCCW,Financials,6770
+SVCO,Information Technology,7372
+SVIA,Financials,6199
+SVIAW,Financials,6199
+SVIV,Financials,6770
+SVIVU,Financials,6770
+SVIVW,Financials,6770
+SVIX,Financials,6221
+SVM,Materials,1040
+SVRA,Health Care,2834
+SVRE,Information Technology,7371
+SVREW,Information Technology,7371
+SVRN,Industrials,4412
+SVU,Consumer Staples,5141
+SVV,Consumer Discretionary,5900
+SVXY,Financials,6221
+SW,Materials,2650
+SWAG,Industrials,7311
+SWAGW,Industrials,7311
+SWBI,Industrials,3480
+SWBK.U,Financials,6770
+SWIM,Materials,3089
+SWK,Industrials,3420
+SWKHL,Financials,6159
+SWKS,Information Technology,3674
+SWMR,Information Technology,7372
+SWRD,Financials,6153
+SWVL,Industrials,7389
+SWVLW,Industrials,7389
+SWX,Utilities,4923
+SXC,Materials,3312
+SXCP,Materials,3312
+SXI,Industrials,3580
+SXT,Materials,2860
+SXTP,Health Care,2834
+SXTPW,Health Care,2834
+SY,Information Technology,7374
+SYBT,Financials,6022
+SYF,Financials,6199
+SYK,Health Care,3841
+SYM,Industrials,3569
+SYNA,Information Technology,3674
+SYNC,Information Technology,7370
+SYNT,Information Technology,7371
+SYNX,Consumer Discretionary,3651
+SYPR,Information Technology,3823
+SYRE,Health Care,2834
+SYY,Consumer Staples,5140
+SZZL,Financials,6770
+SZZLR,Financials,6770
+SZZLU,Financials,6770
+T,Communication Services,4813
+TAC,Utilities,4911
+TACH,Financials,6770
+TACHU,Financials,6770
+TACHW,Financials,6770
+TACO,Financials,6770
+TACOU,Financials,6770
+TACOW,Financials,6770
+TACT,Information Technology,3577
+TAGS,Financials,6221
+TAK,Health Care,2834
+TAL,Consumer Discretionary,8200
+TALO,Energy,1311
+TANH,Materials,2860
+TAOP,Information Technology,7372
+TAOX,Financials,6199
+TAP,Consumer Staples,2082
+TAP.A,Consumer Staples,2082
+TAPR,Financials,6029
+TARA,Health Care,2836
+TARS,Health Care,2836
+TASK,Information Technology,7374
+TAT,Energy,1382
+TATT,Industrials,3724
+TAVI,Financials,6770
+TAVIR,Financials,6770
+TAVIU,Financials,6770
+TAWN,Financials,6029
+TAX,Financials,6794
+TAXI,Financials,6199
+TAYD,Industrials,3569
+TBB,Communication Services,4813
+TBBB,Consumer Staples,5411
+TBBK,Financials,6021
+TBCH,Information Technology,3669
+TBCV,Financials,6770
+TBCVU,Financials,6770
+TBCVW,Financials,6770
+TBI,Industrials,7363
+TBLA,Information Technology,7370
+TBN,Energy,1311
+TC,Industrials,7389
+TCBI,Financials,6022
+TCBK,Financials,6022
+TCBS,Financials,6036
+TCBX,Financials,6036
+TCF,Financials,6021
+TCGX,Financials,6770
+TCI,Real Estate,6798
+TCMD,Health Care,3841
+TCO,Real Estate,6798
+TCOM,Industrials,7389
+TCPA,Utilities,4922
+TCRT,Health Care,2834
+TCRX,Health Care,2836
+TCX,Information Technology,7374
+TCXB,Financials,6770
+TD,Financials,6029
+TDAC,Financials,6770
+TDACU,Financials,6770
+TDACW,Financials,6770
+TDAY,Communication Services,2711
+TDC,Information Technology,7372
+TDG,Industrials,3728
+TDIC,Industrials,8741
+TDOC,Health Care,8011
+TDOG,Financials,6221
+TDS,Communication Services,4813
+TDTH,Industrials,7389
+TDUP,Consumer Discretionary,5961
+TDW,Industrials,4400
+TDWD,Financials,6770
+TDWDR,Financials,6770
+TDWDU,Financials,6770
+TDY,Industrials,3812
+TE,Information Technology,3674
+TEAD,Information Technology,7370
+TEAM,Information Technology,7372
+TECH,Health Care,2836
+TECK,Materials,1400
+TECX,Health Care,2836
+TEL,Industrials,5065
+TELA,Health Care,3841
+TELO,Health Care,2834
+TEM,Information Technology,7370
+TEN,Industrials,4412
+TENB,Information Technology,7372
+TENX,Health Care,2834
+TEO,Communication Services,4813
+TER,Information Technology,3825
+TERP,Utilities,4911
+TETH,Financials,6221
+TEVA,Health Care,2834
+TEX,Industrials,3537
+TFC,Financials,6021
+TFII,Industrials,4210
+TFIN,Financials,6022
+TFPM,Financials,6795
+TFSL,Financials,6035
+TFX,Health Care,3841
+TG,Materials,3350
+TGB,Materials,1040
+TGE,Communication Services,2721
+TGEN,Industrials,3585
+TGHL,Information Technology,7374
+TGL,Industrials,7389
+TGLS,Materials,3211
+TGS,Utilities,4922
+TGT,Consumer Discretionary,5331
+TGTX,Health Care,2834
+TH,Consumer Discretionary,7000
+THC,Health Care,8062
+THCH,Consumer Discretionary,5812
+THEO,Financials,6770
+THEOR,Financials,6770
+THEOU,Financials,6770
+THFF,Financials,6022
+THG,Financials,6331
+THH,Consumer Discretionary,7990
+THM,Materials,1000
+THO,Consumer Discretionary,3716
+THOR,Health Care,2834
+THRM,Consumer Discretionary,3714
+THRY,Industrials,7310
+THYP,Financials,6221
+TIBRU,Financials,6411
+TIC,Industrials,7389
+TIER,Real Estate,6798
+TIF,Consumer Discretionary,5944
+TIG,Financials,6331
+TIGO,Communication Services,4812
+TIGR,Financials,6211
+TII,Materials,1040
+TIL,Health Care,2836
+TILE,Consumer Discretionary,2273
+TIMB,Communication Services,4813
+TIME,Communication Services,2721
+TINY,Financials,6282
+TIPT,Financials,6331
+TISI,Consumer Discretionary,7600
+TITN,Consumer Discretionary,5990
+TIVO,Financials,6794
+TJGC,Industrials,7311
+TJX,Consumer Discretionary,5651
+TK,Industrials,4412
+TKC,Communication Services,4813
+TKLF,Consumer Discretionary,5990
+TKNO,Health Care,2835
+TKNZ,Financials,6221
+TKO,Consumer Discretionary,7900
+TKR,Industrials,3562
+TLAC,Financials,6770
+TLACU,Financials,6770
+TLACW,Financials,6770
+TLF,Consumer Discretionary,3100
+TLIH,Industrials,5080
+TLK,Communication Services,4813
+TLN,Utilities,4911
+TLNC,Financials,6770
+TLNCU,Financials,6770
+TLNCW,Financials,6770
+TLND,Information Technology,7372
+TLP,Industrials,4610
+TLPH,Health Care,2834
+TLRA,Industrials,7311
+TLRY,Health Care,2833
+TLS,Information Technology,7373
+TLSA,Health Care,2834
+TLSI,Health Care,3841
+TLSIW,Health Care,3841
+TLX,Health Care,2834
+TLYS,Consumer Discretionary,5600
+TM,Consumer Discretionary,3711
+TMC,Materials,1000
+TMCI,Health Care,3841
+TMCR,Materials,1040
+TMDE,Energy,5172
+TMDX,Health Care,3845
+TME,Communication Services,4832
+TMH,Industrials,7363
+TMO,Information Technology,3829
+TMP,Financials,6022
+TMQ,Materials,1040
+TMS,Consumer Discretionary,5900
+TMSWW,Consumer Discretionary,5900
+TMTS,Financials,6770
+TMTSU,Financials,6770
+TMTSW,Financials,6770
+TMUS,Communication Services,4812
+TMUSI,Communication Services,4812
+TMUSL,Communication Services,4812
+TMUSZ,Communication Services,4812
+TNAV,Industrials,3812
+TNC,Industrials,3580
+TNDM,Health Care,3841
+TNET,Industrials,7389
+TNGX,Health Care,2834
+TNK,Industrials,4400
+TNL,Consumer Discretionary,7011
+TNMG,Industrials,7310
+TNON,Health Care,3841
+TNONW,Health Care,3841
+TNXP,Health Care,2834
+TNYA,Health Care,2836
+TOL,Consumer Discretionary,1531
+TOMZ,Materials,2860
+TONT,Financials,6770
+TONX,Financials,6199
+TOON,Communication Services,7812
+TOP,Financials,6200
+TOPP,Industrials,4210
+TOPS,Industrials,4412
+TORO,Industrials,4412
+TOST,Information Technology,7374
+TOUR,Industrials,4700
+TOVX,Health Care,2834
+TOWR,Consumer Discretionary,3714
+TOXR,Financials,6221
+TOYO,Information Technology,3674
+TP,Consumer Discretionary,7990
+TPB,Consumer Staples,2100
+TPC,Industrials,1540
+TPCS,Industrials,3440
+TPEI,Financials,6029
+TPET,Energy,1311
+TPG,Financials,6282
+TPGXL,Financials,6282
+TPL,Financials,6792
+TPR,Consumer Discretionary,3100
+TPST,Health Care,2834
+TPTS,Real Estate,6798
+TPTX,Health Care,2834
+TR,Consumer Staples,2060
+TRAD,Financials,6770
+TRAK,Information Technology,7374
+TRAW,Health Care,2834
+TRAX,Health Care,2834
+TRBG,Utilities,4931
+TRC,Real Estate,6500
+TRCB,Financials,6022
+TRDA,Health Care,2834
+TREC,Energy,2911
+TREE,Financials,6163
+TREO,Materials,1000
+TREX,Materials,2400
+TRGP,Utilities,4922
+TRGS,Financials,6770
+TRGSR,Financials,6770
+TRGSU,Financials,6770
+TRI,Communication Services,2741
+TRIB,Health Care,2835
+TRIP,Information Technology,7370
+TRLV,Health Care,2833
+TRMB,Information Technology,3829
+TRMD,Industrials,4412
+TRMK,Financials,6021
+TRMT,Real Estate,6798
+TRN,Industrials,3743
+TRNO,Real Estate,6500
+TRNR,Industrials,3600
+TRNS,Information Technology,3825
+TRON,Financials,6199
+TROO,Financials,6159
+TROW,Financials,6282
+TROX,Materials,2810
+TRP,Utilities,4922
+TRS,Industrials,3460
+TRSG,Industrials,3530
+TRST,Financials,6022
+TRT,Industrials,3559
+TRTX,Real Estate,6798
+TRU,Industrials,7320
+TRUG,Consumer Discretionary,3949
+TRUP,Financials,6324
+TRUU,Health Care,2833
+TRV,Financials,6331
+TRVG,Information Technology,7374
+TRVI,Health Care,2834
+TRX,Materials,1040
+TRXB,Health Care,2836
+TRXS,Financials,6221
+TS,Materials,3312
+TSAT,Communication Services,4899
+TSBK,Financials,6036
+TSC,Financials,6022
+TSCO,Consumer Discretionary,5200
+TSEM,Information Technology,3674
+TSHA,Health Care,2836
+TSLA,Consumer Discretionary,3711
+TSM,Information Technology,3674
+TSN,Consumer Staples,2015
+TSOL,Financials,6221
+TSQ,Communication Services,4832
+TSRO,Health Care,2834
+TSS,Industrials,7389
+TSSI,Industrials,8742
+TST,Communication Services,2711
+TSUI,Financials,6221
+TT,Information Technology,3822
+TTAM,Materials,1400
+TTAN,Information Technology,7372
+TTC,Industrials,3524
+TTD,Information Technology,7370
+TTE,Energy,1311
+TTEC,Industrials,7363
+TTEK,Industrials,8711
+TTGT,Communication Services,4822
+TTI,Energy,1311
+TTMI,Information Technology,3672
+TTPH,Health Care,2834
+TTRX,Health Care,2834
+TTWO,Information Technology,7372
+TU,Communication Services,4812
+TULP,Consumer Staples,0100
+TURB,Industrials,3690
+TUSK,Energy,1389
+TUYA,Information Technology,7372
+TV,Communication Services,4833
+TVA,Financials,6770
+TVACU,Financials,6770
+TVACW,Financials,6770
+TVAI,Financials,6770
+TVAIR,Financials,6770
+TVAIU,Financials,6770
+TVC,Utilities,4911
+TVE,Utilities,4911
+TVGN,Health Care,2836
+TVGNW,Health Care,2836
+TVIV,Financials,6770
+TVIVU,Financials,6770
+TVIVW,Financials,6770
+TVPT,Industrials,4700
+TVRD,Health Care,2834
+TVTX,Health Care,2834
+TVTY,Health Care,8090
+TW,Financials,6200
+TWAV,Information Technology,7370
+TWFG,Financials,6411
+TWI,Materials,3312
+TWIN,Industrials,3560
+TWLO,Information Technology,7372
+TWLV,Financials,6770
+TWLVR,Financials,6770
+TWLVU,Financials,6770
+TWST,Health Care,2836
+TX,Materials,3312
+TXG,Information Technology,3826
+TXMD,Health Care,2834
+TXN,Information Technology,3674
+TXNM,Utilities,4911
+TXO,Energy,1311
+TXRH,Consumer Discretionary,5812
+TXT,Industrials,3720
+TYGO,Information Technology,3674
+TYL,Information Technology,7372
+TYME,Health Care,2834
+TYPE,Information Technology,7371
+TYRA,Health Care,2834
+TZACU,Health Care,2834
+TZOO,Industrials,7310
+U,Information Technology,7372
+UA,Consumer Discretionary,2300
+UAA,Consumer Discretionary,2300
+UAC,Financials,6770
+UAL,Industrials,4512
+UAMY,Materials,3330
+UAN,Materials,2870
+UAVS,Industrials,3721
+UBCP,Financials,6022
+UBER,Industrials,7389
+UBNK,Financials,6036
+UBS,Financials,6021
+UBSI,Financials,6022
+UCAR,Industrials,3690
+UCB,Financials,6022
+UCBA,Financials,6035
+UCFC,Financials,6036
+UCFI,Consumer Staples,2000
+UCFIW,Consumer Staples,2000
+UCIB,Financials,6021
+UCL,Communication Services,4899
+UCO,Financials,6221
+UCTT,Information Technology,3674
+UDN,Financials,6221
+UDR,Real Estate,6798
+UE,Real Estate,6500
+UEC,Materials,1090
+UEIC,Consumer Discretionary,3651
+UFCS,Financials,6331
+UFG,Energy,5172
+UFI,Consumer Discretionary,2200
+UFPI,Materials,2421
+UFPT,Health Care,3841
+UFS,Materials,2621
+UG,Consumer Staples,2844
+UGA,Financials,6221
+UGI,Utilities,4932
+UGL,Financials,6221
+UGP,Utilities,4924
+UHAL,Consumer Discretionary,7510
+UHAL.B,Consumer Discretionary,7510
+UHS,Health Care,8062
+UHT,Real Estate,6798
+UI,Information Technology,3663
+UIS,Information Technology,7373
+UK,Industrials,7389
+UL,Consumer Staples,2840
+ULBI,Industrials,3690
+ULCC,Industrials,4512
+ULE,Financials,6221
+ULH,Industrials,4213
+ULS,Industrials,8734
+ULTA,Consumer Discretionary,5990
+UMAC,Information Technology,3663
+UMBF,Financials,6021
+UMBFO,Financials,6021
+UMC,Information Technology,3674
+UMH,Real Estate,6798
+UNB,Financials,6022
+UNCY,Health Care,2834
+UNF,Consumer Discretionary,7200
+UNFI,Consumer Staples,5141
+UNG,Financials,6221
+UNH,Financials,6324
+UNIT,Communication Services,4813
+UNL,Financials,6221
+UNM,Financials,6321
+UNMA,Financials,6321
+UNP,Industrials,4011
+UNTY,Financials,6022
+UONE,Communication Services,4832
+UONEK,Communication Services,4832
+UP,Industrials,4522
+UPB,Health Care,2834
+UPBD,Industrials,7359
+UPC,Health Care,2834
+UPLD,Information Technology,7372
+UPS,Industrials,4210
+UPST,Financials,6199
+UPWK,Information Technology,7374
+UPXI,Financials,6199
+UQM,Information Technology,3679
+URBN,Consumer Discretionary,5651
+URG,Materials,1040
+URGN,Health Care,2834
+URI,Industrials,7359
+UROY,Financials,6221
+USAC,Utilities,4922
+USAK,Industrials,4213
+USAR,Materials,1000
+USAS,Materials,1000
+USAU,Materials,1000
+USB,Financials,6021
+USBC,Financials,6199
+USCB,Financials,6022
+USCI,Financials,6221
+USCR,Materials,3272
+USDE,Financials,6199
+USDEW,Financials,6199
+USEA,Industrials,4400
+USFD,Consumer Staples,5140
+USG,Materials,3270
+USGO,Materials,1040
+USIO,Financials,6099
+USL,Financials,6221
+USLM,Materials,1400
+USNA,Health Care,2833
+USO,Financials,6221
+USOI,Financials,6211
+USPH,Health Care,8000
+USX,Industrials,4213
+UTHR,Health Care,2834
+UTI,Consumer Discretionary,8200
+UTL,Utilities,4931
+UTMD,Health Care,3841
+UTSI,Information Technology,3669
+UTZ,Consumer Staples,2090
+UUP,Financials,6221
+UUUU,Materials,1400
+UVE,Financials,6331
+UVIX,Financials,6221
+UVSP,Financials,6022
+UVV,Industrials,5150
+UVXY,Financials,6221
+UWMC,Financials,6162
+UWN,Consumer Discretionary,7990
+UXIN,Industrials,7389
+UYSC,Financials,6770
+UYSCR,Financials,6770
+UYSCU,Financials,6770
+UZD,Communication Services,4812
+UZE,Communication Services,4812
+UZF,Communication Services,4812
+UZX,Consumer Discretionary,5961
+V,Industrials,7389
+VABK,Financials,6021
+VAC,Real Estate,6531
+VAI,Consumer Discretionary,7510
+VAL,Energy,1381
+VALE,Materials,1000
+VALN,Health Care,2836
+VALU,Financials,6282
+VANI,Health Care,3845
+VATE,Industrials,3440
+VAVX,Financials,6221
+VBIO,Health Care,2834
+VBNB,Financials,6221
+VBNK,Financials,6029
+VC,Consumer Discretionary,3714
+VCEL,Health Care,2836
+VCIG,Industrials,8744
+VCRE,Health Care,2834
+VCTR,Financials,6282
+VCYT,Health Care,8071
+VECA,Financials,6770
+VECO,Industrials,3559
+VEEA,Information Technology,7373
+VEEAW,Information Technology,7373
+VEEE,Industrials,3730
+VEEV,Information Technology,7372
+VEL,Financials,6199
+VELO,Industrials,3559
+VENU,Consumer Discretionary,7900
+VEON,Communication Services,4812
+VER,Real Estate,6798
+VERA,Health Care,2834
+VERI,Information Technology,7374
+VERU,Health Care,2834
+VERX,Information Technology,7372
+VET,Energy,1311
+VFC,Consumer Discretionary,2320
+VFF,Consumer Staples,0100
+VFS,Consumer Discretionary,3711
+VFSWW,Consumer Discretionary,3711
+VG,Utilities,4924
+VGAC.U,Health Care,2834
+VGAS,Materials,2860
+VGASW,Materials,2860
+VGNT,Consumer Discretionary,3714
+VGZ,Materials,1040
+VHC,Financials,6794
+VHCP,Financials,6770
+VHCPU,Financials,6770
+VHCPW,Financials,6770
+VHI,Materials,2810
+VHUB,Industrials,3590
+VIA,Information Technology,7372
+VIAV,Information Technology,3674
+VICI,Real Estate,6798
+VICL,Health Care,2836
+VICR,Information Technology,3679
+VIDA,Information Technology,7372
+VIE,Health Care,2834
+VII,Financials,6770
+VIK,Industrials,4400
+VINP,Financials,6282
+VIOT,Consumer Discretionary,3630
+VIP,Financials,6199
+VIPS,Consumer Discretionary,5961
+VIR,Health Care,2836
+VIRC,Consumer Discretionary,2531
+VIRT,Financials,6211
+VISN,Information Technology,3663
+VIST,Energy,1311
+VITL,Consumer Staples,2000
+VIV,Communication Services,4813
+VIVK,Industrials,4953
+VIVO,Utilities,4931
+VIVS,Health Care,2836
+VIXM,Financials,6221
+VIXY,Financials,6221
+VJET,Health Care,3841
+VKTX,Health Care,2834
+VLGEA,Consumer Staples,5411
+VLN,Information Technology,3674
+VLO,Energy,2911
+VLOS,Financials,6770
+VLOSU,Financials,6770
+VLOSW,Financials,6770
+VLP,Industrials,4610
+VLRS,Industrials,4512
+VLTO,Information Technology,3825
+VLY,Financials,6021
+VLYPN,Financials,6021
+VLYPO,Financials,6021
+VLYPP,Financials,6021
+VMAR,Industrials,3730
+VMC,Materials,1400
+VMD,Health Care,8090
+VMET,Financials,6795
+VMI,Industrials,3440
+VMRK,Real Estate,6798
+VNCE,Consumer Discretionary,5600
+VNDA,Health Care,2834
+VNE,Consumer Discretionary,3714
+VNET,Information Technology,7370
+VNME,Financials,6770
+VNMEU,Financials,6770
+VNMEW,Financials,6770
+VNO,Real Estate,6798
+VNOM,Energy,1311
+VNRX,Health Care,2835
+VNT,Information Technology,3824
+VNTG,Industrials,4731
+VOC,Energy,1311
+VOD,Communication Services,4812
+VOGX,Health Care,2834
+VOLT,Industrials,7363
+VOR,Health Care,2836
+VOXR,Materials,1040
+VOYA,Financials,6311
+VOYG,Industrials,3760
+VPG,Information Technology,3670
+VRA,Consumer Discretionary,3100
+VRAX,Health Care,2835
+VRCA,Health Care,2834
+VRDN,Health Care,2834
+VREX,Information Technology,3679
+VRM,Consumer Discretionary,5500
+VRNS,Information Technology,7372
+VRRM,Industrials,4700
+VRS,Materials,2621
+VRSK,Information Technology,7374
+VRSN,Information Technology,7371
+VRT,Information Technology,3679
+VRTS,Financials,6282
+VRTU,Information Technology,7371
+VRTX,Health Care,2834
+VRXA,Health Care,2834
+VRXAW,Health Care,2834
+VS,Information Technology,7374
+VSA,Consumer Discretionary,8200
+VSAT,Communication Services,4899
+VSEC,Industrials,8711
+VSECU,Industrials,8711
+VSH,Information Technology,3670
+VSI,Consumer Staples,5400
+VSM,Materials,2890
+VSME,Industrials,7311
+VSNT,Communication Services,4833
+VSOL,Financials,6221
+VST,Utilities,4911
+VSTM,Health Care,2834
+VSTS,Industrials,5190
+VSXY,Consumer Discretionary,5621
+VTEX,Information Technology,7372
+VTGN,Health Care,2834
+VTIX,Information Technology,3577
+VTMX,Real Estate,6500
+VTOL,Industrials,4522
+VTR,Real Estate,6798
+VTRS,Health Care,2834
+VTS,Energy,1311
+VTSI,Consumer Discretionary,3990
+VTVT,Health Care,2834
+VUZI,Information Technology,3663
+VVC,Utilities,4932
+VVOS,Health Care,3841
+VVV,Energy,2990
+VVX,Industrials,8744
+VWAV,Information Technology,7372
+VWAVW,Information Technology,7372
+VXX,Financials,6029
+VXZ,Financials,6029
+VYGR,Health Care,2836
+VYLD,Financials,6021
+VYLR,Consumer Staples,0100
+VYX,Information Technology,3578
+VZ,Communication Services,4813
+VZLA,Materials,1040
+W,Consumer Discretionary,5961
+WAAS,Utilities,4941
+WAB,Industrials,3743
+WABC,Financials,6021
+WAFD,Financials,6021
+WAFDP,Financials,6021
+WAFU,Consumer Discretionary,8200
+WAIR,Industrials,5072
+WAL,Financials,6022
+WASH,Financials,6022
+WAT,Information Technology,3826
+WATR,Consumer Staples,2080
+WATT,Information Technology,3663
+WAVE,Utilities,4911
+WAY,Information Technology,7373
+WB,Information Technology,7370
+WBC,Consumer Discretionary,3711
+WBI,Energy,1389
+WBT,Industrials,3580
+WBTN,Communication Services,2741
+WBUY,Consumer Discretionary,5900
+WBX,Industrials,3690
+WCC,Industrials,5063
+WCCB,Financials,6022
+WCG,Financials,6324
+WCN,Industrials,4953
+WCT,Information Technology,7372
+WD,Financials,6199
+WDAY,Information Technology,7374
+WDC,Information Technology,3572
+WDFC,Materials,2890
+WDH,Financials,6411
+WDS,Energy,1311
+WEAT,Financials,6221
+WEAV,Information Technology,7372
+WEB,Information Technology,7372
+WEBK,Financials,6036
+WEC,Utilities,4931
+WELL,Real Estate,6798
+WEN,Consumer Discretionary,5810
+WENC,Financials,6770
+WENN,Financials,6770
+WENNU,Financials,6770
+WENNW,Financials,6770
+WERN,Industrials,4213
+WES,Utilities,4922
+WEST,Consumer Staples,2080
+WETH,Information Technology,3577
+WETO,Industrials,4100
+WEX,Industrials,7389
+WEYS,Industrials,5130
+WF,Financials,6029
+WFC,Financials,6021
+WFCF,Information Technology,7372
+WFF,Consumer Discretionary,3990
+WFG,Materials,2421
+WFRD,Industrials,3533
+WGO,Consumer Discretionary,3716
+WGS,Health Care,8000
+WH,Consumer Discretionary,7011
+WHD,Industrials,3533
+WHG,Financials,6282
+WHK,Energy,1311
+WHLR,Real Estate,6798
+WHLRD,Real Estate,6798
+WHLRL,Real Estate,6798
+WHLRP,Real Estate,6798
+WHR,Consumer Discretionary,3630
+WHWK,Health Care,2834
+WIFI,Communication Services,4899
+WIMI,Information Technology,7372
+WINA,Consumer Discretionary,5900
+WING,Consumer Discretionary,5812
+WIT,Information Technology,7371
+WIX,Information Technology,7370
+WK,Information Technology,7372
+WKC,Energy,5172
+WKHS,Consumer Discretionary,3711
+WKSP,Consumer Discretionary,3714
+WLCO,Financials,6770
+WLCOU,Financials,6770
+WLCOW,Financials,6770
+WLDN,Industrials,8711
+WLDS,Information Technology,3576
+WLDSW,Information Technology,3576
+WLFC,Industrials,5080
+WLH,Consumer Discretionary,1531
+WLII,Financials,6770
+WLIIU,Financials,6770
+WLIIW,Financials,6770
+WLK,Materials,2860
+WLKP,Materials,2860
+WLL,Energy,1311
+WLTH,Financials,6199
+WLY,Communication Services,2731
+WLYB,Communication Services,2731
+WM,Industrials,4953
+WMB,Utilities,4922
+WMG,Consumer Discretionary,7900
+WMGI,Health Care,3842
+WMK,Consumer Staples,5411
+WMS,Materials,3086
+WMT,Consumer Discretionary,5331
+WNC,Consumer Discretionary,3715
+WNEB,Financials,6035
+WNW,Consumer Staples,2840
+WOK,Health Care,3841
+WOLF,Information Technology,3674
+WOOF,Consumer Discretionary,5990
+WOR,Materials,3310
+WORX,Information Technology,7374
+WP,Industrials,7389
+WPAC,Financials,6770
+WPC,Real Estate,6798
+WPM,Materials,1040
+WPP,Industrials,7311
+WPRT,Industrials,3510
+WPX,Energy,1311
+WQEY,Information Technology,7374
+WRAP,Industrials,3480
+WRB,Financials,6331
+WRBY,Health Care,3851
+WRD,Information Technology,7373
+WRI,Real Estate,6798
+WRLD,Financials,6141
+WRN,Materials,1000
+WS,Materials,3310
+WSBC,Financials,6021
+WSBCO,Financials,6021
+WSBF,Financials,6035
+WSBK,Financials,6036
+WSC,Industrials,7350
+WSCI,Industrials,3540
+WSE,Industrials,7389
+WSFS,Financials,6021
+WSHP,Consumer Discretionary,5900
+WSM,Consumer Discretionary,5700
+WSO,Industrials,5070
+WSO.B,Industrials,5070
+WST,Health Care,3841
+WSTN,Health Care,8011
+WSTNR,Health Care,8011
+WSTNU,Health Care,8011
+WT,Financials,6211
+WTBA,Financials,6022
+WTF,Financials,6200
+WTFC,Financials,6022
+WTFCN,Financials,6022
+WTG,Information Technology,7370
+WTGUR,Information Technology,7370
+WTGUU,Information Technology,7370
+WTI,Energy,1311
+WTID,Financials,6029
+WTIU,Financials,6029
+WTM,Financials,6331
+WTRE,Financials,6331
+WTRG,Utilities,4941
+WTS,Industrials,3490
+WTTR,Energy,1389
+WTW,Financials,6411
+WU,Industrials,7389
+WULF,Financials,6199
+WVE,Health Care,2834
+WVVI,Consumer Staples,2080
+WVVIP,Consumer Staples,2080
+WW,Consumer Discretionary,7200
+WWD,Industrials,3620
+WWR,Materials,1000
+WWW,Consumer Discretionary,3140
+WXM,Industrials,1700
+WY,Real Estate,6798
+WYFI,Financials,6199
+WYHG,Consumer Staples,2013
+WYNN,Consumer Discretionary,7011
+WYY,Information Technology,7373
+XAIR,Health Care,3841
+XBIO,Health Care,2834
+XBIT,Health Care,2834
+XBP,Industrials,7389
+XBPEW,Industrials,7389
+XCBE,Financials,6770
+XCBEU,Financials,6770
+XCBEW,Financials,6770
+XCH,Industrials,3690
+XCOM,Information Technology,3661
+XCRA,Information Technology,3825
+XCUR,Health Care,2834
+XE,Industrials,3443
+XEC,Energy,1311
+XEL,Utilities,4931
+XELB,Financials,6794
+XELLL,Utilities,4931
+XENE,Health Care,2834
+XENT,Health Care,3841
+XERS,Health Care,2834
+XFLH,Financials,6770
+XFOR,Health Care,2836
+XGN,Health Care,8071
+XHG,Financials,6411
+XHLD,Industrials,7389
+XHR,Consumer Discretionary,7011
+XIFR,Utilities,4911
+XIII,Financials,6770
+XIIIU,Financials,6770
+XIIIW,Financials,6770
+XL,Utilities,4911
+XLAB,Information Technology,7372
+XLABW,Information Technology,7372
+XLCD,Financials,6029
+XLCU,Financials,6029
+XLO,Health Care,2834
+XLPD,Financials,6029
+XLPU,Financials,6029
+XLRN,Health Care,2836
+XMAX,Consumer Discretionary,2510
+XMTR,Industrials,7389
+XNCR,Health Care,2834
+XNDU,Information Technology,3571
+XNET,Information Technology,7372
+XOG,Energy,1311
+XOM,Energy,2911
+XON,Health Care,2834
+XONE,Industrials,3555
+XOS,Consumer Discretionary,3714
+XP,Financials,6211
+XPEL,Industrials,3470
+XPER,Information Technology,7372
+XPEV,Consumer Discretionary,3711
+XPL,Materials,1040
+XPLR,Information Technology,3570
+XPO,Industrials,4700
+XPOF,Consumer Discretionary,7990
+XPON,Industrials,3690
+XPRO,Energy,1389
+XRAY,Health Care,3843
+XRM,Consumer Discretionary,2221
+XRN,Real Estate,6798
+XRP,Financials,6221
+XRPC,Financials,6221
+XRPN,Financials,6221
+XRPNW,Financials,6221
+XRPZ,Financials,6221
+XRTX,Health Care,2834
+XRX,Information Technology,3577
+XRXDW,Information Technology,3577
+XSLL,Financials,6770
+XSLLU,Financials,6770
+XSLLW,Financials,6770
+XTER,Financials,6770
+XTERU,Financials,6770
+XTERW,Financials,6770
+XTIA,Information Technology,7371
+XTLB,Health Care,2834
+XTND,Industrials,3760
+XTNT,Health Care,3841
+XWEL,Consumer Discretionary,7200
+XXI,Financials,6199
+XXII,Consumer Staples,2111
+XYF,Financials,6199
+XYL,Industrials,3561
+XYZ,Information Technology,7372
+XZO,Information Technology,7372
+YAAS,Information Technology,7372
+YALA,Information Technology,7370
+YARW,Health Care,2834
+YB,Financials,6411
+YCBD,Consumer Staples,2844
+YCL,Financials,6221
+YCS,Financials,6221
+YCY,Financials,6770
+YDDL,Industrials,5090
+YDES,Health Care,8071
+YDESW,Health Care,8071
+YDKG,Financials,6199
+YELP,Consumer Discretionary,7200
+YETI,Consumer Discretionary,3949
+YEXT,Information Technology,7374
+YFOR,Industrials,7363
+YHC,Consumer Staples,2080
+YHGJ,Materials,3060
+YHNA,Financials,6770
+YHNAR,Financials,6770
+YHNAU,Financials,6770
+YI,Consumer Staples,5912
+YIBO,Information Technology,3577
+YICC,Financials,6770
+YICCU,Financials,6770
+YICCW,Financials,6770
+YJ,Consumer Discretionary,5990
+YMAT,Consumer Discretionary,3949
+YMM,Information Technology,7372
+YMT,Information Technology,7374
+YORW,Utilities,4941
+YOU,Information Technology,7372
+YOUL,Consumer Discretionary,8200
+YPF,Energy,2911
+YQ,Consumer Discretionary,8200
+YRD,Financials,6199
+YSAG,Financials,6221
+YSAU,Financials,6221
+YSG,Consumer Staples,2844
+YSS,Industrials,3760
+YSWY,Consumer Staples,5411
+YSXT,Consumer Discretionary,7500
+YTRA,Industrials,4700
+YUM,Consumer Discretionary,5812
+YUMC,Consumer Discretionary,5812
+YXT,Information Technology,7372
+YYAI,Information Technology,7370
+Z,Industrials,7389
+ZAGG,Consumer Discretionary,5900
+ZAYO,Communication Services,4813
+ZBAO,Financials,6411
+ZBH,Health Care,3842
+ZBIO,Health Care,2834
+ZBRA,Industrials,3560
+ZCMD,Consumer Discretionary,8200
+ZCSH,Financials,6221
+ZD,Communication Services,4822
+ZDAI,Industrials,1540
+ZDGE,Information Technology,7372
+ZENA,Information Technology,7372
+ZEO,Industrials,1700
+ZEOWW,Industrials,1700
+ZEPP,Information Technology,3571
+ZETA,Information Technology,7372
+ZG,Industrials,7389
+ZGN,Consumer Discretionary,2300
+ZGNX,Health Care,2834
+ZGYHU,Financials,6770
+ZH,Industrials,7389
+ZIM,Industrials,4412
+ZINC,Materials,3330
+ZION,Financials,6021
+ZIONP,Financials,6021
+ZIP,Information Technology,7370
+ZIXI,Information Technology,7374
+ZJK,Industrials,3452
+ZJYL,Health Care,3842
+ZKH,Consumer Discretionary,5200
+ZKIN,Industrials,3490
+ZKP,Financials,6770
+ZKPU,Financials,6770
+ZKPW,Financials,6770
+ZLAB,Health Care,2834
+ZM,Information Technology,7370
+ZNB,Financials,6199
+ZNTL,Health Care,2834
+ZONE,Consumer Staples,2842
+ZOOZ,Industrials,3590
+ZOOZW,Industrials,3590
+ZS,Information Technology,7371
+ZSL,Financials,6221
+ZSQR,Financials,6199
+ZSTK,Financials,6199
+ZTG,Industrials,8742
+ZTO,Industrials,4210
+ZTS,Health Care,2834
+ZUMZ,Consumer Discretionary,5600
+ZURA,Health Care,2836
+ZVIA,Consumer Staples,2086
+ZVRA,Health Care,2834
+ZWS,Industrials,3560
+ZYBT,Health Care,2834
+ZYME,Health Care,2834

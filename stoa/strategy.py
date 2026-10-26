@@ -10,6 +10,7 @@ from stoa.baselines import BuyAndHold, SMACrossover
 from stoa.config import Secrets, Settings
 from stoa.exits import evaluate_exits, initial_stop
 from stoa.features import cell, regime_is_bull, snapshot
+from stoa.membership import sector_of
 from stoa.models import Candidate, QuantKill, dec
 from stoa.planner import Decision, DecisionInput, ScoutRun, Strategy
 from stoa.roles.llm import Budget, LLMClient, ReplayCache, make_llm_client
@@ -48,6 +49,8 @@ class AgentStrategy:
             regime_bull=bull,
             universe=inp.universe,
             limits=s.risk,
+            # Without a map every pick was "Unknown" and the plan had no sector cap.
+            sectors={sym: sector_of(sym) for sym in set(snap.index) | set(inp.holdings)},
         )
         exits = evaluate_exits(inp.holdings, inp.features, inp.session, s.exits)
 
