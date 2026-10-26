@@ -61,7 +61,7 @@ jobs:
       STOA_NTFY_APPROVAL_TOPIC: ${{ secrets.STOA_NTFY_APPROVAL_TOPIC }}
       STOA_HEALTHCHECK_URL: ${{ secrets.STOA_HEALTHCHECK_URL }}
       FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
-      # Paper DECIDE runs the v1 rules. Claude is used only by trial 7's shadow (analyst.yml).
+      # Paper DECIDE runs the v1 rules. Claude is used only by trial 7 (analyst.yml).
       STOA__SCOUT__KIND: rule
       HF_HUB_DISABLE_TELEMETRY: "1"
       STOA_MODE: ${{ vars.STOA_MODE }}
