@@ -264,17 +264,21 @@ The dashboard's **Live** card shows the paper account's equity, today's change a
 - **If it is down:** the card says "Live data unavailable right now" and the rest of the dashboard, built from committed state, loads as usual.
 - **Where:** the Vercel project is `stoa-live` and the address is `https://stoa-live.vercel.app/api/positions`, set as `dashboard.live_url` in `config/default.yaml`; blank hides the card.
 
-Deploying or changing it (from the repository root, with Node installed):
+**Deploying** happens on its own: the stoa-live project is connected to this repository, with its Root Directory set to `live` (Vercel, stoa-live, Settings, Build and Deployment). A push to main that changes anything under `live/` builds and deploys to production. Every other push is skipped by the ignored build step in `live/vercel.json` and shows in Vercel as Canceled, not as an error. A redeploy of the commit already live always builds.
+
+`live/vercel.json` also sets `"framework": null`. Without it Vercel treats the folder as a Python web app and fails with "No python entrypoint found". A test checks both settings.
+
+To redeploy by hand (from the repository root, with Node installed), for example after changing a key:
 
 ```
 npx vercel@65.2.0 login                       # once, in a browser
 npx vercel@65.2.0 link --yes --project stoa-live --cwd live   # once per machine
-npx vercel@65.2.0 deploy --prod --cwd live    # after a change to live/
+npx vercel@65.2.0 redeploy stoa-live.vercel.app --target production --cwd live
 ```
 
-`live/vercel.json` sets `"framework": null`. Without it Vercel treats the folder as a Python web app and refuses the deploy with "No python entrypoint found".
+Do not use `vercel deploy --cwd live`: with the Root Directory set it fails with 'Root Directory "live" does not exist'. Deploying from the repository root would upload the whole repository, data folder included.
 
-**Rotating the paper keys means updating them in Vercel too**, or the card goes blank: Vercel, the stoa-live project, Settings, Environment Variables, edit `ALPACA_PAPER_KEY_ID` and `ALPACA_PAPER_SECRET` (Production), then redeploy (`npx vercel@65.2.0 deploy --prod --cwd live`). Or from the command line: `npx vercel@65.2.0 env rm ALPACA_PAPER_KEY_ID production --cwd live`, then `npx vercel@65.2.0 env add ALPACA_PAPER_KEY_ID production --cwd live` (it asks for the value), the same for the secret, then redeploy. Never add the live keys there.
+**Rotating the paper keys means updating them in Vercel too**, or the card goes blank. Environment variables only reach new builds, so redeploy afterwards. In the dashboard: stoa-live, Settings, Environment Variables, edit `ALPACA_PAPER_KEY_ID` and `ALPACA_PAPER_SECRET` (Production), then Deployments, the top production deployment, Redeploy. Or from the command line: `npx vercel@65.2.0 env rm ALPACA_PAPER_KEY_ID production --cwd live`, then `npx vercel@65.2.0 env add ALPACA_PAPER_KEY_ID production --cwd live` (it asks for the value), the same for the secret, then the redeploy command above. Never add the live keys there.
 
 ## 14. Changing settings
 
