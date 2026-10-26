@@ -2,15 +2,23 @@ name: close
 
 # Approvals close at 9:40 am New York time. This job tells the phone which picks
 # were approved, then answers any later tap with "Too late" until 10:15 am.
-# Task Scheduler on the Dell starts it at 9:39 (scripts/dispatch.ps1); this cron is
-# the backup. It only reads state and never commits, so it has its own concurrency
+# cron-job.org starts it at 9:39, the Dell's Task Scheduler too (scripts/dispatch.ps1);
+# this cron is the last backup. It only reads state and never commits, so it has its own concurrency
 # group and never holds up EXECUTE at 9:45. A second start waits behind the first,
 # finds its window gone and does nothing.
+run-name: >-
+  ${{ github.event_name == 'schedule' && format('close schedule {0}', github.event.schedule)
+  || format('close via {0}', inputs.source || 'manual') }}
 on:
   schedule:
     - cron: "41 13 * * 1-5" # CLOSE backup, EDT slot (9:41 am EDT)
     - cron: "41 14 * * 1-5" # CLOSE backup, EST slot (9:41 am EST)
   workflow_dispatch:
+    inputs:
+      source:
+        description: "What started this run: cron-job.org, dell, or blank for by hand"
+        type: string
+        default: ""
 
 concurrency:
   group: stoa-close
@@ -18,6 +26,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read # the trigger check lists runs
 
 jobs:
   close:
@@ -50,3 +59,11 @@ jobs:
 
       - name: Close approvals
         run: stoa close
+
+      # Did cron-job.org start the sweep within 5 minutes? Never fails the run.
+      - name: Check the last trigger
+        if: "!cancelled()"
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: stoa triggers check --job close

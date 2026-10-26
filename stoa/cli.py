@@ -5,16 +5,18 @@ from __future__ import annotations
 import functools
 import json
 import logging
+import os
 import sys
 from collections.abc import Callable
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
 
 import click
 
-from stoa import __version__, alerts, cli_v2, clock, redact
+from stoa import __version__, alerts, approvals, cli_v2, clock, redact
+from stoa import triggers as trigger_check
 from stoa.config import Secrets, Settings, load_settings
 from stoa.jobs import EXIT_OK, Runtime, live_lock_problems
 from stoa.jobs import close_job as run_close
@@ -536,6 +538,62 @@ def alert_test(ctx: Ctx) -> None:
         click.echo("STOA_NTFY_TOPIC is not set, so the alert was printed here instead of sent.")
     click.echo("Sent." if ok else "Failed to send. Check the topic and server.")
     sys.exit(EXIT_OK if ok else 1)
+
+
+# ---- triggers ------------------------------------------------------------------------------
+
+
+@main.group()
+def triggers() -> None:
+    """Whether each scheduled job started on time."""
+
+
+@triggers.command("check")
+@click.option(
+    "--job",
+    "job",
+    required=True,
+    type=click.Choice([slot[0] for slot in trigger_check.SLOTS]),
+    help="The job this run is.",
+)
+@pass_ctx
+def triggers_check(ctx: Ctx, job: str) -> None:
+    """Alert if cron-job.org did not start the previous slot within 5 minutes.
+
+    Runs at the end of each scheduled job on GitHub Actions. It never fails the job.
+    """
+    repo, token, run_id = (
+        os.environ.get("GITHUB_REPOSITORY", ""),
+        os.environ.get("GITHUB_TOKEN", ""),
+        os.environ.get("GITHUB_RUN_ID", ""),
+    )
+    if not (repo and token and run_id):
+        click.echo("Not on GitHub Actions; nothing to check.")
+        return
+    notifier = make_notifier(ctx.settings, ctx.secrets)
+    topic, ntfy_token = ctx.secrets.ntfy_topic, ctx.secrets.ntfy_token
+    sent_titles = None
+    if topic is not None:
+        reader = approvals.ApprovalClient(
+            ctx.settings.alerts.server,
+            topic.get_secret_value(),
+            token=ntfy_token.get_secret_value() if ntfy_token else None,
+        )
+
+        def sent_titles(since: datetime) -> list[str] | None:
+            try:
+                return [str(m.get("title", "")) for m in reader.poll(since)]
+            except Exception as exc:  # unreadable topic: send rather than stay quiet
+                log.warning("could not read the alert topic: %s", type(exc).__name__)
+                return None
+
+    github = trigger_check.GitHubRuns(
+        repo, token, api=os.environ.get("GITHUB_API_URL", "https://api.github.com")
+    )
+    try:
+        click.echo(trigger_check.check(job, run_id, github, notifier, sent_titles))
+    except Exception as exc:
+        click.echo(f"Trigger check skipped: {type(exc).__name__}: {redact.redact(str(exc))}")
 
 
 # ---- kill switch -----------------------------------------------------------------------------

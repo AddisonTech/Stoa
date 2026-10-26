@@ -1,12 +1,16 @@
 name: daily
 
-# Task Scheduler on the Dell starts each job on time by workflow_dispatch
-# (scripts/dispatch.ps1). GitHub cron, in UTC, often starts late or not at all,
-# so it is only the backup a few minutes later, in both the EDT and the EST slot.
+# cron-job.org starts each job on time by workflow_dispatch (source=cron-job.org).
+# Task Scheduler on the Dell (scripts/dispatch.ps1, source=dell) is the first backup,
+# at the same minute. GitHub cron, in UTC, often starts late or not at all, so it is
+# the last backup a few minutes later, in both the EDT and the EST slot.
 # A second start is harmless: runs share one concurrency group, and Stoa checks
 # New York time and the NYSE calendar and acts once per session.
 # The day: DECIDE at 5:15 pm (day summary, then a quiet plan), the news SWEEP at
 # 9:00 am (final picks with Approve and Skip, taps until 9:40), EXECUTE at 9:45 am.
+run-name: >-
+  ${{ github.event_name == 'schedule' && format('schedule {0}', github.event.schedule)
+  || format('{0} via {1}', inputs.job, inputs.source || 'manual') }}
 on:
   schedule:
     - cron: "20 21 * * 1-5" # DECIDE backup, EDT slot (5:20 pm EDT)
@@ -36,6 +40,10 @@ on:
         description: "override (paper only, once a session): buys to send, comma-separated; blank reads the Approve taps"
         type: string
         default: ""
+      source:
+        description: "What started this run: cron-job.org, dell, or blank for by hand"
+        type: string
+        default: ""
 
 # DECIDE and EXECUTE share one group so they never overlap or race on state.
 concurrency:
@@ -44,6 +52,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: read # the trigger check lists this workflow's runs
 
 jobs:
   run:
@@ -179,6 +188,18 @@ jobs:
       - name: Save state
         if: always() && steps.secrets.outputs.ready == 'true'
         run: bash scripts/state-branch.sh commit state-branch "${{ steps.pick.outputs.job }} run ${{ github.run_id }}"
+
+      # Did cron-job.org start the slot before this one within 5 minutes? Alerts once
+      # if not. Read only, after the job, and it never fails the run.
+      - name: Check the last trigger
+        if: >-
+          !cancelled() && steps.secrets.outputs.ready == 'true' &&
+          contains(fromJSON('["decide","sweep","execute"]'), steps.pick.outputs.job)
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          JOB: ${{ steps.pick.outputs.job }}
+        run: stoa triggers check --job "$JOB"
 
       - name: Alert on failure
         if: failure() && steps.secrets.outputs.ready == 'true'

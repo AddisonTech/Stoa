@@ -98,7 +98,7 @@ All times are New York time.
 - **About 7:45 pm**: the analyst workflow (trial 7, the analyst forward test in DECISIONS.md). It scores the session's news for the point-in-time S&P 500 through the Batch API in shadow mode and commits the scores to `shared/shadow/` on the state branch. Shadow scores never reach a trade. It has its own concurrency group, so it never holds up DECIDE or EXECUTE. The daily summary and the dashboard show how many of the 210 sessions are scored. After 210, run `stoa analyst evaluate` once.
 - **After each daily run**: the pages workflow rebuilds the read-only dashboard at https://addisontech.github.io/Stoa/ from the committed state. It gets no secrets and has no buttons; approvals stay on your phone. Its **trade log** is public: every morning pick, drop, fill, skip and closed trade with its date, symbol, side, size, reason and profit or loss (paper money). To rebuild by hand: Actions, pages, Run workflow. One-time setup: Settings, Pages, Source: GitHub Actions.
 
-Each job is started on time by Windows Task Scheduler on the Dell (section 13), with GitHub cron as the backup a few minutes later, in two slots an hour apart (because it ignores daylight saving time). Any later start sees the first already did the work and does nothing. Weekends and market holidays are skipped. On early close days (like the day after Thanksgiving) DECIDE runs earlier on its own.
+Each job is started on time by cron-job.org (section 13), with Windows Task Scheduler on the Dell as a backup at the same minute and GitHub cron as the last backup a few minutes later, in two slots an hour apart (because it ignores daylight saving time). If cron-job.org misses a slot, the next job sends a "Trigger missed" alert. Any later start sees the first already did the work and does nothing. Weekends and market holidays are skipped. On early close days (like the day after Thanksgiving) DECIDE runs earlier on its own.
 
 ## 8. Reading alerts
 
@@ -244,14 +244,32 @@ If any of the three locks is missing, Stoa refuses and sends an urgent alert. To
 
 GitHub disables scheduled workflows in a public repository after 60 days with no activity, and it is not clear that Stoa's own state commits count. Make the repository private (section 0) and this does not apply. Until then, make any small commit to the main branch once a month, or re-enable the **daily** workflow if the Actions tab shows a banner. The healthchecks.io check (section 5) tells you if the daily run stops.
 
-GitHub cron can start late under load, or not at all: on 2026-10-26, the first scheduled morning, no scheduled run of any workflow had ever started in this repository, and the 8:55 sweep never came. So the Dell starts each job on time:
+GitHub cron can start late under load, or not at all: on 2026-10-26, the first scheduled morning, no scheduled run of any workflow had ever started in this repository, and the 8:55 sweep never came. So three clocks start each job, and the Dell can be closed:
 
-- `scripts\dispatch.ps1 -Job <decide|sweep|execute>` starts the daily workflow by `workflow_dispatch` with the GitHub CLI (`gh`, logged in as AddisonTech) and logs to `data\dispatch.log`.
-- `scripts\install-dispatch.ps1` registers five Task Scheduler tasks, weekdays, New York time: **Stoa sweep** at 8:57 am (the run holds until 9:00, so the picks go out at 9:00 with the night's news complete), **Stoa close** at 9:39 am (it holds until 9:40), **Stoa execute** at 9:45 am, **Stoa decide** at 5:15 pm and **Stoa analyst** (trial 7's shadow scoring, the analyst workflow) at 7:45 pm. They wake the Dell from sleep and catch up if it was off at the time. Run it again after changing a time.
-- GitHub cron stays as the backup: DECIDE at 5:20 pm, SWEEP at 9:05 am, CLOSE at 9:41 am, EXECUTE at 9:50 am, the analyst at 7:50 pm (6:50 pm in winter).
-- They can never double-run. Every run is in the `stoa-state` concurrency group, so runs go one at a time, and each job records its session on the state branch: a second start for the same job logs "already swept" (or decided, or executed) and sends nothing. Taps still close at 9:40 am whichever start sent the picks.
+- **cron-job.org is the primary clock** (free account, set up 2026-10-26). Five jobs, weekdays, America/New_York: **stoa sweep** 8:57 am (the run holds until 9:00, so the picks go out at 9:00 with the night's news complete), **stoa close** 9:39 am (it holds until 9:40), **stoa execute** 9:45 am, **stoa decide** 5:15 pm and **stoa analyst** 7:45 pm (trial 7's shadow scoring). Each is a POST to `https://api.github.com/repos/AddisonTech/Stoa/actions/workflows/<daily.yml|close.yml|analyst.yml>/dispatches` with the body `{"ref":"main","inputs":{"job":"sweep","source":"cron-job.org"}}` (no `job` for close and analyst) and the headers `Authorization: Bearer <token>`, `Accept: application/vnd.github+json` and `X-GitHub-Api-Version: 2022-11-28`. GitHub answers 204. A failed call emails the account's address. Proven on 2026-10-26: planned 2:21:00 pm, called 2:21:01, run created 2:21:04.
+- **The Dell is the first backup**, at the same minute. `scripts\install-dispatch.ps1` registers five Task Scheduler tasks with those times (they wake the Dell from sleep and catch up if it was off); each runs `scripts\dispatch.ps1 -Job <job>`, which starts the workflow with the GitHub CLI (`gh`, logged in as AddisonTech), names the run "via dell" and logs to `data\dispatch.log`. Run the installer again after changing a time.
+- **GitHub cron is the last backup**: SWEEP at 9:05 am, CLOSE at 9:41 am, EXECUTE at 9:50 am, DECIDE at 5:20 pm, the analyst at 7:50 pm (6:50 pm in winter).
+- **They can never double-run.** Every daily run is in the `stoa-state` concurrency group, so runs go one at a time, and each job records its session on the state branch: a second start for the same job logs "already swept" (or decided, or executed) and sends nothing. Close and analyst have their own groups and the same once-a-session rule. Taps still close at 9:40 am whichever start sent the picks.
+- **A missed trigger is reported.** Each run's name says what started it ("sweep via cron-job.org", "execute via dell", "schedule 5 13 * * 1-5"). At the end of each scheduled job, `stoa triggers check` looks at the slot before it (sweep checks the previous evening's analyst, close checks the sweep, and so on). If no run started by cron-job.org was created within 5 minutes of that slot, it sends one alert, "Trigger missed: 8:57 am sweep Mon Nov 2", saying which trigger did start it. Priority 4 when a backup covered it; priority 5 when nothing started it within 5 minutes. It reads only, never fails the job, and checks the alert topic first so the same miss is reported once.
 
-If the Dell is off or asleep through a whole window, the backup cron covers it. If both miss the morning, start the sweep by hand before 9:40 (Actions, daily, Run workflow, **sweep**).
+If every clock misses the morning, start the sweep by hand before 9:40 (Actions, daily, Run workflow, **sweep**).
+
+**Pausing.** cron-job.org has no single switch for all jobs, and pausing it alone would leave the Dell and GitHub cron running. The one place that stops every clock is GitHub: disable the workflows, and every start from any clock is ignored until they are enabled again. From the Dell:
+
+```
+gh workflow disable daily.yml -R AddisonTech/Stoa; gh workflow disable close.yml -R AddisonTech/Stoa; gh workflow disable analyst.yml -R AddisonTech/Stoa
+gh workflow enable daily.yml -R AddisonTech/Stoa; gh workflow enable close.yml -R AddisonTech/Stoa; gh workflow enable analyst.yml -R AddisonTech/Stoa
+```
+
+Or in the browser: Actions, each of daily, close and analyst, the three dots, **Disable workflow**. To stop only cron-job.org (say, to test the backups), switch each of the five jobs off in its console; the others keep running.
+
+**The GitHub token expires on 2027-10-26.** It is a fine-grained token named `stoa-cron-job-org`, for AddisonTech/Stoa only, with Actions read and write and nothing else (GitHub adds Metadata read-only). It lives only in cron-job.org, in each job's Authorization header. When it expires, every cron-job.org call fails: cron-job.org emails you, the next job's trigger check alerts, and the Dell and GitHub cron keep the jobs running meanwhile. To rotate, before it expires:
+
+1. GitHub, Settings, Developer settings, Fine-grained tokens: open `stoa-cron-job-org` and click **Regenerate token** (or make a new one with the same settings), one year.
+2. In cron-job.org, open each of the five jobs, Advanced, Headers, and replace the value of `Authorization` with `Bearer ` and the new token. Save.
+3. Run one job now (the job's menu, **Test run**) on **close**, which does nothing outside its window, and check that it answered 204 and that a "close via cron-job.org" run appeared in Actions.
+
+The cron-job.org API key (Settings, API) was used only to create the jobs. Delete it there if it is not needed; the jobs keep running without it.
 
 ## 13a. The live positions panel (Vercel)
 

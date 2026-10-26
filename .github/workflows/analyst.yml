@@ -5,14 +5,22 @@ name: analyst
 # branch. Shadow scores never reach DECIDE, EXECUTE or an order.
 #
 # It has its own concurrency group, so it never waits for DECIDE or EXECUTE and
-# they never wait for it. Task Scheduler on the Dell starts it at 7:45 pm New
-# York time (scripts/dispatch.ps1); this cron is the backup, after both DECIDE
-# backup slots. It writes only shared/shadow/ on the state branch, never
-# state.json, and skips a session it has already scored.
+# they never wait for it. cron-job.org starts it at 7:45 pm New York time, the
+# Dell's Task Scheduler too (scripts/dispatch.ps1); this cron is the last backup,
+# after both DECIDE backup slots. It writes only shared/shadow/ on the state
+# branch, never state.json, and skips a session it has already scored.
+run-name: >-
+  ${{ github.event_name == 'schedule' && format('analyst schedule {0}', github.event.schedule)
+  || format('analyst via {0}', inputs.source || 'manual') }}
 on:
   schedule:
     - cron: "50 23 * * 1-5" # backup: 7:50 pm EDT, 6:50 pm EST
   workflow_dispatch:
+    inputs:
+      source:
+        description: "What started this run: cron-job.org, dell, or blank for by hand"
+        type: string
+        default: ""
 
 concurrency:
   group: stoa-analyst
@@ -20,6 +28,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: read # the trigger check lists runs
 
 jobs:
   shadow:
@@ -79,6 +88,14 @@ jobs:
       - name: Save shadow scores
         if: always() && steps.secrets.outputs.ready == 'true'
         run: bash scripts/state-branch.sh commit state-branch "analyst shadow ${{ github.run_id }}"
+
+      # Did cron-job.org start DECIDE within 5 minutes? Never fails the run.
+      - name: Check the last trigger
+        if: "!cancelled() && steps.secrets.outputs.ready == 'true'"
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: stoa triggers check --job analyst
 
       - name: Alert on failure
         if: failure() && steps.secrets.outputs.ready == 'true'
