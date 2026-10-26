@@ -253,6 +253,26 @@ GitHub cron can start late under load, or not at all: on 2026-10-26, the first s
 
 If the Dell is off or asleep through a whole window, the backup cron covers it. If both miss the morning, start the sweep by hand before 9:40 (Actions, daily, Run workflow, **sweep**).
 
+## 13a. The live positions panel (Vercel)
+
+The dashboard's **Live** card shows the paper account's equity, today's change and every open position (quantity, price, market value, today's change and total profit or loss), refreshed every 30 seconds while the tab is open and the market is open, with "Market closed" outside regular hours. GitHub Pages is static and public, so the keys cannot live there. A small read-only function on Vercel's free tier holds them instead:
+
+- **Code:** `live/api/positions.py`, standard library only. It makes exactly two kinds of request, both GET, to the paper API: `/v2/account` and `/v2/positions`. There is no order, cancel or other write call anywhere in it; a test checks the source.
+- **Paper only:** it refuses (HTTP 503) if `ALPACA_LIVE_KEY_ID`, `ALPACA_LIVE_SECRET` or `STOA_MODE=live` is set in Vercel, or if the key is not a paper key (paper keys start with `PK`).
+- **Rate limit:** answers are cached 25 seconds, in memory and at Vercel's edge (`s-maxage=25`), so however many tabs poll, Alpaca sees at most two requests every 25 seconds, far from the 200 a minute the pulls and the daily jobs share.
+- **CORS:** only `https://addisontech.github.io` may read it from a browser.
+- **If it is down:** the card says "Live data unavailable right now" and the rest of the dashboard, built from committed state, loads as usual.
+- **Where:** the address is `dashboard.live_url` in `config/default.yaml`; blank hides the card.
+
+Deploying or changing it (from the repository root, with Node installed):
+
+```
+npx vercel@65.2.0 login                       # once, in a browser
+npx vercel@65.2.0 deploy --prod --cwd live    # after a change to live/
+```
+
+**Rotating the paper keys means updating them in Vercel too**, or the card goes blank: Vercel, the stoa-live project, Settings, Environment Variables, edit `ALPACA_PAPER_KEY_ID` and `ALPACA_PAPER_SECRET` (Production), then redeploy (`npx vercel@65.2.0 deploy --prod --cwd live`). Or from the command line: `npx vercel@65.2.0 env rm ALPACA_PAPER_KEY_ID production --cwd live`, then `npx vercel@65.2.0 env add ALPACA_PAPER_KEY_ID production --cwd live` (it asks for the value), the same for the secret, then redeploy. Never add the live keys there.
+
 ## 14. Changing settings
 
 Every limit is in `config/default.yaml`. Change it in a commit, or override one value with a repository variable passed as an environment variable named `STOA__SECTION__KEY` (for example `STOA__RISK__MAX_POSITIONS=4`). Changing settings after the holdout is sealed makes `stoa holdout score` refuse, on purpose.

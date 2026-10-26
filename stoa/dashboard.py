@@ -408,6 +408,7 @@ def collect(
         "generated_at": built.isoformat(),
         "version": __version__,
         "mode": mode,
+        "live_url": settings.dashboard.live_url,
         "benchmark": settings.benchmark,
         "equity": {
             "session": equity.session.isoformat() if equity else None,
@@ -887,6 +888,94 @@ def render_health(data: dict[str, Any]) -> str:
     return '<dl class="kv">' + "".join(f"<dt>{k}</dt><dd>{v}</dd>" for k, v in rows) + "</dl>"
 
 
+LIVE_POLL_SECONDS = 30
+LIVE_CLOSED_POLL_SECONDS = 300
+LIVE_COLUMNS = (
+    ("Symbol", "symbol"),
+    ("Qty", "qty"),
+    ("Price", "price"),
+    ("Market value", "market_value"),
+    ("Today", "today_change"),
+    ("Today %", "today_change_pct"),
+    ("Total P/L", "total_pl"),
+    ("Total P/L %", "total_pl_pct"),
+)
+
+LIVE_JS = """
+(function(){
+var URL=__URL__,EVERY=__EVERY__*1000,CLOSED=__CLOSED__*1000;
+var $=function(id){return document.getElementById(id)};
+var usd=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'});
+var num=new Intl.NumberFormat('en-US',{maximumFractionDigits:6});
+function money(v,signed){if(v==null)return '';var t=usd.format(Math.abs(v));
+return signed?(v>0?'+':v<0?'-':'')+t:(v<0?'-'+t:t)}
+function pct(v){return v==null?'':(v>0?'+':'')+v.toFixed(2)+'%'}
+function tone(el,v){el.className=v>0?'up':v<0?'down':''}
+var timer=null,last=null;
+function cell(tr,label,text,v){var td=document.createElement('td');
+td.setAttribute('data-label',label);
+td.textContent=text;if(v!==undefined)tone(td,v);tr.appendChild(td)}
+function show(d){
+$('live-equity').textContent=money(d.equity);$('live-cash').textContent=money(d.cash);
+var c=$('live-change');c.textContent=money(d.today_change,true)+' ('+pct(d.today_change_pct)+')';
+tone(c,d.today_change);
+var body=$('live-rows');body.textContent='';
+d.positions.forEach(function(p){var tr=document.createElement('tr');
+cell(tr,'Symbol',p.symbol);cell(tr,'Qty',p.qty==null?'':num.format(p.qty));
+cell(tr,'Price',money(p.price));cell(tr,'Market value',money(p.market_value));
+cell(tr,'Today',money(p.today_change,true),p.today_change);
+cell(tr,'Today %',pct(p.today_change_pct),p.today_change_pct);
+cell(tr,'Total P/L',money(p.total_pl,true),p.total_pl);
+cell(tr,'Total P/L %',pct(p.total_pl_pct),p.total_pl_pct);body.appendChild(tr)});
+$('live-empty').hidden=d.positions.length>0;$('live-table').hidden=d.positions.length===0;
+var when=new Date(d.as_of).toLocaleTimeString([],
+{hour:'numeric',minute:'2-digit',second:'2-digit'});
+$('live-status').textContent=(d.market_open?'Last updated ':'Market closed. Last updated ')+when;
+$('live-body').hidden=false}
+function load(){
+fetch(URL,{cache:'no-store',credentials:'omit'}).then(function(r){
+if(!r.ok)throw new Error(r.status);return r.json()}).then(function(d){last=d;show(d);plan()})
+.catch(function(){$('live-status').textContent=last?'Live data unavailable right now; '+
+'showing the last update.':'Live data unavailable right now. The rest of this page '+
+'is from the last committed state.';plan()})}
+function plan(){clearTimeout(timer);
+if(document.visibilityState!=='visible')return;
+timer=setTimeout(load,last&&last.market_open?EVERY:CLOSED)}
+document.addEventListener('visibilitychange',function(){
+if(document.visibilityState==='visible')load();else clearTimeout(timer)});
+load()})();
+"""
+
+
+def render_live(data: dict[str, Any]) -> str:
+    """The live paper account, filled in by the browser from the live function."""
+    url = str(data.get("live_url") or "")
+    if not url:
+        return _empty("Live positions are not set up yet (dashboard.live_url is blank).")
+    head = "".join(f"<th>{_e(label)}</th>" for label, _ in LIVE_COLUMNS)
+    script = (
+        LIVE_JS.replace("__URL__", json.dumps(url).replace("</", r"<\/"))
+        .replace("__EVERY__", str(LIVE_POLL_SECONDS))
+        .replace("__CLOSED__", str(LIVE_CLOSED_POLL_SECONDS))
+    )
+    return (
+        '<p id="live-status" class="small muted">Loading live data...</p>'
+        '<div id="live-body" hidden>'
+        '<div class="tiles live-tiles">'
+        '<div class="tile"><div class="k">Equity (paper)</div>'
+        '<div class="v" id="live-equity"></div></div>'
+        '<div class="tile"><div class="k">Today</div><div class="v" id="live-change"></div></div>'
+        '<div class="tile"><div class="k">Cash</div><div class="v" id="live-cash"></div></div>'
+        "</div>"
+        f'<table class="stack" id="live-table"><thead><tr>{head}</tr></thead>'
+        '<tbody id="live-rows"></tbody></table>'
+        '<p class="empty" id="live-empty" hidden>No open positions.</p>'
+        "</div>"
+        '<noscript><p class="empty">Live data needs JavaScript.</p></noscript>'
+        f"<script>{script}</script>"
+    )
+
+
 CSS = """
 :root{--bg:#f6f7f9;--card:#fff;--fg:#14181f;--muted:#5d6675;--border:#dfe3ea;
 --stoa:#2563eb;--spy:#9a6700;--ref:#7c3aed;--ok:#1a7f37;--warn:#9a6700;--bad:#cf222e;
@@ -969,6 +1058,8 @@ border-bottom:1px solid var(--border)}
 .kv dt{color:var(--muted)}.kv dd{margin:0}
 footer{color:var(--muted);font-size:12px;margin:8px 0 24px}
 footer a{color:inherit}
+.up{color:var(--ok)}.down{color:var(--bad)}
+.live-tiles{margin:8px 0 10px}
 """
 
 
@@ -1000,6 +1091,7 @@ def render(data: dict[str, Any]) -> str:
         '<meta name="description" content="Read-only status of the Stoa trading system.">'
         f"<style>{CSS}</style></head><body><main>"
         f'<header><h1>Stoa</h1>{_badge(mode)}<span class="muted">{as_of}</span></header>'
+        f'<section class="card"><h2>Live</h2>{render_live(data)}</section>'
         f'<section class="tiles">{tiles_html}</section>'
         f'<section class="card"><h2>Equity vs SPY and MTUM</h2>{render_curves(data)}</section>'
         f'<section class="card"><h2>Positions</h2>{render_positions(data)}</section>'

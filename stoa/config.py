@@ -422,6 +422,20 @@ class ApprovalConfig(_Frozen):
     exempt_reasons: tuple[str, ...] = ("kill_switch",)
 
 
+class DashboardConfig(_Frozen):
+    """The public dashboard on GitHub Pages."""
+
+    # The read-only live positions function (live/, on Vercel). Blank hides the panel.
+    live_url: str = ""
+
+    @field_validator("live_url")
+    @classmethod
+    def _https(cls, v: str) -> str:
+        if v and not v.startswith("https://"):
+            raise ValueError("dashboard.live_url must be an https:// address")
+        return v
+
+
 class SweepConfig(_Frozen):
     """The 9:00 am overnight news sweep, read by FinBERT on CPU."""
 
@@ -503,6 +517,7 @@ class Settings(_Frozen):
     sources: DataSourcesConfig = DataSourcesConfig()
     approval: ApprovalConfig = ApprovalConfig()
     sweep: SweepConfig = SweepConfig()
+    dashboard: DashboardConfig = DashboardConfig()
     crosscheck: CrossCheckConfig = CrossCheckConfig()
     healthcheck: HealthcheckConfig = HealthcheckConfig()
     fallback: FallbackConfig = FallbackConfig()

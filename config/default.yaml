@@ -260,6 +260,9 @@ approval:
   poll_interval_seconds: 30
   exempt_reasons: [kill_switch]    # never wait for a tap to flatten
 
+dashboard:
+  live_url: ""                     # the live positions function on Vercel (live/); blank hides the panel
+
 sweep:
   enabled: true
   model: ProsusAI/finbert          # read on CPU in GitHub Actions; no paid API

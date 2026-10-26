@@ -46,7 +46,7 @@ jobs:
           ruff format --check .
 
       - name: Mypy
-        run: mypy stoa
+        run: mypy stoa live/api/positions.py
 
       - name: Tests
         run: pytest

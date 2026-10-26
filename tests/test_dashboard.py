@@ -231,6 +231,7 @@ def test_read_only_page_and_no_network(tmp_path: Path, monkeypatch: pytest.Monke
     s = settings_for(tmp_path)
     write_fixture(s)
     page, _ = build(tmp_path, s)
+    # With the live panel off (the default), the page has no script at all.
     for banned in ("<form", "<button", "<input", "<script", "ntfy", "approve?", "onclick"):
         assert banned not in page.lower()
     links = re.findall(r'href="([^"]+)"', page)
@@ -255,3 +256,44 @@ def test_cli_builds_into_the_folder(tmp_path: Path) -> None:
     )
     assert res.exit_code == 0, res.output
     assert (out / "index.html").exists() and (out / "data.json").exists()
+
+
+LIVE = "https://stoa-live.vercel.app/api/positions"
+
+
+def test_live_panel_is_hidden_until_the_function_is_set_up(tmp_path: Path) -> None:
+    page, data = build(tmp_path, settings_for(tmp_path))
+    assert data["live_url"] == ""
+    assert "Live positions are not set up yet" in page and "<script" not in page
+
+
+def test_live_panel_polls_only_the_live_function_and_writes_text_only(tmp_path: Path) -> None:
+    s = make_settings(
+        watchlist=",".join(SMALL_WATCHLIST),
+        mode="paper",
+        state__dir=str(tmp_path / "state"),
+        dashboard__live_url=LIVE,
+    )
+    write_fixture(s)
+    page, _ = build(tmp_path, s)
+    # The Live card comes first, before the tiles and every other section.
+    assert page.index("<h2>Live</h2>") < page.index('class="tiles"') < page.index("Trade log")
+    scripts = re.findall(r"<script>(.*?)</script>", page, flags=re.S)
+    assert len(scripts) == 1
+    js = scripts[0]
+    assert f'var URL="{LIVE}"' in js
+    assert js.count("fetch(") == 1 and "credentials:'omit'" in js
+    for banned in ("innerHTML", "eval(", "POST", "method:", "ntfy", "approve", "localStorage"):
+        assert banned not in js
+    assert "EVERY=30*1000" in js  # every 30 seconds while the market is open
+    assert "Market closed" in js and "Last updated" in js
+    assert "Live data unavailable right now" in js
+    for label, _ in dashboard.LIVE_COLUMNS:
+        assert f"<th>{label}</th>" in page
+    # The rest of the page is still built from committed state, with or without the function.
+    assert "Trade log" in page and "Positions" in page
+
+
+def test_live_url_must_be_https() -> None:
+    with pytest.raises(ValueError, match="https"):
+        make_settings(dashboard__live_url="http://example.com/api")
