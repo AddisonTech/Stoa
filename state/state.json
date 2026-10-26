@@ -25,8 +25,52 @@
   "swept_sessions": [
     "2026-10-26"
   ],
+  "override_sessions": [
+    "2026-10-26"
+  ],
   "pending_plan": null,
-  "positions_meta": {},
+  "positions_meta": {
+    "CRM": {
+      "entry_session": "2026-10-26",
+      "entry_price": "247.904",
+      "entry_atr": "8.716889012925364774445830147",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "MSFT": {
+      "entry_session": "2026-10-26",
+      "entry_price": "526.388",
+      "entry_atr": "11.08006618285911964164648911",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "KO": {
+      "entry_session": "2026-10-26",
+      "entry_price": "92.278",
+      "entry_atr": "1.673565194693129510421745227",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "LLY": {
+      "entry_session": "2026-10-26",
+      "entry_price": "1286.042",
+      "entry_atr": "41.74620280932042817333877781",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "AAPL": {
+      "entry_session": "2026-10-26",
+      "entry_price": "343.77",
+      "entry_atr": "6.114998258681441153900352289",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    }
+  },
   "realized_by_year": {},
   "llm_spend_by_month": {
     "2026-10": "0.000917"
@@ -57,7 +101,7 @@
         }
       }
     ],
-    "cost_drag": "0",
+    "cost_drag": "0.048974999054270",
     "trades_closed": 0,
     "pending_trades": 0,
     "last_strategy": "agents",
