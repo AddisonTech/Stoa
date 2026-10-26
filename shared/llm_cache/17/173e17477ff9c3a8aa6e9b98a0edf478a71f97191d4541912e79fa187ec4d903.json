@@ -1,0 +1,36 @@
+{
+ "cost_usd": 0.000917,
+ "created": "2026-10-26T13:15:53.057221+00:00",
+ "input_tokens": 2660,
+ "model": "claude-haiku-5-5",
+ "output_tokens": 1302,
+ "parsed": {
+  "candidates": [
+   {
+    "asset_id": "Asset A1",
+    "conviction": 4,
+    "thesis": "Strong medium-term trend with ret_60 at 0.378, ret_120 at 0.346 and dist_sma_200 at 0.256, plus rs_spy_60 of 0.341. RSI of 68.7 and dist_52w_high of -0.060 suggest it is near highs without being extremely overbought, though vol_20 of 0.325 is elevated."
+   },
+   {
+    "asset_id": "Asset O",
+    "conviction": 4,
+    "thesis": "Steady uptrend with ret_60 at 0.165, ret_120 at 0.273 and dist_sma_200 at 0.205, with controlled vol_20 of 0.197 and atr_pct of 0.021. RSI of 49.6 is not overbought and dist_52w_high of -0.035 leaves room to run."
+   },
+   {
+    "asset_id": "Asset N",
+    "conviction": 3,
+    "thesis": "Uptrend with ret_120 at 0.200, ret_60 at 0.054 and dist_sma_200 at 0.147, and low atr_pct of 0.018. RSI of 70.1 is somewhat elevated, and dist_52w_high of -0.028 is close to highs."
+   },
+   {
+    "asset_id": "Asset X",
+    "conviction": 3,
+    "thesis": "Positive momentum with ret_20 at 0.076, ret_60 at 0.104 and ret_120 at 0.320, and dist_sma_200 at 0.176. Vol_20 of 0.308 is higher than ideal and RSI of 70.0 is elevated, so conviction is limited."
+   },
+   {
+    "asset_id": "Asset Q",
+    "conviction": 3,
+    "thesis": "Low volatility trend with vol_20 at 0.165, atr_pct at 0.018 and dist_sma_200 at 0.182, plus ret_120 at 0.258. Short-term momentum is modest with ret_20 at 0.020 and RSI is high at 72.3."
+   }
+  ]
+ }
+}
