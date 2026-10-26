@@ -318,6 +318,7 @@ Local runs keep state in `state/`. The workflow keeps its own copy on the `stoa-
 1. In the ntfy app, check the topic name matches the `STOA_NTFY_TOPIC` secret exactly.
 2. Run the **alert-test** job again and open its log. "Sent." means ntfy accepted it; the problem is on the phone side (notifications blocked for the app).
 3. If the log says "Stoa is not set up yet. Missing secrets", add the secrets it lists.
+4. To watch a locked phone at a known time, run the **ntfy-test** workflow with a New York time (HH:MM, within 30 minutes). At that time it sends the standard test alert (priority 3), then a plain priority 4 alert 60 seconds later. Its log shows both send times.
 
 ## Sample run
 

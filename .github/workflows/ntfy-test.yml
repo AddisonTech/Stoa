@@ -1,0 +1,73 @@
+name: ntfy-test
+
+# Phone check at a set time. Waits until AT (New York time, today), sends the
+# standard test alert (stoa alert test), waits 60 seconds, then sends a plain
+# priority 4 test alert. Both times are known in advance, so the owner can watch a
+# locked phone. It only sends to the alert topic: no broker keys, no state, no commits.
+on:
+  workflow_dispatch:
+    inputs:
+      at:
+        description: "Send time, HH:MM New York time, today, within 30 minutes"
+        required: true
+
+concurrency:
+  group: ntfy-test
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      STOA_NTFY_TOPIC: ${{ secrets.STOA_NTFY_TOPIC }}
+      STOA_NTFY_TOKEN: ${{ secrets.STOA_NTFY_TOKEN }}
+      NTFY_SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      STOA__ALERTS__SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      AT: ${{ inputs.at }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install .
+
+      - name: Wait for the send time
+        run: |
+          [[ "$AT" =~ ^([01][0-9]|2[0-3]):[0-5][0-9]$ ]] || { echo "at must be HH:MM"; exit 1; }
+          target=$(TZ=America/New_York date -d "today $AT" +%s)
+          wait=$(( target - $(date +%s) ))
+          if [ "$wait" -lt 0 ] || [ "$wait" -gt 1800 ]; then
+            echo "$AT New York time is not within the next 30 minutes"; exit 1
+          fi
+          echo "TARGET=$target" >> "$GITHUB_ENV"
+          sleep "$wait"
+
+      - name: Send the standard test alert
+        run: |
+          TZ=America/New_York date '+Sending stoa alert test at %T New York time'
+          stoa alert test
+
+      - name: Send a plain priority 4 alert 60 seconds later
+        run: |
+          sleep $(( TARGET + 60 - $(date +%s) ))
+          sent=$(TZ=America/New_York date +%T)
+          echo "Sending the priority 4 alert at $sent New York time"
+          auth=()
+          if [ -n "$STOA_NTFY_TOKEN" ]; then auth=(-H "Authorization: Bearer $STOA_NTFY_TOKEN"); fi
+          curl -sS --fail --max-time 15 \
+            -H "Title: Stoa test alert 2" \
+            -H "Priority: 4" \
+            -H "Tags: bell" \
+            "${auth[@]}" \
+            -d "Plain priority 4 test, sent at $sent New York time." \
+            "${NTFY_SERVER%/}/$STOA_NTFY_TOPIC" | python -c "import json,sys; d=json.load(sys.stdin); print('ntfy accepted it, priority', d.get('priority'), 'time', d.get('time'))"
