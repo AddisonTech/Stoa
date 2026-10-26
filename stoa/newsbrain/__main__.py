@@ -1,11 +1,13 @@
 """Run one background job: ``python -m stoa.newsbrain <job>``.
 
-Jobs: news, minute, sec, score, panel, trial9, trial10, coverage. Each logs to data/newsbrain/logs/
+Jobs: news, minute, sec, score, panel, trial9, trial10, preregister11, trial11,
+news_timing, coverage. Each logs to data/newsbrain/logs/
 and can be stopped and restarted at any time.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import sys
 from datetime import date
@@ -56,6 +58,48 @@ def run_trial9(trial: int = 9) -> None:
     print(json.dumps({"passed": report["passed"], "checks": report["checks"]}, indent=1))
 
 
+def run_trial11() -> None:
+    """Trial 11 end to end: its rows (with pre-market fills), then the trial."""
+    import json
+    from pathlib import Path
+
+    import pandas as pd
+
+    from stoa.config import load_settings
+    from stoa.experiments import Registry
+    from stoa.newsbrain.alpaca_pull import LIMITS, client_from_env
+    from stoa.newsbrain.pace import Pace, write_parquet
+    from stoa.newsbrain.panel import PANEL, PANEL_END, PANEL_START, calendar
+    from stoa.newsbrain.premarket import OUT, build_rows, preregister, run_trial11
+    from stoa.newsbrain.trial import EntryPrices
+
+    settings = load_settings(Path("config/default.yaml"))
+    registry = Registry(settings.registry_path)
+    preregister(registry)  # already there; never rewritten
+    days, _ = calendar(PANEL_START, PANEL_END)
+    path = OUT / "rows.parquet"
+    if path.exists():
+        rows = pd.read_parquet(path)
+    else:
+        rows = build_rows(pd.read_parquet(PANEL), days)
+        write_parquet(rows, path)
+    entry = EntryPrices(client_from_env(), Pace("entry", 60, LIMITS), ROOT / "entry")
+    report = run_trial11(settings, rows, days, entry.at_945, registry)
+    print(json.dumps({"passed": report["passed"], "checks": report["checks"]}, indent=1))
+
+
+def preregister11() -> None:
+    from pathlib import Path
+
+    from stoa.config import load_settings
+    from stoa.experiments import Registry
+    from stoa.newsbrain.premarket import preregister, spec_hash
+
+    settings = load_settings(Path("config/default.yaml"))
+    preregister(Registry(settings.registry_path))
+    print(f"trial 11 pre-registered in {settings.registry_path} (spec {spec_hash()})")
+
+
 def main(argv: list[str]) -> int:
     job = argv[0] if argv else ""
     (ROOT / "logs").mkdir(parents=True, exist_ok=True)
@@ -89,6 +133,14 @@ def main(argv: list[str]) -> int:
         run_trial9()
     elif job == "trial10":
         run_trial9(10)
+    elif job == "preregister11":
+        preregister11()
+    elif job == "trial11":
+        run_trial11()
+    elif job == "news_timing":
+        from stoa.newsbrain.news_timing import run as news_timing
+
+        print(json.dumps(news_timing(), indent=1, default=str))
     elif job == "coverage":
         from stoa.newsbrain.coverage import report
 

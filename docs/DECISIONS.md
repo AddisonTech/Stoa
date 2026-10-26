@@ -425,3 +425,44 @@ Pre-registered on 2026-10-25 with trial 9. Identical to trial 9 (data, features,
 **When.** Run once, after the minute bar pull is complete. Trial 9 does not wait for it.
 
 **Registry.** One run logs three trials (1, 5 and 20 sessions).
+
+## Trial 11: the news brain, entering in pre-market
+
+Pre-registered on 2026-10-26, before any trial 11 code ran and before any of its rows, fills or results were looked at; trials 9 and 10 had not run yet either. Trained once and tested once. If it fails, the result is reported and nothing is tuned or retried. The rules below are also in the experiment registry as entry `trial11:preregistration`, spec hash `0e96967fa65b95a0` (`stoa/newsbrain/premarket.py`, `spec()`), written before the run.
+
+**Question.** Does acting on news in pre-market, instead of waiting for the 9:45 am entry, add return after realistic pre-market costs, and does it help most for small, quietly covered companies whose price may be slow to catch up?
+
+**Same as trial 9:** the data, the 13 features, the model settings, the walk-forward protocol on 2016-01-01 to 2022-12-31 (frozen on labels ending by 2022-12-30), the test window 2023-01-01 to 2026-06-30, the replay engine, every risk rail, the pass bar and the holdout wall. Only the following differ.
+
+**Rows.** A (symbol, session t) of trial 9's universe (liquid at the close of t-1) with at least one article (at most 3 tickers) known from 4:00 am to before 9:25 am New York time on t.
+
+**Decision time and features.** The decision minute is the first such article's known time rounded up to the whole minute. The fresh-news features (`sent`, `surprise`, `first_break`, `quiet_spike`, `coverage`) use the fresh articles known by the decision minute (known after 9:00 am on t-1), with trial 9's 60 session baselines from sessions before t. Filing features are as known at 4:00 am on t. Ripple and the bar controls are trial 9's (t-1 and earlier).
+
+**Entry: a buy limit order.** The reference is the close of the symbol's last minute bar on t before the decision minute (from 4:00 am), else the close of t-1; the limit is the reference plus 1%. From the decision minute through 9:25 am, a minute qualifies when its dollar volume (volume times its volume-weighted price) is at least $1,000, ten times the largest order the $100 book places, and it has at least one trade. Thinner minutes are skipped. At the first qualifying minute whose volume-weighted price plus the cost is at or under the limit, the buy fills at that price plus the cost. No fill by 9:25 am means no trade.
+
+**Cost model (pre-market buys), one way, in bps:** min(300 bps, 2 x base x volume factor x cap factor).
+
+- base: trial 9's rule, 25 x sqrt($10 million / 20 session dollar volume), clipped to 5 to 75.
+- volume factor: sqrt($50,000 / the minute's dollar volume, at least $1,000), clipped to 1 to 4. A busy minute costs the base; a thin one up to 4 times it.
+- cap factor: small 1.5, mid 1.2, large 1.0, sized at the decision (SEC shares outstanding times the reference: small under $2 billion, mid to $10 billion, large above; else by dollar volume as trial 9).
+- Sells stay at 9:45 am at trial 9's cost plus the sell fee.
+
+**Labels (training, rows that filled).** From the fill to the open of t+h (trial 9's rule when missing), minus SPY from its last minute close at or before the fill minute (else its open of t) to its open of t+h, minus the exit cost and the sell fee. 1 when above 0.
+
+**Signals.** At p of at least 0.55, taken in order of decision minute, earliest first (a 6 am decision cannot see a 9 am one), up to 10 a session, rows that filled only. Buys fill at their pre-market price with its cost (the engine's own slippage is netted out); sells and holds at 9:45 am. Known simplification: the engine settles a session's 9:45 am sells and its buys together, so a pre-market buy may use cash a sell frees later that morning; real trading would wait for it or need margin.
+
+**Comparison.** The same signals, in the same order, buying at 9:45 am at trial 9's cost.
+
+**Grading.** The 5 session pre-market run on trial 9's pass bar, including Sharpe above MTUM on validation and the deflated Sharpe at least 0.95 counting every distinct configuration. The 1 and 20 session runs and all three 9:45 am comparison runs are reported and logged as trials (six configurations), so they count in the deflation.
+
+**Reported:** for each horizon and for small, mid and large caps: trades, hit rate, mean excess return and profit for both entries, the profit gain or loss of pre-market entry against 9:45 am, and the mean entry advantage (the 9:45 am price with its cost over the pre-market fill, less 1). Also rows triggered and filled by cap.
+
+**When.** Run once, after trial 10 finishes and its results are committed. Reads the minute bars as pulled (4:00 am to 8:00 pm), before the compaction.
+
+**Known limits, said now.** Benzinga's known time can lag the event itself. A $100 book's orders are tiny, so these fills say little about larger size. Pre-market quotes are not in the data; the spread is modelled from volume, not measured. The test window overlaps windows earlier trials were scored on.
+
+**Holdout.** 2026-07-01 to 2026-10-23 is never read: rows from it are dropped and minute bars check each day against the wall.
+
+## News timing (analysis only)
+
+Added 2026-10-26 beside trial 11. It changes none of trial 11's rules and grades nothing. Using 2016 to 2022 only (the training years, so the 2023 to 2026 test window stays clean and the holdout is never read): when news lands by hour of day, New York time, on weekdays and weekends, split by small, mid and large cap; which hours' news was followed by the biggest moves against SPY over the next 1 and 5 sessions (count of articles and share of the total absolute move per hour); and which scan windows a live news watcher would need to catch most of the moves, with what each extra hour adds. Written to `docs/NEWS_TIMING.md` with its charts, run alongside trial 11, and the recommended windows go in trial 11's result alert.
