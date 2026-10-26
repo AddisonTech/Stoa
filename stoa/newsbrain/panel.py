@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from stoa import clock, wide
-from stoa.newsbrain import ROOT
+from stoa.newsbrain import ROOT, sealed
 from stoa.newsbrain.alpaca_pull import NEWS_DIR, PLAN, WIDE_BARS
 from stoa.newsbrain.score import SCORE_DIR
 from stoa.newsbrain.sec_pull import SEC_DIR
@@ -62,6 +62,7 @@ _WORD = re.compile(r"[a-z]{3,}")
 
 def calendar(start: date, end: date) -> tuple[list[date], np.ndarray]:
     """Sessions and their 9:00 am New York cutoffs as UTC nanoseconds."""
+    sealed.check(end, "the panel calendar")
     days = clock.sessions_between(start, end)
     cut = np.array([pd.Timestamp(clock.at_ny(d, "09:00")).value for d in days], dtype=np.int64)
     return days, cut
@@ -85,6 +86,8 @@ def load_news(cut: np.ndarray) -> pd.DataFrame:
     """One row per (article, tagged symbol) for articles tagging at most 3 symbols."""
     parts = []
     for path in sorted(NEWS_DIR.glob("*.parquet")):
+        if not sealed.month_allowed(path.stem):
+            continue  # holdout months are never opened
         scores = SCORE_DIR / "news" / path.name
         if not scores.exists():
             raise FileNotFoundError(f"{path.name} is not scored yet")
@@ -207,6 +210,7 @@ def filing_features(cut: np.ndarray, ciks: pd.DataFrame) -> pd.DataFrame:
         if not scores.exists():
             continue
         df = pd.read_parquet(path, columns=["cik", "accn", "accepted", "kind", "doc", "text"])
+        df = sealed.before_holdout(df, "accepted")
         if df.empty:
             continue
         sc = pd.read_parquet(scores)
@@ -300,6 +304,7 @@ def links(cut: np.ndarray, ciks: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for path in sorted((SEC_DIR / "tenk").glob("*.parquet")):
         df = pd.read_parquet(path, columns=["cik", "accn", "accepted", "text"])
+        df = sealed.before_holdout(df, "accepted")
         df = df[df["text"].str.len() > 0].sort_values("accepted")
         if df.empty:
             continue

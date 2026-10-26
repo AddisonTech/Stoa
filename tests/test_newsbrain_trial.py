@@ -245,3 +245,66 @@ def test_cool_off_never_uses_a_bar_before_it_closes() -> None:
     entry = bars[bars["o"] == px]["t"].iloc[0]
     # The 9:44 bar is the first settled one (r5 0 vs a 5% peak); it closes at 9:45.
     assert entry >= pd.Timestamp(clock.at_ny(day, "09:45"))
+
+
+def test_holdout_dates_match_the_config() -> None:
+    from stoa.config import load_settings
+    from stoa.newsbrain import sealed
+
+    b = load_settings(Path("config/default.yaml")).backtest
+    assert (b.holdout_start, b.holdout_end) == (sealed.HOLDOUT_START, sealed.HOLDOUT_END)
+    assert panel.PANEL_END < sealed.HOLDOUT_START and trial.TEST_END < sealed.HOLDOUT_START
+    assert all(end < sealed.HOLDOUT_START for _, end in trial.WINDOWS.values())
+
+
+def test_trials_9_and_10_cannot_read_the_holdout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from stoa.newsbrain import sealed
+    from stoa.newsbrain.timing import MinuteStore
+
+    first = date(2026, 7, 1)
+    with pytest.raises(sealed.HoldoutBreach):
+        panel.calendar(date(2026, 6, 1), first)
+
+    class NoCalls:
+        def get(self, *a: Any, **k: Any) -> Any:
+            raise AssertionError("asked Alpaca for a holdout price")
+
+    class Pace:
+        def wait(self) -> None:
+            pass
+
+    with pytest.raises(sealed.HoldoutBreach):
+        trial.EntryPrices(NoCalls(), Pace(), tmp_path)(date(2026, 7, 2), {"AAPL"}, set())
+    with pytest.raises(sealed.HoldoutBreach):
+        MinuteStore(tmp_path).day("AAPL", date(2026, 10, 23))
+
+    # Holdout news months are never opened: an unreadable file there would fail.
+    news, scores = tmp_path / "news", tmp_path / "scores"
+    (scores / "news").mkdir(parents=True)
+    news.mkdir()
+    (news / "2026-07.parquet").write_bytes(b"not parquet")
+    june = pd.DataFrame(
+        {
+            "id": [1],
+            "created_at": [pd.Timestamp("2026-06-29 15:00", tz="UTC")],
+            "updated_at": [pd.Timestamp("2026-06-29 15:00", tz="UTC")],
+            "symbols": [["ACME"]],
+            "headline": ["Acme wins a contract"],
+        }
+    )
+    june.to_parquet(news / "2026-06.parquet")
+    pd.DataFrame({"id": [1], "positive": [0.9], "negative": [0.05]}).to_parquet(
+        scores / "news" / "2026-06.parquet"
+    )
+    monkeypatch.setattr(panel, "NEWS_DIR", news)
+    monkeypatch.setattr(panel, "SCORE_DIR", scores)
+    _, cut = panel.calendar(date(2026, 6, 1), date(2026, 6, 30))
+    loaded = panel.load_news(cut)
+    assert list(loaded["symbol"]) == ["ACME"]
+
+    stamps = pd.DataFrame(
+        {"accepted": pd.to_datetime(["2026-06-30 20:00", "2026-07-01 04:30"], utc=True)}
+    )
+    assert len(sealed.before_holdout(stamps, "accepted")) == 1  # 12:30 am New York on Jul 1

@@ -34,7 +34,7 @@ from stoa.data.base import Bars
 from stoa.event_run import base_bars, source
 from stoa.experiments import Registry, deflate, return_moments
 from stoa.model import Calibrator
-from stoa.newsbrain import ROOT
+from stoa.newsbrain import ROOT, sealed
 from stoa.newsbrain.panel import FEATURES, HORIZONS
 from stoa.scoreboard import summarize
 from stoa.universe import Universe
@@ -236,6 +236,7 @@ def replay(
 ) -> dict[str, Replay]:
     out: dict[str, Replay] = {}
     for w, (start, end) in WINDOWS.items():
+        sealed.check(end, f"the {w} replay")
         src = source(settings, bars, end, signals=sigs, name=name)
         assert src.window_bars is not None
         res = run_backtest(
@@ -284,6 +285,7 @@ class EntryPrices:
     def at_945(self, day: date, symbols: set[str]) -> dict[str, Decimal]:
         from stoa.newsbrain.alpaca_pull import get
 
+        sealed.check(day, "9:45 am prices")
         path = self.cache / f"{day.isoformat()}.parquet"
         have = pd.read_parquet(path) if path.exists() else pd.DataFrame(columns=["symbol", "price"])
         missing = sorted(symbols - set(have["symbol"]))
@@ -493,6 +495,10 @@ def run_trial(
     Trial 10 passes ``frozen_dir`` (trial 9's folder): the same frozen models and
     walk-forward, nothing refit, only the entry fill changes.
     """
+    sealed.check(TEST_END, "the test window")
+    if len(days) and days[-1] >= sealed.HOLDOUT_START:
+        sealed.check(days[-1], "the session calendar")
+    rows = rows[rows["session"] < sealed.HOLDOUT_START]
     for h in HORIZONS:
         register_kind(h)
     out.mkdir(parents=True, exist_ok=True)

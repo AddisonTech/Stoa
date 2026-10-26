@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 
 from stoa import clock
+from stoa.newsbrain import sealed
 from stoa.newsbrain.alpaca_pull import MINUTE_DIR
 
 COOL_SHARE = 1 / 3
@@ -86,6 +87,7 @@ class MinuteStore:
         return self._index[stamp]
 
     def day(self, symbol: str, day: date) -> pd.DataFrame:
+        sealed.check(day, "minute bars")
         path = self._month(f"{day.year:04d}-{day.month:02d}").get(symbol)
         if path is None:
             return pd.DataFrame(columns=["t", "o", "c"])

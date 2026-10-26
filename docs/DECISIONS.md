@@ -414,6 +414,8 @@ Pre-registered on 2026-10-25, before any feature, label or training code for it 
 
 **Registry.** One run logs three trials (1, 5 and 20 sessions).
 
+**The holdout wall** (added 2026-10-26, before any trial 9 run). `stoa/newsbrain/sealed.py` stops trials 9 and 10 from reading 2026-07-01 to 2026-10-23 in code, not only by date choice: the panel calendar, the replay windows and the test window refuse an end date inside it; 9:45 am prices and minute bars refuse a holdout day before any request or file read; holdout news months are never opened; SEC filings accepted from midnight New York time on 2026-07-01 are dropped at load; panel rows from the holdout are dropped before training. Tests hold the dates to `backtest.holdout_start` and `holdout_end`. The raw minute bars for July to October are on disk (the pull covers 2016 to now), but nothing in the trials opens them. `stoa holdout seal` was tried the same day and refused, as designed, because no model has passed walk-forward; no HOLDOUT.lock exists.
+
 ## Trial 10: the news brain, with minute timing
 
 Pre-registered on 2026-10-25 with trial 9. Identical to trial 9 (data, features, model, frozen fit, replay, grading on the 5 session horizon, pass bar) except the entry time, which uses Alpaca minute bars.
