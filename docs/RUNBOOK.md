@@ -337,6 +337,7 @@ Local runs keep state in `state/`. The workflow keeps its own copy on the `stoa-
 2. Run the **alert-test** job again and open its log. "Sent." means ntfy accepted it; the problem is on the phone side (notifications blocked for the app).
 3. If the log says "Stoa is not set up yet. Missing secrets", add the secrets it lists.
 4. To watch a locked phone at a known time, run the **ntfy-test** workflow with a New York time (HH:MM, within 30 minutes). At that time it sends the standard test alert (priority 3), then a plain priority 4 alert 60 seconds later. Its log shows both send times.
+5. Research jobs on the Dell (trial 9 and 10) alert through the **notify** workflow: `gh workflow run notify.yml -R AddisonTech/Stoa -f title=... -f message=... -f priority=4`. It sends one alert to the same topic and nothing else.
 
 ## Sample run
 

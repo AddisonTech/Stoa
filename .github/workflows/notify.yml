@@ -1,0 +1,48 @@
+name: notify
+
+# Sends one alert to the phone with the given title and message. For research
+# jobs on the Dell (such as trial 9) that have no ntfy topic of their own: they run
+# `gh workflow run notify.yml -f title=... -f message=...`. Alert topic only: no
+# broker keys, no state, no commits.
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: "Alert title"
+        required: true
+      message:
+        description: "Alert text"
+        required: true
+      priority:
+        description: "ntfy priority"
+        type: choice
+        options: ["3", "4", "5"]
+        default: "4"
+
+concurrency:
+  group: notify
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      STOA_NTFY_TOPIC: ${{ secrets.STOA_NTFY_TOPIC }}
+      STOA_NTFY_TOKEN: ${{ secrets.STOA_NTFY_TOKEN }}
+      NTFY_SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      TITLE: ${{ inputs.title }}
+      MESSAGE: ${{ inputs.message }}
+      PRIORITY: ${{ inputs.priority }}
+    steps:
+      - name: Send
+        run: |
+          body=$(python3 -c 'import json, os; print(json.dumps({"topic": os.environ["STOA_NTFY_TOPIC"], "title": os.environ["TITLE"][:200], "message": os.environ["MESSAGE"][:3500], "priority": int(os.environ["PRIORITY"]), "tags": ["microscope"]}))')
+          auth=()
+          if [ -n "$STOA_NTFY_TOKEN" ]; then auth=(-H "Authorization: Bearer $STOA_NTFY_TOKEN"); fi
+          curl -sS --fail --max-time 15 --retry 2 "${auth[@]}" \
+            -H "Content-Type: application/json" -d "$body" "${NTFY_SERVER%/}/" > /dev/null
+          echo "Sent: $TITLE"
