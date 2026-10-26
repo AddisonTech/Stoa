@@ -8,9 +8,11 @@ $script = Join-Path $PSScriptRoot "dispatch.ps1"
 $days = "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
 
 # The sweep starts at 8:57 and holds until 9:00, so the picks go out at 9:00
-# with the night's news complete. EXECUTE opens at 9:45 and does not wait.
+# with the night's news complete. The close job starts at 9:39 and holds until the
+# 9:40 cutoff. EXECUTE opens at 9:45 and does not wait.
 $jobs = @(
     @{ Name = "Stoa sweep"; Job = "sweep"; At = "8:57am" },
+    @{ Name = "Stoa close"; Job = "close"; At = "9:39am" },
     @{ Name = "Stoa execute"; Job = "execute"; At = "9:45am" },
     @{ Name = "Stoa decide"; Job = "decide"; At = "5:15pm" },
     @{ Name = "Stoa analyst"; Job = "analyst"; At = "7:45pm" }

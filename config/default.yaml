@@ -104,6 +104,7 @@ job_windows:
   sweep_start: "08:50"             # the morning sweep may start from here (New York time)
   news_cutoff: "09:00"             # news published up to here counts for today's picks
   approval_deadline: "09:40"       # taps after this are ignored
+  late_replies_until: "10:15"      # "Too late" replies to taps after the deadline, until this time
 
 backtest:
   starting_equity: "100"

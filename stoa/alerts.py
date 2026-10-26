@@ -173,6 +173,40 @@ def shares(qty: Decimal) -> str:
     return text or "0"
 
 
+def _hhmm(hhmm: str) -> str:
+    """A HH:MM time without the leading zero: 09:40 becomes 9:40."""
+    return hhmm.lstrip("0") if not hhmm.startswith("00") else hhmm
+
+
+def approvals_closed_alert(symbols: Sequence[str], approved: set[str], deadline: str) -> Alert:
+    """The 9:40 am note: which picks were approved, and that the rest are skipped."""
+    yes = [x for x in symbols if x in approved]
+    rest = [x for x in symbols if x not in approved]
+    head = f"Approved {', '.join(yes)}" if yes else "Approved none"
+    tail = f"; skipped the rest ({', '.join(rest)})" if rest else ""
+    after = (
+        "Approved buys go in at 9:45 am."
+        if yes
+        else "Nothing will be bought today. Sells and stops are not affected."
+    )
+    return Alert(
+        title=f"Approvals closed at {_hhmm(deadline)}",
+        message=f"{head}{tail}. {after}",
+        priority=HIGH,
+        tags=("lock",),
+    )
+
+
+def too_late_alert(verb: str, symbol: str, deadline: str) -> Alert:
+    """The reply to a tap after the deadline. The tap is not acted on."""
+    return Alert(
+        title=f"Too late: {verb} {symbol}",
+        message=f"Too late, approvals closed at {_hhmm(deadline)}.",
+        priority=HIGH,
+        tags=("hourglass",),
+    )
+
+
 def signal_alert(
     order: PlannedOrder, equity: Decimal, mode: str, when: str = "at the open"
 ) -> Alert:

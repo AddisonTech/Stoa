@@ -158,8 +158,13 @@ class JobWindows(_Frozen):
     sweep_start: str = "08:50"
     news_cutoff: str = "09:00"
     approval_deadline: str = "09:40"
+    # The close job sends "Approvals closed" at approval_deadline, then answers late
+    # taps with "Too late" until late_replies_until. It starts up to 5 minutes early.
+    late_replies_until: str = "10:15"
 
-    @field_validator("decide_end", "sweep_start", "news_cutoff", "approval_deadline")
+    @field_validator(
+        "decide_end", "sweep_start", "news_cutoff", "approval_deadline", "late_replies_until"
+    )
     @classmethod
     def _hhmm(cls, v: str) -> str:
         hh, mm = v.split(":")

@@ -78,7 +78,7 @@ EXIT_OK = 0
 EXIT_FAILED = 1
 EXIT_REFUSED = 2
 
-JobName = Literal["decide", "execute", "sweep", "override"]
+JobName = Literal["decide", "execute", "sweep", "override", "close"]
 
 
 class Refusal(RuntimeError):
@@ -1777,6 +1777,83 @@ def _sweep(rt: Runtime, force: bool) -> JobResult:
         )
     state.mark_swept(session)
     store.save(state)
+    return result
+
+
+# ---- approvals close (9:40 am) -------------------------------------------------------
+
+CLOSE_EARLY_MINUTES = 5
+LATE_POLL_SECONDS = 20.0
+
+
+def close_job(rt: Runtime) -> JobResult:
+    return _guarded(rt, "close", lambda: _close(rt))
+
+
+def _close(rt: Runtime) -> JobResult:
+    """Say which picks were approved when taps close, then answer late taps.
+
+    Read-only: it never changes state, so it runs beside EXECUTE, which decides the
+    same taps by the same deadline on its own. It acts only if started from 5 minutes
+    before the deadline until EXECUTE starts; a second start that waited behind the
+    first finds its window gone and does nothing.
+    """
+    s = rt.settings
+    w = s.job_windows
+    now = rt.now()
+    day = clock.to_ny(now).date()
+    if not clock.is_session(day):
+        return JobResult(EXIT_OK, "outside_window")
+    deadline = clock.at_ny(day, w.approval_deadline)
+    execute_at = clock.session(day).open + timedelta(minutes=w.execute_after_open_minutes)
+    if not deadline - timedelta(minutes=CLOSE_EARLY_MINUTES) <= now < max(execute_at, deadline):
+        log.info("CLOSE: outside the window at %s ET", clock.to_ny(now).strftime("%H:%M"))
+        return JobResult(EXIT_OK, "outside_window")
+    state = rt.store.load()
+    plan = state.pending_plan
+    if plan is None or plan.execute_session != day or day not in state.swept_sessions:
+        log.info("CLOSE: no swept plan for %s", day)
+        return JobResult(EXIT_OK, "no_plan", day)
+    pending = [o for o in plan.orders if needs_tap(o, s, state.approval_required)]
+    if not pending:
+        return JobResult(EXIT_OK, "nothing_to_close", day)
+    client = make_approvals(rt)
+    if client is None:
+        raise Refusal("no approval topic is configured")
+    if rt.now() < deadline:
+        rt.sleep((deadline - rt.now()).total_seconds() + 2)
+    result = JobResult(EXIT_OK, "closed", day)
+    nonce = state.approval_nonce or ""
+    messages = client.poll(plan.created_at - timedelta(minutes=1))
+    verdicts = approvals.decide(
+        pending,
+        messages,
+        plan_id=plan.plan_id,
+        nonce=nonce,
+        created_at=plan.created_at,
+        deadline=deadline,
+    )
+    approved = {k for k, v in verdicts.items() if v.approved}
+    symbols = [o.symbol for o in pending]
+    send(rt, result, alerts.approvals_closed_alert(symbols, approved, w.approval_deadline))
+    answered: set[str] = set()
+    until = clock.at_ny(day, w.late_replies_until)
+    while True:
+        for m in messages:
+            d = approvals.parse(m)
+            key = str(m.get("id") or f"{m.get('time')}:{m.get('message')}")
+            if d is None or d.plan_id != plan.plan_id or d.at <= deadline or key in answered:
+                continue
+            answered.add(key)
+            send(rt, result, alerts.too_late_alert(d.verb, d.symbol, w.approval_deadline))
+        if rt.now() >= until:
+            break
+        rt.sleep(LATE_POLL_SECONDS)
+        try:
+            messages = client.poll(deadline - timedelta(minutes=1))
+        except (httpx.HTTPError, RuntimeError) as exc:
+            log.warning("CLOSE: approval poll failed: %s", exc)
+            messages = []
     return result
 
 

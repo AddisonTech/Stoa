@@ -462,3 +462,75 @@ def test_manual_override_refuses_before_execute_has_run(tmp_path: Path, bars: Ba
     rt, rec = rt_for(s, bars, broker, EXEC_AT, approvals=Topic())
     assert jobs.manual_override(rt).status == "refused"
     assert broker.fills == [] and any("refused" in a.title for a in rec.alerts)
+
+
+class Clock:
+    """Time that moves only when the job sleeps."""
+
+    def __init__(self, at: datetime) -> None:
+        self.at = at
+
+    def now(self) -> datetime:
+        return self.at
+
+    def sleep(self, seconds: float) -> None:
+        self.at += timedelta(seconds=seconds)
+
+
+CLOSE_AT = datetime(2021, 10, 13, 13, 39, tzinfo=UTC)  # 9:39 am
+
+
+def test_close_says_what_was_approved_and_answers_late_taps_once(
+    tmp_path: Path, bars: Bars
+) -> None:
+    s, broker, plan = decided(tmp_path, bars)
+    rt, _ = rt_for(s, bars, broker, SWEEP_AT, news_client=FakeNews([]))
+    jobs.sweep_job(rt)
+    state = StateStore(s.state.dir).load()
+    nonce = state.approval_nonce
+    assert nonce
+    syms = [o.symbol for o in plan.orders]
+    topic = Topic()
+    topic.tap("approve", plan, syms[0], nonce, SWEEP_AT + timedelta(minutes=5))
+    topic.tap("skip", plan, syms[1], nonce, SWEEP_AT + timedelta(minutes=10))
+    topic.tap("approve", plan, syms[2], nonce, SWEEP_AT + timedelta(minutes=49))  # 9:49 am
+
+    clock = Clock(CLOSE_AT)
+    rt2, rec = rt_for(s, bars, broker, CLOSE_AT, approvals=topic)
+    rt2.now, rt2.sleep = clock.now, clock.sleep
+    assert jobs.close_job(rt2).status == "closed"
+    closed = [a for a in rec.alerts if a.title == "Approvals closed at 9:40"]
+    assert len(closed) == 1 and closed[0].priority == alerts.HIGH
+    rest = ", ".join(syms[1:])
+    assert closed[0].message.startswith(f"Approved {syms[0]}; skipped the rest ({rest}).")
+    late = [a for a in rec.alerts if a.title.startswith("Too late")]
+    assert [a.title for a in late] == [f"Too late: approve {syms[2]}"]
+    assert late[0].message == "Too late, approvals closed at 9:40."
+    assert clock.at >= datetime(2021, 10, 13, 14, 15, tzinfo=UTC)  # listened until 10:15
+    # Read-only: the state EXECUTE uses is untouched.
+    assert StateStore(s.state.dir).load() == state
+
+    # EXECUTE still decides by the 9:40 cutoff: only the first pick is bought.
+    broker.begin_session(EXEC_DAY, prices(bars, EXEC_DAY, "open"))
+    rt3, _ = rt_for(s, bars, broker, EXEC_AT, approvals=topic)
+    assert jobs.execute(rt3).status == "executed"
+    assert [f.symbol for f in broker.fills] == [syms[0]]
+
+
+def test_close_with_no_approvals_and_outside_its_window(tmp_path: Path, bars: Bars) -> None:
+    s, broker, _ = decided(tmp_path, bars)
+    rt, _ = rt_for(s, bars, broker, SWEEP_AT, news_client=FakeNews([]))
+    jobs.sweep_job(rt)
+    clock = Clock(CLOSE_AT)
+    rt2, rec = rt_for(s, bars, broker, CLOSE_AT, approvals=Topic())
+    rt2.now, rt2.sleep = clock.now, clock.sleep
+    assert jobs.close_job(rt2).status == "closed"
+    msg = next(a.message for a in rec.alerts if a.title.startswith("Approvals closed"))
+    assert msg.startswith("Approved none; skipped the rest (")
+    assert "Nothing will be bought today" in msg
+    # A second start that waited behind the first finds its window gone.
+    rt3, rec3 = rt_for(s, bars, broker, clock.at, approvals=Topic())
+    assert jobs.close_job(rt3).status == "outside_window" and rec3.alerts == []
+    # Too early, too: before 9:35 am.
+    rt4, rec4 = rt_for(s, bars, broker, SWEEP_AT, approvals=Topic())
+    assert jobs.close_job(rt4).status == "outside_window" and rec4.alerts == []

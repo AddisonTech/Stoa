@@ -17,6 +17,7 @@ import click
 from stoa import __version__, alerts, cli_v2, clock, redact
 from stoa.config import Secrets, Settings, load_settings
 from stoa.jobs import EXIT_OK, Runtime, live_lock_problems
+from stoa.jobs import close_job as run_close
 from stoa.jobs import decide as run_decide
 from stoa.jobs import execute as run_execute
 from stoa.jobs import manual_override as run_override
@@ -398,6 +399,13 @@ def decide(ctx: Ctx, force: bool) -> None:
 def execute(ctx: Ctx, force: bool) -> None:
     """After the open: submit last night's plan."""
     sys.exit(run_execute(runtime(ctx), force=force).code)
+
+
+@main.command()
+@pass_ctx
+def close(ctx: Ctx) -> None:
+    """At 9:40 am: say which picks were approved, then answer late taps with Too late."""
+    sys.exit(run_close(runtime(ctx)).code)
 
 
 @main.command()

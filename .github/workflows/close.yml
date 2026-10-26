@@ -1,0 +1,52 @@
+name: close
+
+# Approvals close at 9:40 am New York time. This job tells the phone which picks
+# were approved, then answers any later tap with "Too late" until 10:15 am.
+# Task Scheduler on the Dell starts it at 9:39 (scripts/dispatch.ps1); this cron is
+# the backup. It only reads state and never commits, so it has its own concurrency
+# group and never holds up EXECUTE at 9:45. A second start waits behind the first,
+# finds its window gone and does nothing.
+on:
+  schedule:
+    - cron: "41 13 * * 1-5" # CLOSE backup, EDT slot (9:41 am EDT)
+    - cron: "41 14 * * 1-5" # CLOSE backup, EST slot (9:41 am EST)
+  workflow_dispatch:
+
+concurrency:
+  group: stoa-close
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      STOA_NTFY_TOPIC: ${{ secrets.STOA_NTFY_TOPIC }}
+      STOA_NTFY_TOKEN: ${{ secrets.STOA_NTFY_TOKEN }}
+      STOA_NTFY_APPROVAL_TOPIC: ${{ secrets.STOA_NTFY_APPROVAL_TOPIC }}
+      STOA_MODE: ${{ vars.STOA_MODE }}
+      NTFY_SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      STOA__ALERTS__SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      STOA_STATE_DIR: ${{ vars.STOA_MODE == 'live' && 'state-branch/live-state' || 'state-branch/state' }}
+      STOA__STATE__SHARED_DIR: state-branch/shared
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Check out state branch
+        run: bash scripts/state-branch.sh checkout state-branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install .
+
+      - name: Close approvals
+        run: stoa close
