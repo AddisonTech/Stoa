@@ -25,9 +25,12 @@ FAKE_SECRET = "pk-live-value-that-must-never-leak"
 SESSIONS = [date(2021, 10, d) for d in (6, 7, 8, 11, 12, 13)]
 
 
-def settings_for(tmp: Path) -> Settings:
+def settings_for(tmp: Path, live_url: str = "") -> Settings:
     return make_settings(
-        watchlist=",".join(SMALL_WATCHLIST), mode="paper", state__dir=str(tmp / "state")
+        watchlist=",".join(SMALL_WATCHLIST),
+        mode="paper",
+        state__dir=str(tmp / "state"),
+        dashboard__live_url=live_url,
     )
 
 

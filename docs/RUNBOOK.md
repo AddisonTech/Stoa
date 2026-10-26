@@ -262,14 +262,17 @@ The dashboard's **Live** card shows the paper account's equity, today's change a
 - **Rate limit:** answers are cached 25 seconds, in memory and at Vercel's edge (`s-maxage=25`), so however many tabs poll, Alpaca sees at most two requests every 25 seconds, far from the 200 a minute the pulls and the daily jobs share.
 - **CORS:** only `https://addisontech.github.io` may read it from a browser.
 - **If it is down:** the card says "Live data unavailable right now" and the rest of the dashboard, built from committed state, loads as usual.
-- **Where:** the address is `dashboard.live_url` in `config/default.yaml`; blank hides the card.
+- **Where:** the Vercel project is `stoa-live` and the address is `https://stoa-live.vercel.app/api/positions`, set as `dashboard.live_url` in `config/default.yaml`; blank hides the card.
 
 Deploying or changing it (from the repository root, with Node installed):
 
 ```
 npx vercel@65.2.0 login                       # once, in a browser
+npx vercel@65.2.0 link --yes --project stoa-live --cwd live   # once per machine
 npx vercel@65.2.0 deploy --prod --cwd live    # after a change to live/
 ```
+
+`live/vercel.json` sets `"framework": null`. Without it Vercel treats the folder as a Python web app and refuses the deploy with "No python entrypoint found".
 
 **Rotating the paper keys means updating them in Vercel too**, or the card goes blank: Vercel, the stoa-live project, Settings, Environment Variables, edit `ALPACA_PAPER_KEY_ID` and `ALPACA_PAPER_SECRET` (Production), then redeploy (`npx vercel@65.2.0 deploy --prod --cwd live`). Or from the command line: `npx vercel@65.2.0 env rm ALPACA_PAPER_KEY_ID production --cwd live`, then `npx vercel@65.2.0 env add ALPACA_PAPER_KEY_ID production --cwd live` (it asks for the value), the same for the secret, then redeploy. Never add the live keys there.
 

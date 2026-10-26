@@ -261,7 +261,7 @@ approval:
   exempt_reasons: [kill_switch]    # never wait for a tap to flatten
 
 dashboard:
-  live_url: ""                     # the live positions function on Vercel (live/); blank hides the panel
+  live_url: https://stoa-live.vercel.app/api/positions   # the live positions function on Vercel (live/); blank hides the panel
 
 sweep:
   enabled: true

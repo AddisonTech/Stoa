@@ -201,3 +201,9 @@ def test_the_function_has_no_order_cancel_or_write_calls() -> None:
         assert word not in text.replace("paper-api.alpaca.markets", "")
     assert 'method="GET"' in text and "urlopen" in text
     assert text.count("Request(") == 1
+
+
+def test_vercel_serves_api_as_plain_functions() -> None:
+    config = json.loads((ROOT / "live" / "vercel.json").read_text(encoding="utf-8"))
+    assert config["framework"] is None  # otherwise Vercel wants a Python web app entrypoint
+    assert config["functions"]["api/positions.py"]["maxDuration"] <= 15
