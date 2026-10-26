@@ -233,8 +233,11 @@ def fill_alert(symbol: str, side: Side, qty: Decimal, price: Decimal, mode: str)
 def rejected_order_alert(symbol: str, side: Side, detail: str, live: bool) -> Alert:
     return Alert(
         title=f"Order rejected: {side.value} {symbol}",
-        message=f"The broker did not fill {side.value} {symbol}: {detail}. Check the Alpaca app.",
-        priority=URGENT if live else HIGH,
+        message=(
+            f"The broker did not fill {side.value} {symbol}: {detail}. "
+            f"Check the {'live' if live else 'paper'} account in the Alpaca app."
+        ),
+        priority=URGENT,  # a failure, in paper too
         tags=("x",),
     )
 

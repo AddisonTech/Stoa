@@ -162,7 +162,16 @@ def test_urgent_alert_types() -> None:
     assert alerts.job_failure_alert("decide", "x").priority == alerts.URGENT
     assert alerts.data_failure_alert("decide", "x").priority == alerts.URGENT
     assert alerts.rejected_order_alert("A", Side.BUY, "x", live=True).priority == alerts.URGENT
-    assert alerts.rejected_order_alert("A", Side.BUY, "x", live=False).priority == alerts.HIGH
+    assert alerts.rejected_order_alert("A", Side.BUY, "x", live=False).priority == alerts.URGENT
+
+
+def test_picks_and_fills_pop_at_priority_4() -> None:
+    buy = PlannedOrder(symbol="A", side=Side.BUY, notional=D(20), ref_price=D(10), reason="entry")
+    sell = PlannedOrder(symbol="A", side=Side.SELL, qty=D(1), ref_price=D(10), reason="exit")
+    assert alerts.signal_alert(buy, D(100), "paper").priority == alerts.HIGH == 4
+    assert alerts.signal_alert(sell, D(100), "paper").priority == alerts.HIGH
+    assert alerts.fill_alert("A", Side.BUY, D(1), D(10), "paper").priority == alerts.HIGH
+    assert alerts.URGENT == 5
 
 
 def test_console_and_recording_notifiers(capsys: pytest.CaptureFixture[str]) -> None:
