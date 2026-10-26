@@ -22,7 +22,7 @@ on:
         type: choice
         options:
           [decide, sweep, execute, alert-test, approve-test, money-confirm,
-           kill-switch-reset, fallback-reset, reader-check]
+           kill-switch-reset, fallback-reset, reader-check, override]
         default: decide
       force:
         description: "Run even outside the window or again for the same session"
@@ -30,6 +30,10 @@ on:
         default: false
       equity:
         description: "Equity for money-confirm or kill-switch-reset (blank reads it from Alpaca)"
+        type: string
+        default: ""
+      symbols:
+        description: "override (paper only, once a session): buys to send, comma-separated; blank reads the Approve taps"
         type: string
         default: ""
 
@@ -71,6 +75,7 @@ jobs:
       JOB_INPUT: ${{ inputs.job }}
       FORCE_INPUT: ${{ inputs.force }}
       EQUITY_INPUT: ${{ inputs.equity }}
+      SYMBOLS_INPUT: ${{ inputs.symbols }}
       SCHEDULE: ${{ github.event.schedule }}
     steps:
       - name: Pick the job
@@ -165,6 +170,7 @@ jobs:
             reader-check) stoa reader-check ;;
             money-confirm) stoa money confirm-withdrawal --yes "${equity[@]}" ;;
             kill-switch-reset) stoa kill-switch reset --yes "${equity[@]}" ;;
+            override) stoa override --symbols "$SYMBOLS_INPUT" ;;
             *) echo "unknown job $JOB"; exit 2 ;;
           esac
 

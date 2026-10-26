@@ -22,6 +22,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any, Literal
 
+import httpx
 import pandas as pd
 
 from stoa import adjust, alerts, approvals, clock, exam, money, risk, stops, sweep, tracking
@@ -77,7 +78,7 @@ EXIT_OK = 0
 EXIT_FAILED = 1
 EXIT_REFUSED = 2
 
-JobName = Literal["decide", "execute", "sweep"]
+JobName = Literal["decide", "execute", "sweep", "override"]
 
 
 class Refusal(RuntimeError):
@@ -1225,6 +1226,155 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         result.code = EXIT_FAILED
         result.status = "live_order_rejected"
     return result
+
+
+OVERRIDE_REASON = "manual_override"
+
+
+def manual_override(rt: Runtime, symbols: list[str] | None = None) -> JobResult:
+    return _guarded(rt, "override", lambda: _manual_override(rt, symbols))
+
+
+def _manual_override(rt: Runtime, symbols: list[str] | None) -> JobResult:
+    """Paper only, once a session: send today's planned buys after EXECUTE turned them down.
+
+    For a test of the order path when the taps came after the cutoff. The buys are
+    the ones Approve was tapped on (at any time) for today's plan, or ``symbols``,
+    or every planned buy if neither names one. The sector cap is lifted for this
+    run only; every other check runs as usual. Recorded as a manual override.
+    """
+    s = rt.settings
+    if s.mode != "paper":
+        raise Refusal("a manual override is for the paper account only")
+    check_mode(s, rt.secrets)
+    now = rt.now()
+    session = _market_open(now)
+    if session is None:
+        raise Refusal("the market is closed; a manual override runs only while it is open")
+    store = rt.store
+    state = store.load()
+    if session not in state.executed_sessions:
+        raise Refusal(f"EXECUTE has not run for {session}; a manual override comes after it")
+    if session in state.override_sessions:
+        raise Refusal(f"a manual override already ran for {session}; it is one time only")
+    plans = [
+        Plan.model_validate_json(p.read_text(encoding="utf-8"))
+        for p in sorted(store.plans_dir.glob("*.json"))
+    ]
+    todays = [p for p in plans if p.execute_session == session]
+    if not todays:
+        raise Refusal(f"no plan was made for {session}")
+    plan = todays[-1]
+    buys = [o for o in plan.orders if o.side is Side.BUY]
+    chosen, source = _override_symbols(rt, plan, buys, symbols)
+    orders = [o.model_copy(update={"reason": OVERRIDE_REASON}) for o in buys if o.symbol in chosen]
+    if not orders:
+        raise Refusal("none of the named symbols is a planned buy for today")
+    result = JobResult(EXIT_OK, "override", session)
+    # The sector cap is lifted for this run only, in memory; nothing is saved.
+    risk_cfg = s.risk.model_copy(update={"max_sector_pct": Decimal(1)})
+    s_run = s.model_copy(update={"risk": risk_cfg})
+    run_plan = plan.model_copy(update={"orders": tuple(orders)})
+
+    broker = make_broker(rt)
+    account = broker.account()
+    if account.trading_blocked:
+        raise Refusal(f"Alpaca says trading is blocked on this account (status {account.status})")
+    if isinstance(broker, AlpacaBroker) and not broker.market_is_open():
+        raise Refusal("Alpaca says the market is closed right now; orders would queue blind")
+    assets = {o.symbol: broker.asset(o.symbol) for o in orders}
+    universe = Universe(watchlist=s.watchlist, benchmark=s.benchmark, assets=assets)
+    before = broker.positions()
+    track = state.track
+    sectors = {sym: sector_of(sym) for sym in set(s.watchlist) | set(before)}
+    report = execute_plan(
+        run_plan,
+        broker,
+        state,
+        s_run,
+        universe,
+        session,
+        prev_close_equity(state, session, account.last_equity),
+        gate=lambda os, _prices: (list(os), []),
+        sectors=sectors,
+        halt_reason=track.fallback_reason if track.fallback_active else None,
+        fallback_active=track.fallback_active,
+    )
+    for f in report.fills:
+        st = f.status
+        if st.filled_avg_price is not None:
+            track.cost_drag += tracking.fill_cost(
+                st.side, st.filled_qty, st.filled_avg_price, st.fees, s.costs
+            )
+    note = (
+        f"Manual override, paper only: buys sent after the {s.job_windows.approval_deadline} "
+        f"cutoff ({source}); the sector cap was lifted for this run only."
+    )
+    rt.journal.write(
+        now,
+        "execute",
+        session,
+        "override",
+        plan_id=plan.plan_id,
+        note=note,
+        symbols=sorted(chosen),
+        fills=[f.status.model_dump(mode="json") for f in report.fills],
+        unfilled=[f.status.model_dump(mode="json") for f in report.unfilled],
+        rejections=[r.model_dump(mode="json") for r in report.rejections],
+    )
+    send(
+        rt,
+        result,
+        alerts.Alert(title="Manual override (paper)", message=note, priority=alerts.HIGH),
+    )
+    for f in report.fills:
+        st = f.status
+        assert st.filled_avg_price is not None
+        send(
+            rt,
+            result,
+            alerts.fill_alert(st.symbol, st.side, st.filled_qty, st.filled_avg_price, s.mode),
+        )
+    for f in report.unfilled:
+        st = f.status
+        if not st.terminal:
+            state.open_orders = [*state.open_orders, _open_order(f.order, st, session, before)]
+        send(
+            rt,
+            result,
+            alerts.rejected_order_alert(st.symbol, st.side, st.detail or st.status, False),
+        )
+    for r in report.rejections:
+        send(rt, result, alerts.skipped_order_alert(r.symbol, r.side, r.reason, r.detail))
+    state.mark_override(session)
+    store.save(state)
+    return result
+
+
+def _override_symbols(
+    rt: Runtime, plan: Plan, buys: list[PlannedOrder], symbols: list[str] | None
+) -> tuple[set[str], str]:
+    planned = {o.symbol for o in buys}
+    if symbols:
+        return {x.upper() for x in symbols} & planned, "symbols named by hand"
+    client = make_approvals(rt)
+    tapped: dict[str, approvals.Decision] = {}
+    if client is not None:
+        try:
+            msgs = client.poll(plan.created_at - timedelta(minutes=1))
+        except (httpx.HTTPError, RuntimeError) as exc:
+            log.warning("override: could not read the approval topic: %s", exc)
+            msgs = []
+        for m in msgs:
+            d = approvals.parse(m)
+            if d is None or d.plan_id != plan.plan_id or d.symbol not in planned:
+                continue
+            if d.symbol not in tapped or d.at >= tapped[d.symbol].at:
+                tapped[d.symbol] = d
+    approved = {sym for sym, d in tapped.items() if d.verb == approvals.APPROVE}
+    if approved:
+        return approved, "the symbols tapped Approve"
+    return planned, "no Approve taps found, so every planned buy"
 
 
 def protect(

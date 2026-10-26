@@ -148,6 +148,8 @@ class State(BaseModel):
     decided_sessions: list[date] = Field(default_factory=list)
     executed_sessions: list[date] = Field(default_factory=list)
     swept_sessions: list[date] = Field(default_factory=list)
+    # Sessions with a one-time manual override run (jobs.manual_override), at most one each.
+    override_sessions: list[date] = Field(default_factory=list)
     pending_plan: Plan | None = None
     positions_meta: dict[str, PositionMeta] = Field(default_factory=dict)
     realized_by_year: dict[str, Decimal] = Field(default_factory=dict)
@@ -184,6 +186,9 @@ class State(BaseModel):
 
     def mark_swept(self, session: date) -> None:
         self.swept_sessions = _push(self.swept_sessions, session)
+
+    def mark_override(self, session: date) -> None:
+        self.override_sessions = _push(self.override_sessions, session)
 
     def add_trades(self, trades: list[ClosedTrade]) -> None:
         self.recent_trades = [*self.recent_trades, *trades][-RECENT_TRADES:]

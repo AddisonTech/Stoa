@@ -19,6 +19,7 @@ from stoa.config import Secrets, Settings, load_settings
 from stoa.jobs import EXIT_OK, Runtime, live_lock_problems
 from stoa.jobs import decide as run_decide
 from stoa.jobs import execute as run_execute
+from stoa.jobs import manual_override as run_override
 from stoa.jobs import sweep_job as run_sweep
 from stoa.state import StateStore
 
@@ -397,6 +398,15 @@ def decide(ctx: Ctx, force: bool) -> None:
 def execute(ctx: Ctx, force: bool) -> None:
     """After the open: submit last night's plan."""
     sys.exit(run_execute(runtime(ctx), force=force).code)
+
+
+@main.command()
+@click.option("--symbols", default="", help="Comma-separated buys; blank reads the Approve taps.")
+@pass_ctx
+def override(ctx: Ctx, symbols: str) -> None:
+    """Paper only, once a session: send today's buys after EXECUTE turned them down."""
+    names = [x.strip() for x in symbols.split(",") if x.strip()]
+    sys.exit(run_override(runtime(ctx), names or None).code)
 
 
 @main.command()

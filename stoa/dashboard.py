@@ -264,7 +264,8 @@ def trade_log(
                         why,
                     )
                 )
-        elif job == "execute" and step == "execution":
+        elif job == "execute" and step in ("execution", "override"):
+            manual = step == "override"
             for f in data.get("fills") or []:
                 sym = f.get("symbol")
                 pnl = None
@@ -280,7 +281,14 @@ def trade_log(
                         sym,
                         f.get("side"),
                         _size(None, f.get("filled_qty"), f.get("filled_avg_price")),
-                        "open position" if pnl is not None else "",
+                        ", ".join(
+                            w
+                            for w in (
+                                "manual override" if manual else "",
+                                "open position" if pnl is not None else "",
+                            )
+                            if w
+                        ),
                         pnl,
                     )
                 )

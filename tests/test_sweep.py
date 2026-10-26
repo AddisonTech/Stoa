@@ -402,3 +402,63 @@ def test_trade_log_empty_state_renders(tmp_path: Path) -> None:
 
     html_text = dashboard.render_trades({"trades": []})
     assert "No trades yet" in html_text
+
+
+def test_manual_override_sends_late_tapped_buys_once_in_paper(tmp_path: Path, bars: Bars) -> None:
+    from stoa.dashboard import trade_log
+    from stoa.journal import read_journal
+
+    s, broker, plan = decided(tmp_path, bars)
+    rt, _ = rt_for(s, bars, broker, SWEEP_AT, news_client=FakeNews([]))
+    assert jobs.sweep_job(rt).status == "swept"
+    nonce = StateStore(s.state.dir).load().approval_nonce
+    assert nonce
+    late = plan.orders[1].symbol
+    topic = Topic()
+    topic.tap("approve", plan, late, nonce, SWEEP_AT + timedelta(minutes=49))  # 9:49 am
+    broker.begin_session(EXEC_DAY, prices(bars, EXEC_DAY, "open"))
+    rt2, _ = rt_for(s, bars, broker, EXEC_AT, approvals=topic)
+    assert jobs.execute(rt2).status == "executed"
+    assert broker.fills == []  # the 9:40 cutoff holds for the normal run
+
+    later = EXEC_AT + timedelta(minutes=30)
+    rt3, rec3 = rt_for(s, bars, broker, later, approvals=topic)
+    assert jobs.manual_override(rt3).status == "override"
+    assert [f.symbol for f in broker.fills] == [late]
+    titles = [a.title for a in rec3.alerts]
+    assert "Manual override (paper)" in titles and f"Filled buy {late}" in titles
+    state = StateStore(s.state.dir).load()
+    assert EXEC_DAY in state.override_sessions and EXEC_DAY in state.executed_sessions
+    records = read_journal(s.state.dir / "journal")
+    override = [r for r in records if r.get("step") == "override"]
+    assert len(override) == 1 and override[0]["data"]["symbols"] == [late]
+    assert "Manual override" in override[0]["data"]["note"]
+    rows = trade_log(records, state)
+    assert any(r["kind"] == "filled" and "manual override" in r["reason"] for r in rows)
+
+    # One time only, and EXECUTE still will not run again.
+    rt4, _ = rt_for(s, bars, broker, later + timedelta(minutes=5), approvals=topic)
+    assert jobs.manual_override(rt4).status == "refused"
+    assert jobs.execute(rt4).status == "already_done"
+    assert [f.symbol for f in broker.fills] == [late]
+
+
+def test_manual_override_without_taps_sends_every_planned_buy(tmp_path: Path, bars: Bars) -> None:
+    s, broker, plan = decided(tmp_path, bars)
+    rt, _ = rt_for(s, bars, broker, SWEEP_AT, news_client=FakeNews([]))
+    jobs.sweep_job(rt)
+    broker.begin_session(EXEC_DAY, prices(bars, EXEC_DAY, "open"))
+    rt2, _ = rt_for(s, bars, broker, EXEC_AT, approvals=Topic())
+    jobs.execute(rt2)
+    rt3, _ = rt_for(s, bars, broker, EXEC_AT + timedelta(minutes=30), approvals=Topic())
+    assert jobs.manual_override(rt3).status == "override"
+    buys = {o.symbol for o in plan.orders if o.side is Side.BUY}
+    assert {f.symbol for f in broker.fills} == buys
+
+
+def test_manual_override_refuses_before_execute_has_run(tmp_path: Path, bars: Bars) -> None:
+    s, broker, _ = decided(tmp_path, bars)
+    broker.begin_session(EXEC_DAY, prices(bars, EXEC_DAY, "open"))
+    rt, rec = rt_for(s, bars, broker, EXEC_AT, approvals=Topic())
+    assert jobs.manual_override(rt).status == "refused"
+    assert broker.fills == [] and any("refused" in a.title for a in rec.alerts)

@@ -186,6 +186,10 @@ Either nothing was planned (you get "No trades today"), or the sweep did not run
 **No summary by 7 pm on a trading day**
 Silence means something broke. Check the Actions tab. If there is no run at all, see "Scheduled runs stopped".
 
+### Taps came too late (paper only)
+
+Actions, daily, Run workflow, pick **override**. It runs once a session, only in paper, only while the market is open and only after EXECUTE: it sends today's planned buys you tapped Approve on (at any time), or the ones named in **symbols**, or every planned buy if neither names one. The sector cap is lifted for that run only; every other check still runs. The journal and the trade log mark it as a manual override. It never changes the 9:40 cutoff or lets EXECUTE run twice.
+
 ## 10. Withdrawing (the money plan)
 
 The plan: grow $100 to $200, then take the $100 out and let Stoa trade only the profit.
