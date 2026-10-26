@@ -94,10 +94,10 @@ All times are New York time.
 - **The 2nd of each month, early morning**: the monthly retrain. New data, the same walk-forward, and a new model only if it is no worse than the current one. You get a short summary.
   **Currently off** (disabled on 2026-10-24 with `gh workflow disable monthly`). It stays off until a design passes walk-forward: none has (trials 1 to 6 failed, see DECISIONS.md), and retraining a failed design only adds trials to the registry. Turn it back on with `gh workflow enable monthly` or the Actions tab once a model is promoted.
 - **About 9:45 am**: EXECUTE. Stoa places the approved buys and the planned sells and sends one alert per fill with its price, then places a stop order at Alpaca for every position held from a prior day (see docs/RISK.md, Stops at the broker). If a stop fills during the day, DECIDE records it that evening and alerts you.
-- **About 7:45 pm (6:45 pm in winter)**: the analyst workflow (trial 7, the analyst forward test in DECISIONS.md). It scores the session's news for the point-in-time S&P 500 through the Batch API in shadow mode and commits the scores to `shared/shadow/` on the state branch. Shadow scores never reach a trade. It has its own concurrency group, so it never holds up DECIDE or EXECUTE. The daily summary and the dashboard show how many of the 210 sessions are scored. After 210, run `stoa analyst evaluate` once.
+- **About 7:45 pm**: the analyst workflow (trial 7, the analyst forward test in DECISIONS.md). It scores the session's news for the point-in-time S&P 500 through the Batch API in shadow mode and commits the scores to `shared/shadow/` on the state branch. Shadow scores never reach a trade. It has its own concurrency group, so it never holds up DECIDE or EXECUTE. The daily summary and the dashboard show how many of the 210 sessions are scored. After 210, run `stoa analyst evaluate` once.
 - **After each daily run**: the pages workflow rebuilds the read-only dashboard at https://addisontech.github.io/Stoa/ from the committed state. It gets no secrets and has no buttons; approvals stay on your phone. Its **trade log** is public: every morning pick, drop, fill, skip and closed trade with its date, symbol, side, size, reason and profit or loss (paper money). To rebuild by hand: Actions, pages, Run workflow. One-time setup: Settings, Pages, Source: GitHub Actions.
 
-GitHub runs each job twice an hour apart (because it ignores daylight saving time). The second run sees the first already did the work and does nothing. Weekends and market holidays are skipped. On early close days (like the day after Thanksgiving) DECIDE runs earlier on its own.
+Each job is started on time by Windows Task Scheduler on the Dell (section 13), with GitHub cron as the backup a few minutes later, in two slots an hour apart (because it ignores daylight saving time). Any later start sees the first already did the work and does nothing. Weekends and market holidays are skipped. On early close days (like the day after Thanksgiving) DECIDE runs earlier on its own.
 
 ## 8. Reading alerts
 
@@ -239,7 +239,14 @@ If any of the three locks is missing, Stoa refuses and sends an urgent alert. To
 
 GitHub disables scheduled workflows in a public repository after 60 days with no activity, and it is not clear that Stoa's own state commits count. Make the repository private (section 0) and this does not apply. Until then, make any small commit to the main branch once a month, or re-enable the **daily** workflow if the Actions tab shows a banner. The healthchecks.io check (section 5) tells you if the daily run stops.
 
-GitHub cron can also start late under load. Stoa's windows (DECIDE until midnight, EXECUTE for two hours after 9:45 am) leave plenty of slack.
+GitHub cron can start late under load, or not at all: on 2026-10-26, the first scheduled morning, no scheduled run of any workflow had ever started in this repository, and the 8:55 sweep never came. So the Dell starts each job on time:
+
+- `scripts\dispatch.ps1 -Job <decide|sweep|execute>` starts the daily workflow by `workflow_dispatch` with the GitHub CLI (`gh`, logged in as AddisonTech) and logs to `data\dispatch.log`.
+- `scripts\install-dispatch.ps1` registers four Task Scheduler tasks, weekdays, New York time: **Stoa sweep** at 8:57 am (the run holds until 9:00, so the picks go out at 9:00 with the night's news complete), **Stoa execute** at 9:45 am, **Stoa decide** at 5:15 pm and **Stoa analyst** (trial 7's shadow scoring, the analyst workflow) at 7:45 pm. They wake the Dell from sleep and catch up if it was off at the time. Run it again after changing a time.
+- GitHub cron stays as the backup: DECIDE at 5:20 pm, SWEEP at 9:05 am, EXECUTE at 9:50 am, the analyst at 7:50 pm (6:50 pm in winter).
+- They can never double-run. Every run is in the `stoa-state` concurrency group, so runs go one at a time, and each job records its session on the state branch: a second start for the same job logs "already swept" (or decided, or executed) and sends nothing. Taps still close at 9:40 am whichever start sent the picks.
+
+If the Dell is off or asleep through a whole window, the backup cron covers it. If both miss the morning, start the sweep by hand before 9:40 (Actions, daily, Run workflow, **sweep**).
 
 ## 14. Changing settings
 

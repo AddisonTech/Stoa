@@ -5,11 +5,13 @@ name: analyst
 # branch. Shadow scores never reach DECIDE, EXECUTE or an order.
 #
 # It has its own concurrency group, so it never waits for DECIDE or EXECUTE and
-# they never wait for it. It runs after both DECIDE slots (21:20 and 22:20 UTC)
-# and writes only shared/shadow/ on the state branch, never state.json.
+# they never wait for it. Task Scheduler on the Dell starts it at 7:45 pm New
+# York time (scripts/dispatch.ps1); this cron is the backup, after both DECIDE
+# backup slots. It writes only shared/shadow/ on the state branch, never
+# state.json, and skips a session it has already scored.
 on:
   schedule:
-    - cron: "45 23 * * 1-5" # after DECIDE in both the EDT and the EST slot
+    - cron: "50 23 * * 1-5" # backup: 7:50 pm EDT, 6:50 pm EST
   workflow_dispatch:
 
 concurrency:
