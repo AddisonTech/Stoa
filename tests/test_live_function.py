@@ -208,6 +208,9 @@ def test_vercel_serves_api_as_plain_functions() -> None:
     assert config["framework"] is None  # otherwise Vercel wants a Python web app entrypoint
     assert config["functions"]["api/positions.py"]["maxDuration"] <= 15
     # Git pushes that leave live/ alone skip the build (exit 0 means skip). The
-    # project's root directory is live/, so "." is live/.
-    assert config["ignoreCommand"].startswith("git diff --quiet ")
-    assert config["ignoreCommand"].endswith(" HEAD -- .")
+    # project's root directory is live/, so "." is live/. A redeploy of the commit
+    # already live always builds, so rotated keys can take effect.
+    cmd = config["ignoreCommand"]
+    assert cmd.startswith('[ "$VERCEL_GIT_PREVIOUS_SHA" != "$VERCEL_GIT_COMMIT_SHA" ] && ')
+    assert cmd.endswith("git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- .")
+    assert len(cmd) <= 256
