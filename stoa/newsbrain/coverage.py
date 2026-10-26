@@ -74,8 +74,10 @@ def markdown(df: pd.DataFrame) -> str:
     lines = ["| " + " | ".join(cols) + " |", "| " + " | ".join("---" for _ in cols) + " |"]
     for row in df.itertuples(index=False):
         cells = [
-            f"{v:,}" if isinstance(v, int | float) and not isinstance(v, bool) else str(v)
-            for v in row
+            f"{v:,}"
+            if isinstance(v, int | float) and not isinstance(v, bool) and c != "year"
+            else str(v)
+            for c, v in zip(cols, row, strict=True)
         ]
         lines.append("| " + " | ".join(cells) + " |")
     return "\n".join(lines)
