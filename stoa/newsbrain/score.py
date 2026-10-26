@@ -91,7 +91,8 @@ def pulls_finished() -> bool:
         if not path.exists():
             return False
         lines = path.read_text(encoding="utf-8").strip().splitlines()
-        if not lines or not json.loads(lines[-1]).get("done"):
+        # Progress lines also carry "done": <count>; only the final "done": true counts.
+        if not lines or json.loads(lines[-1]).get("done") is not True:
             return False
     return True
 

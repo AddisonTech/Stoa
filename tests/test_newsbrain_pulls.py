@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from stoa.newsbrain import alpaca_pull as ap
 from stoa.newsbrain import sec_pull as sp
@@ -168,3 +169,18 @@ def test_first_section_skips_cover_lines() -> None:
     )
     out = first_section(text)
     assert out.startswith("Apple reports") and "EX-99.1" not in out
+
+
+def test_scorer_waits_for_the_final_done_line_not_a_progress_count(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from stoa.newsbrain import score
+
+    monkeypatch.setattr(score, "ROOT", tmp_path)
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "news.jsonl").write_text('{"done": true}\n', encoding="utf-8")
+    (logs / "sec.jsonl").write_text('{"pass_": "earnings", "done": 1400, "of": 6689}\n', "utf-8")
+    assert not score.pulls_finished()
+    (logs / "sec.jsonl").write_text('{"done": true, "on": "2026-10-27"}\n', encoding="utf-8")
+    assert score.pulls_finished()
