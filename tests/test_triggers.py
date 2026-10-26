@@ -147,7 +147,7 @@ def test_a_backup_start_is_a_high_alert_naming_the_trigger() -> None:
     assert a.title == "Trigger missed: 8:57 am sweep Mon Nov 2"
     assert "cron-job.org did not start the 8:57 am sweep job" in a.message
     assert "the Dell started it at 8:57 am, so the job ran" in a.message
-    assert "—" not in a.title + a.message
+    assert chr(0x2014) not in a.title + a.message  # no em dash
 
 
 def test_a_late_primary_counts_as_missed() -> None:
