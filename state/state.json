@@ -21,7 +21,8 @@
     "2026-10-26"
   ],
   "executed_sessions": [
-    "2026-10-26"
+    "2026-10-26",
+    "2026-10-27"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -30,83 +31,7 @@
   "override_sessions": [
     "2026-10-26"
   ],
-  "pending_plan": {
-    "plan_id": "3326d22034",
-    "strategy": "agents",
-    "mode": "paper",
-    "decided_session": "2026-10-26",
-    "execute_session": "2026-10-27",
-    "created_at": "2026-10-26T21:15:42.650853Z",
-    "orders": [],
-    "equity_at_decide": "100.20365673172",
-    "kill_switch": false,
-    "reserves": [
-      {
-        "symbol": "CVX",
-        "side": "buy",
-        "notional": "20.04",
-        "qty": null,
-        "ref_price": "232.01",
-        "entry_atr": "4.967185714285709",
-        "stop_price": "219.592",
-        "reason": "entry",
-        "conviction": 5,
-        "thesis": "Momentum score 0.204: 60 day +18.9%, 120 day +22.6%, above its 50 and 200 day averages.",
-        "client_order_id": "stoa-20261027-CVX-buy-3326d22034",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "V",
-        "side": "buy",
-        "notional": "20.04",
-        "qty": null,
-        "ref_price": "404.16",
-        "entry_atr": "7.293807142857138",
-        "stop_price": "385.9255",
-        "reason": "entry",
-        "conviction": 3,
-        "thesis": "Momentum score 0.168: 60 day +10.6%, 120 day +26.0%, above its 50 and 200 day averages.",
-        "client_order_id": "stoa-20261027-V-buy-3326d22034",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "MA",
-        "side": "buy",
-        "notional": "20.04",
-        "qty": null,
-        "ref_price": "613.5",
-        "entry_atr": "10.765664285714283",
-        "stop_price": "586.5858",
-        "reason": "entry",
-        "conviction": 2,
-        "thesis": "Momentum score 0.139: 60 day +7.2%, 120 day +23.8%, above its 50 and 200 day averages.",
-        "client_order_id": "stoa-20261027-MA-buy-3326d22034",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "PG",
-        "side": "buy",
-        "notional": "20.04",
-        "qty": null,
-        "ref_price": "159.92",
-        "entry_atr": "3.2171428571428566",
-        "stop_price": "151.8771",
-        "reason": "entry",
-        "conviction": 1,
-        "thesis": "Momentum score 0.116: 60 day +11.4%, 120 day +11.9%, above its 50 and 200 day averages.",
-        "client_order_id": "stoa-20261027-PG-buy-3326d22034",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      }
-    ]
-  },
+  "pending_plan": null,
   "positions_meta": {
     "CRM": {
       "entry_session": "2026-10-26",
@@ -205,7 +130,43 @@
   },
   "approval_nonce": null,
   "approval_required": false,
-  "protective_stops": [],
+  "protective_stops": [
+    {
+      "symbol": "AAPL",
+      "client_order_id": "stoa-stop-20261027-AAPL-1",
+      "stop_price": "328.75",
+      "qty": "0.0523315",
+      "session": "2026-10-27"
+    },
+    {
+      "symbol": "CRM",
+      "client_order_id": "stoa-stop-20261027-CRM-1",
+      "stop_price": "226.12",
+      "qty": "0.080636052",
+      "session": "2026-10-27"
+    },
+    {
+      "symbol": "KO",
+      "client_order_id": "stoa-stop-20261027-KO-1",
+      "stop_price": "88.10",
+      "qty": "0.216628015",
+      "session": "2026-10-27"
+    },
+    {
+      "symbol": "LLY",
+      "client_order_id": "stoa-stop-20261027-LLY-1",
+      "stop_price": "1181.68",
+      "qty": "0.015543815",
+      "session": "2026-10-27"
+    },
+    {
+      "symbol": "MSFT",
+      "client_order_id": "stoa-stop-20261027-MSFT-1",
+      "stop_price": "500.01",
+      "qty": "0.037975789",
+      "session": "2026-10-27"
+    }
+  ],
   "stop_outs": [],
   "holdings_at_close": {
     "AAPL": {
