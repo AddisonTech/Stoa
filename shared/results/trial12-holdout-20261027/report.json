@@ -1,0 +1,290 @@
+{
+ "verdict": "FAIL",
+ "checks": [
+  {
+   "name": "sharpe_vs_spy",
+   "passed": true,
+   "detail": "1.61 vs SPY 0.69"
+  },
+  {
+   "name": "return_vs_spy",
+   "passed": true,
+   "detail": "15.22% vs SPY 2.21%"
+  },
+  {
+   "name": "drawdown_vs_spy",
+   "passed": false,
+   "detail": "5.95% vs SPY 3.38%"
+  },
+  {
+   "name": "drawdown_cap",
+   "passed": true,
+   "detail": "5.95% (cap 25%)"
+  },
+  {
+   "name": "not_starved",
+   "passed": true,
+   "detail": "37 closed trades (expected 17.9; starved under 4.47)"
+  }
+ ],
+ "expected_trades": 17.866285714285716,
+ "table": {
+  "spy_core": {
+   "return": 0.1522035111087252,
+   "sharpe": 1.6113971483994571,
+   "sortino": 3.5380310997571547,
+   "max_drawdown": 0.05952430460019387,
+   "trades": 37
+  },
+  "cash": {
+   "return": 0.15532034598213373,
+   "sharpe": 1.7242680032219118,
+   "sortino": 4.398485389080159,
+   "max_drawdown": 0.052342541432743195,
+   "trades": 37
+  },
+  "spy": {
+   "return": 0.022122323678364086,
+   "sharpe": 0.6854222503944549,
+   "sortino": 1.0622071993496995,
+   "max_drawdown": 0.033767992662819046,
+   "trades": null
+  },
+  "mtum": {
+   "return": -0.13074530566163955,
+   "sharpe": -1.4539546455505175,
+   "sortino": -1.9219238453902385,
+   "max_drawdown": 0.15149690328123966,
+   "trades": null
+  }
+ },
+ "runs": {
+  "spycore": {
+   "1": {
+    "return": 0.1522035111087252,
+    "sharpe": 1.6113971483994571,
+    "sortino": 3.5380310997571547,
+    "max_drawdown": 0.05952430460019387,
+    "trades": 37
+   },
+   "5": {
+    "return": 0.02410226618378908,
+    "sharpe": 0.7534323854942745,
+    "sortino": 1.1685694945887788,
+    "max_drawdown": 0.033104237057478114,
+    "trades": 0
+   },
+   "20": {
+    "return": 0.02410226618378908,
+    "sharpe": 0.7534323854942745,
+    "sortino": 1.1685694945887788,
+    "max_drawdown": 0.033104237057478114,
+    "trades": 0
+   }
+  },
+  "cash": {
+   "1": {
+    "return": 0.15532034598213373,
+    "sharpe": 1.7242680032219118,
+    "sortino": 4.398485389080159,
+    "max_drawdown": 0.052342541432743195,
+    "trades": 37
+   },
+   "5": {
+    "return": 0.0,
+    "sharpe": 0.0,
+    "sortino": 0.0,
+    "max_drawdown": -0.0,
+    "trades": 0
+   },
+   "20": {
+    "return": 0.0,
+    "sharpe": 0.0,
+    "sortino": 0.0,
+    "max_drawdown": -0.0,
+    "trades": 0
+   }
+  }
+ },
+ "by_cap": {
+  "spycore": {
+   "1": [
+    {
+     "bucket": "small",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    },
+    {
+     "bucket": "mid",
+     "trades": 2,
+     "hit_rate": 0.0,
+     "avg_excess": -0.04446873226826921,
+     "pnl": -1.8948690173501652
+    },
+    {
+     "bucket": "large",
+     "trades": 35,
+     "hit_rate": 0.5428571428571428,
+     "avg_excess": 0.024162988640032176,
+     "pnl": 17.444414835280508
+    }
+   ],
+   "5": [
+    {
+     "bucket": "small",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    },
+    {
+     "bucket": "mid",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    },
+    {
+     "bucket": "large",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    }
+   ],
+   "20": [
+    {
+     "bucket": "small",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    },
+    {
+     "bucket": "mid",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    },
+    {
+     "bucket": "large",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    }
+   ]
+  },
+  "cash": {
+   "1": [
+    {
+     "bucket": "small",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    },
+    {
+     "bucket": "mid",
+     "trades": 2,
+     "hit_rate": 0.0,
+     "avg_excess": -0.044463925778544716,
+     "pnl": -1.9193133551485673
+    },
+    {
+     "bucket": "large",
+     "trades": 35,
+     "hit_rate": 0.5428571428571428,
+     "avg_excess": 0.02416586000497266,
+     "pnl": 17.86451420922514
+    }
+   ],
+   "5": [
+    {
+     "bucket": "small",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    },
+    {
+     "bucket": "mid",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    },
+    {
+     "bucket": "large",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    }
+   ],
+   "20": [
+    {
+     "bucket": "small",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    },
+    {
+     "bucket": "mid",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    },
+    {
+     "bucket": "large",
+     "trades": 0,
+     "hit_rate": NaN,
+     "avg_excess": NaN,
+     "pnl": 0.0
+    }
+   ]
+  }
+ },
+ "spy_core": {
+  "swaps": 52,
+  "bought": 707.9701825505887,
+  "sold": 615.9112615654444,
+  "cost": 1.0019178728072384,
+  "cost_pct_of_start": 0.010019178728072384,
+  "sessions": 81,
+  "share_fully_in_spy": 0.7530864197530864
+ },
+ "deflated": {
+  "spycore": {
+   "sharpe_daily": 0.10150847900056205,
+   "sharpe_annual": 1.6113971483994571,
+   "period": 1.0,
+   "observations": 81.0,
+   "trials": 26.0,
+   "trial_sharpe_variance": 0.003802453838018344,
+   "sr0_daily": 0.12417517558841419,
+   "dsr": 0.40998871261508374,
+   "psr": 0.845933366144324,
+   "pbo": NaN
+  },
+  "cash": {
+   "sharpe_daily": 0.10861867452740706,
+   "sharpe_annual": 1.7242680032219118,
+   "period": 1.0,
+   "observations": 81.0,
+   "trials": 26.0,
+   "trial_sharpe_variance": 0.003802453838018344,
+   "sr0_daily": 0.12417517558841419,
+   "dsr": 0.43500118703721113,
+   "psr": 0.8734134296278,
+   "pbo": NaN
+  }
+ },
+ "note": "MTUM and the deflated Sharpe are reported, not graded: 4 months is too short for either to mean much.",
+ "spec_hash": "2c9d9e8a89e908d5"
+}
