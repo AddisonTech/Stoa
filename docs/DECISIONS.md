@@ -497,3 +497,7 @@ Pre-registered on 2026-10-27, before any trial 12 code ran on data. Trained once
 **When.** Run once, after trial 11 in the after-pull chain, behind the same known-answer gate.
 
 **Holdout.** 2026-07-01 to 2026-10-23 is never read.
+
+## Harness known-answer test, 2026-10-27
+
+Run before trial 10 through trial 9's own code on 2023-01-01 to 2026-06-30 (`stoa/newsbrain/harness.py`), never the holdout, and kept out of the registry. A lookahead cheater passed every check (Sharpe 10.97, 701 trades). Random picks, 5 seeds, averaged -0.75% a trade against SPY, within 3 standard errors of the known -0.44% for the average eligible row after the same costs (33 to 36 bps a round trip). An S&P 500 buy and hold (IVV, since the event strategy never trades the benchmark symbol SPY) returned its exposure times IVV day by day (Sharpe 0.62 against an exact 0.65; the 0.28% gap is costs) but failed a Sharpe rule set beforehand that wrongly assumed a fully invested book; the rails held it in only 61% of sessions at 20%. No engine bug was found, so no earlier trial is touched. The owner reviewed this and released the gate for trial 10 the same day.
