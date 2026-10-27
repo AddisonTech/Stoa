@@ -4,11 +4,15 @@
     {
       "session": "2026-10-26",
       "reason": "items failed"
+    },
+    {
+      "session": "2026-10-26",
+      "reason": "items failed"
     }
   ],
   "items_by_session": {},
   "spend_by_month": {
-    "2026-10": "0.03398046"
+    "2026-10": "0.06693134"
   },
   "cap_raises": [],
   "cap_asks": [],
