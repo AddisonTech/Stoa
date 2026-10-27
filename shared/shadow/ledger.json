@@ -1,5 +1,7 @@
 {
-  "sessions": [],
+  "sessions": [
+    "2026-10-26"
+  ],
   "skipped": [
     {
       "session": "2026-10-26",
@@ -14,9 +16,11 @@
       "reason": "items failed"
     }
   ],
-  "items_by_session": {},
+  "items_by_session": {
+    "2026-10-26": 497
+  },
   "spend_by_month": {
-    "2026-10": "0.12565076"
+    "2026-10": "0.15887252"
   },
   "cap_raises": [],
   "cap_asks": [],
