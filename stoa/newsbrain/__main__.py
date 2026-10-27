@@ -1,7 +1,7 @@
 """Run one background job: ``python -m stoa.newsbrain <job>``.
 
 Jobs: news, minute, sec, score, panel, trial9, trial10, preregister11, trial11,
-news_timing, coverage. Each logs to data/newsbrain/logs/
+news_timing, harness, coverage. Each logs to data/newsbrain/logs/
 and can be stopped and restarted at any time.
 """
 
@@ -141,6 +141,19 @@ def main(argv: list[str]) -> int:
         from stoa.newsbrain.news_timing import run as news_timing
 
         print(json.dumps(news_timing(), indent=1, default=str))
+    elif job == "harness":
+        from pathlib import Path
+
+        import pandas as pd
+
+        from stoa.config import load_settings
+        from stoa.experiments import Registry
+        from stoa.newsbrain.harness import run as harness
+        from stoa.newsbrain.panel import PANEL
+
+        settings = load_settings(Path("config/default.yaml"))
+        got = harness(settings, pd.read_parquet(PANEL), Registry(settings.registry_path))
+        print(json.dumps(got["verdict"], indent=1))
     elif job == "coverage":
         from stoa.newsbrain.coverage import report
 
