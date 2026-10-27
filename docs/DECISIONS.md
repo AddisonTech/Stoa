@@ -476,3 +476,24 @@ Decided 2026-10-27, before trial 10 runs. A trial whose graded run closes fewer 
 - **Cause.** The 7:45 pm trial 7 job failed three times on 2026-10-26 (7:53 pm from the Dell's start, 8:02 pm from cron-job.org's, 10:35 pm from the GitHub cron backup): one failure, reported once by each clock. Each run scored the same session; 5 to 12 of its 499 items failed, and a session counts only when every item is scored. Claude Haiku 5.5 thinks by default and its thinking counts toward `max_tokens`, which was 400, so an item it thought about longer was cut off before its JSON and could not be read. Nothing on the Dell was involved (the job runs on GitHub; the trial 9 commit, the panel build and the minute pull did not touch it).
 - **Fix.** `analyst.max_tokens` is now 4,000 (billed only for tokens used), every failed item now logs its reason (cut off, refusal with its category, or schema), the run summary and the ledger say why, and `stoa analyst explain-failures` re-reads finished batches at no cost. The scoring prompt, model and schema are unchanged; no trial 7 session had been scored yet. The change alters the effective-config hash, so the next model training or scoring run counts as one new configuration in the deflated Sharpe.
 - **One failure alert a day.** When a clock (cron-job.org, the Dell or GitHub cron) already ran a job today and it failed, a later start from a backup clock skips the job and sends nothing (`stoa triggers already-failed`). A start by hand always runs. Missed-trigger alerts are unchanged. The trade-off, accepted: a failed 9:45 am EXECUTE is no longer retried by the 9:50 am backup; rerun it by hand if the failure was passing.
+
+## Trial 12: the 1 session signal with idle money in SPY
+
+Pre-registered on 2026-10-27, before any trial 12 code ran on data. Trained once (trial 9's frozen models) and tested once. If it fails, the result is reported and nothing is tuned or retried. The rules are also in the experiment registry as entry `trial12:preregistration`, spec hash `e75fa8775469de92` (`stoa/newsbrain/spycore.py`, `spec()`), written before the run.
+
+**Question.** Does the news brain's 1 session signal beat SPY when idle money sits in SPY instead of cash? Trial 9's graded 5 session model starved (6 trades). Its 1 session run (+51.8%, Sharpe 1.22, 196 trades) lagged SPY partly because the account sat in cash most of the time in a strong bull market.
+
+**Same as trial 9:** the data, the 13 features, the model settings, the walk-forward on 2016-01-01 to 2022-12-31 with labels ending by 2022-12-30 (trial 9's frozen models are used as they are, not refit), the test window 2023-01-01 to 2026-06-30, the replay engine, every risk rail, the pass bar (including Sharpe above MTUM on validation and the deflated Sharpe at least 0.95), the signals (p of at least 0.55, up to 10 a session, best first) and the holdout wall. Only the following differ.
+
+- **Graded horizon: 1 session.** The 5 and 20 session runs are reported and count as trials in the deflation.
+- **SPY core.** Cash above the 2% reserve sits in SPY. At 9:45 am, a buy that cash cannot cover sells SPY at the same 9:45 am fill. After the session's orders, cash above the reserve buys SPY, so when a pick exits its money goes back to SPY. SPY is never bought and sold in the same session (the account's no same-day round trip rule), so spare cash on a session SPY was sold waits one session. The rails see SPY as idle money: it counts in cash and equity but takes no position slot, no size cap and no sector. The kill switch sells SPY too, and nothing is swept while it is on. SPY itself is never a pick. Swaps are not trades: they are counted on their own, not in the trade count.
+- **SPY costs.** Every SPY trade pays trial 9's cost model (25 x sqrt($10 million / 20 session dollar volume), 5 to 75 bps; 5 bps for SPY) plus the sell fee.
+- **Comparison.** The same signals with idle money in cash (trial 9's rule), logged as its own trial.
+
+**Reported, for both the SPY core and cash versions and each horizon:** trades, hit rate, return, Sharpe, Sortino, max drawdown and deflated Sharpe, against SPY and MTUM, and split by small, mid and large caps. Also the share of sessions fully in SPY (no pick held) and the total cost paid on SPY swaps. Six configurations are logged as trials. The starved-run rule (above) applies.
+
+**Known limits, said now.** The 1 session horizon was chosen after seeing trial 9's results on this same test window, so a pass here is a lead, not proof. Real proof is the sealed holdout and live paper trading. The deflated Sharpe counts every trial so far plus the six configurations here.
+
+**When.** Run once, after trial 11 in the after-pull chain, behind the same known-answer gate.
+
+**Holdout.** 2026-07-01 to 2026-10-23 is never read.

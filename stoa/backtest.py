@@ -17,6 +17,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
+from typing import Any
 
 import pandas as pd
 
@@ -53,6 +54,7 @@ class BacktestResult:
     decisions: int = 0
     kills_by_gate: dict[str, int] = field(default_factory=dict)
     rejections_by_reason: dict[str, int] = field(default_factory=dict)
+    sweep: Any = None  # SweepStats when idle money sat in a fund (trial 12), else None
 
     @property
     def final_equity(self) -> Decimal:
@@ -85,6 +87,7 @@ def run_backtest(
     journal: Journal | None = None,
     slippage: Slippage | None = None,
     fill_prices: Callable[[date, set[str], set[str]], dict[str, Decimal]] | None = None,
+    sweep_symbol: str | None = None,
 ) -> BacktestResult:
     """Run ``strategy`` over the sessions from ``start`` to ``end``.
 
@@ -92,6 +95,9 @@ def run_backtest(
     planned buys and the other symbols that may trade (holdings, planned sells)
     and returns a price for those it knows (the 9:45 am price in the news
     trials). Symbols it leaves out fill at the open.
+
+    ``sweep_symbol`` (trial 12's SPY core, backtest only) holds idle money in that fund
+    through a ``SweepBroker``: the strategy sees the fund as cash, never as a holding.
     """
     bench = settings.benchmark
     if bench not in bars:
@@ -116,7 +122,20 @@ def run_backtest(
     universe = universe or Universe.assume_all_fractionable(settings.watchlist, bench)
     features = build_features(bars, bench)
     portfolio = Portfolio(cash=equity0)
-    broker = SimBroker(portfolio, settings.costs, universe, slippage)
+    broker: SimBroker
+    if sweep_symbol is None:
+        broker = SimBroker(portfolio, settings.costs, universe, slippage)
+    else:
+        from stoa.broker.sweep import SweepBroker
+
+        broker = SweepBroker(
+            portfolio,
+            settings.costs,
+            universe,
+            slippage,
+            symbol=sweep_symbol,
+            reserve_pct=settings.risk.cash_buffer_pct,
+        )
     state = State(high_water_mark=equity0)
 
     equity_points: dict[pd.Timestamp, float] = {pd.Timestamp(first_decide): float(equity0)}
@@ -134,9 +153,9 @@ def run_backtest(
             session=day,
             execute_session=next_day,
             features=slice_features(features, day),
-            holdings=_holdings(portfolio, state),
+            holdings={k: v for k, v in _holdings(portfolio, state).items() if k != sweep_symbol},
             equity=equity,
-            cash=portfolio.cash,
+            cash=broker.account().cash,
             prev_equity=prev_equity if day != first_decide else None,
             high_water_mark=state.high_water_mark or equity,
             kill_switch_active=state.kill_switch.active,
@@ -212,6 +231,11 @@ def run_backtest(
                 trips += int(report.kill_switch_tripped)
             else:
                 execute_baseline(pending, broker, state, day)
+        if sweep_symbol is not None:
+            from stoa.broker.sweep import SweepBroker
+
+            assert isinstance(broker, SweepBroker)
+            broker.sweep(state.kill_switch.active)
         broker.mark(_prices(bars, ts, "close"))
         equity = portfolio.equity(broker.prices)
         invested = portfolio.market_value(broker.prices)
@@ -241,4 +265,5 @@ def run_backtest(
         decisions=decisions,
         kills_by_gate=dict(kills),
         rejections_by_reason=dict(rejections),
+        sweep=getattr(broker, "stats", None) if sweep_symbol is not None else None,
     )

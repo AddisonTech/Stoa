@@ -71,7 +71,7 @@ def test_cheater_takes_each_sessions_best_realised_rows_and_random_takes_two() -
     assert len(a) == 2 * test["sidx"].nunique()
     assert [s.symbol for s in a] != [s.symbol for s in hz.random_signals(test, 2)]
     spy = hz.spy_signals([date(2024, 3, 4), date(2024, 3, 5)])
-    assert all(s.symbol == "SPY" and s.kind == hz.HOLD_KIND for s in spy)
+    assert all(s.symbol == "IVV" and s.kind == hz.HOLD_KIND for s in spy)  # SPY is never a pick
 
 
 def test_charged_costs_are_measured_against_the_price_handed_to_the_engine() -> None:

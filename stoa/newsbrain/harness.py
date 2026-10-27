@@ -6,8 +6,9 @@ simulated broker, the risk engine and its rails, the liquidity cost model), 9:45
 fills, trial 9's trade table and its pass bar. The test window is 2023-01-01 to
 2026-06-30; the holdout is never read.
 
-a. Buy and hold SPY: a SPY signal every session, held until a rail exits it. Known
-   answer: daily returns equal to the book's SPY exposure times SPY's, less costs, so
+a. Buy and hold the S&P 500 through IVV (the event strategy never trades the benchmark
+   symbol, SPY, by design): an IVV signal every session, held until a rail exits it.
+   Known answer: daily returns equal to the book's exposure times IVV's, less costs, so
    its Sharpe sits near SPY's.
 b. The cheater: each session's 10 rows with the best realised 5 session excess return
    (lookahead on purpose). Known answer: every check passes with a huge Sharpe.
@@ -48,6 +49,8 @@ log = logging.getLogger(__name__)
 
 OUT = ROOT / "harness"
 HOLD_KIND = "harness_hold"
+INDEX_FUND = "IVV"  # tracks the S&P 500; SPY is the benchmark and never a pick
+LEGS = ("spy", "cheater", "random")
 SEEDS = (1, 2, 3, 4, 5)
 RANDOM_PER_SESSION = 2
 CHEATER_PER_SESSION = 10
@@ -124,9 +127,9 @@ def register() -> None:
     event_signals.PRIORITY[HOLD_KIND] = 2
 
 
-def spy_signals(days: list[date]) -> list[event_signals.Signal]:
+def spy_signals(days: list[date], symbol: str = INDEX_FUND) -> list[event_signals.Signal]:
     return [
-        event_signals.Signal("SPY", clock.previous_session(d), HOLD_KIND, 1.0, "buy and hold")
+        event_signals.Signal(symbol, clock.previous_session(d), HOLD_KIND, 1.0, "buy and hold")
         for d in days
     ]
 
@@ -224,8 +227,13 @@ def summary(run: Any) -> dict[str, Any]:
 
 
 def run(
-    settings: Settings, rows: pd.DataFrame, registry: Registry, out: Path = OUT
+    settings: Settings,
+    rows: pd.DataFrame,
+    registry: Registry,
+    out: Path = OUT,
+    legs: tuple[str, ...] = LEGS,
 ) -> dict[str, Any]:
+    """Run the given legs; legs run before (in results.json) are kept when only some run."""
     sealed.check(t9.TEST_END, "the test window")
     register()
     rows = rows[rows["session"] < sealed.HOLDOUT_START]
@@ -236,47 +244,99 @@ def run(
     base = t9.baselines(settings, bars)
     spy_test = base["spy:test"].metrics
     adv = {(s, d): a for s, d, a in zip(test["symbol"], test["session"], test["adv"], strict=True)}
-    results: dict[str, Any] = {}
+    old = out / "results.json"
+    keep = old.exists() and set(legs) != set(LEGS)
+    results: dict[str, Any] = json.loads(old.read_text(encoding="utf-8")) if keep else {}
+    if "spy" in legs:
+        results["spy"] = index_leg(settings, bars, days, prices, spy_test)
+    if "cheater" in legs:
+        results["cheater"] = cheater_leg(settings, bars, test, base, registry, prices)
+    if "random" in legs:
+        results["random"] = random_leg(settings, bars, test, adv, prices, spy_test)
+    honest = all(bool(results.get(k, {}).get("passed")) for k in LEGS)
+    verdict = {
+        "verdict": "honest" if honest else "bug",
+        "passed": {k: results.get(k, {}).get("passed") for k in LEGS},
+        "prices": dict(prices.sources),
+    }
+    out.mkdir(parents=True, exist_ok=True)
+    old.write_text(json.dumps(results, indent=1, default=str), encoding="utf-8")
+    (out / "verdict.json").write_text(json.dumps(verdict, indent=1), encoding="utf-8")
+    return {"verdict": verdict, "results": results}
 
-    # a. buy and hold SPY
-    rep = t9.replay(settings, bars, spy_signals(days), H, prices, name="harness_spy")
+
+def costs(c: Charged) -> dict[str, Any]:
+    return c.__dict__ | {"round_trip_bps": c.round_trip_bps}
+
+
+def index_leg(
+    settings: Settings, bars: Any, days: list[date], prices: Prices, spy_test: Any
+) -> dict[str, Any]:
+    """a. Buy and hold the S&P 500 through IVV."""
+    from stoa.newsbrain.panel import bar_frame
+
+    rep = t9.replay(settings, bars, spy_signals(days), H, prices, name="harness_index")
     res = rep["test"].result
-    expected = spy_expected(res, bars["SPY"]["close"])
+    fund = bar_frame(INDEX_FUND, sorted(days))
+    assert fund is not None, f"no daily bars for {INDEX_FUND}"
+    expected = spy_expected(res, fund["close"])
     got = rep["test"].run.metrics
-    c = charged(res, prices)
     ok = (
-        abs(got.sharpe - spy_test.sharpe) <= SPY_SHARPE_GAP
+        len(res.trades) + len(res.final_positions) > 0
+        and abs(got.sharpe - spy_test.sharpe) <= SPY_SHARPE_GAP
         and abs(got.total_return - expected) <= SPY_RETURN_GAP
     )
-    results["spy"] = {
+    out = {
         "passed": bool(ok),
-        "expected": f"Sharpe near SPY's {spy_test.sharpe:.2f}; return near {expected:.2%} "
-        f"(average exposure {float(res.exposure.mean()):.0%} of SPY's {spy_test.total_return:.2%})",
+        "fund": INDEX_FUND,
+        "expected": f"Sharpe near SPY's {spy_test.sharpe:.2f} (within {SPY_SHARPE_GAP}); return "
+        f"near {expected:.2%}, the book's exposure ({float(res.exposure.mean()):.0%} on "
+        f"average) times {INDEX_FUND} day by day (within {SPY_RETURN_GAP:.0%}); SPY returned "
+        f"{spy_test.total_return:.2%}",
         "actual": summary(rep["test"].run),
         "spy": {"return": spy_test.total_return, "sharpe": spy_test.sharpe},
         "expected_return": expected,
         "exposure": float(res.exposure.mean()),
-        "charged": c.__dict__ | {"round_trip_bps": c.round_trip_bps},
+        "charged": costs(charged(res, prices)),
     }
-    log.info("harness spy: %s", results["spy"])
+    log.info("harness index: %s", out)
+    return out
 
-    # b. the cheater, graded on trial 9's pass bar
+
+def cheater_leg(
+    settings: Settings,
+    bars: Any,
+    test: pd.DataFrame,
+    base: dict[str, Any],
+    registry: Registry,
+    prices: Prices,
+) -> dict[str, Any]:
+    """b. The cheater, graded on trial 9's pass bar."""
     rep = t9.replay(settings, bars, cheater_signals(test), H, prices, name="harness_cheater")
     dsr = deflate(registry, list(rep["validation"].run.daily_returns), variance_kind="backtest")
     chk = t9.checks(rep, base, dsr["dsr"])
     sharpe = rep["test"].run.metrics.sharpe
-    c = charged(rep["test"].result, prices)
-    results["cheater"] = {
+    out = {
         "passed": bool(all(x["passed"] for x in chk) and sharpe >= CHEATER_MIN_SHARPE),
         "expected": f"every check passes, Sharpe at least {CHEATER_MIN_SHARPE}",
         "actual": summary(rep["test"].run),
         "checks": chk,
         "dsr": dsr["dsr"],
-        "charged": c.__dict__ | {"round_trip_bps": c.round_trip_bps},
+        "charged": costs(charged(rep["test"].result, prices)),
     }
-    log.info("harness cheater: passed %s, Sharpe %.2f", results["cheater"]["passed"], sharpe)
+    log.info("harness cheater: passed %s, Sharpe %.2f", out["passed"], sharpe)
+    return out
 
-    # c. random picks, 5 seeds
+
+def random_leg(
+    settings: Settings,
+    bars: Any,
+    test: pd.DataFrame,
+    adv: dict[tuple[str, date], float],
+    prices: Prices,
+    spy_test: Any,
+) -> dict[str, Any]:
+    """c. Random picks, 5 seeds, against the average eligible row after the same costs."""
     known = test[f"excess_{H}"].dropna()
     seeds = []
     pooled = []
@@ -285,24 +345,21 @@ def run(
             settings, bars, random_signals(test, seed), H, prices, name=f"harness_random{seed}"
         )
         trades = t9.trade_table(rep["test"].result, bars["SPY"], adv)
-        c = charged(rep["test"].result, prices)
         pooled.append(trades)
         seeds.append(
             {
                 "seed": seed,
                 **summary(rep["test"].run),
                 "mean_trade_excess": float(trades["excess"].mean()) if len(trades) else math.nan,
-                "charged": c.__dict__ | {"round_trip_bps": c.round_trip_bps},
+                "charged": costs(charged(rep["test"].result, prices)),
             }
         )
     allt = pd.concat(pooled, ignore_index=True)
-    mean, se = (
-        float(allt["excess"].mean()),
-        float(allt["excess"].std(ddof=1) / math.sqrt(len(allt))),
-    )
+    mean = float(allt["excess"].mean())
+    se = float(allt["excess"].std(ddof=1) / math.sqrt(len(allt)))
     target = float(known.mean())
     pre_cost = float((known + 2 * test.loc[known.index, "slip"] + FEE).mean())
-    results["random"] = {
+    out = {
         "passed": bool(abs(mean - target) <= RANDOM_SE * se),
         "expected": f"mean trade beats SPY by {target:+.2%} after costs (the average eligible "
         f"row; {pre_cost:+.2%} before costs), within {RANDOM_SE:.0f} standard errors",
@@ -312,15 +369,5 @@ def run(
         "pre_cost": pre_cost,
         "spy": {"return": spy_test.total_return, "sharpe": spy_test.sharpe},
     }
-    log.info("harness random: %s", results["random"]["actual"])
-
-    honest = all(r["passed"] for r in results.values())
-    verdict = {
-        "verdict": "honest" if honest else "bug",
-        "passed": {k: v["passed"] for k, v in results.items()},
-        "prices": dict(prices.sources),
-    }
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "results.json").write_text(json.dumps(results, indent=1, default=str), encoding="utf-8")
-    (out / "verdict.json").write_text(json.dumps(verdict, indent=1), encoding="utf-8")
-    return {"verdict": verdict, "results": results}
+    log.info("harness random: %s", out["actual"])
+    return out

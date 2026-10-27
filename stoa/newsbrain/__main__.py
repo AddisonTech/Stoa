@@ -1,7 +1,7 @@
 """Run one background job: ``python -m stoa.newsbrain <job>``.
 
 Jobs: news, minute, sec, score, panel, trial9, trial10, preregister11, trial11,
-news_timing, harness, coverage. Each logs to data/newsbrain/logs/
+news_timing, harness, preregister12, trial12, coverage. Each logs to data/newsbrain/logs/
 and can be stopped and restarted at any time.
 """
 
@@ -152,8 +152,34 @@ def main(argv: list[str]) -> int:
         from stoa.newsbrain.panel import PANEL
 
         settings = load_settings(Path("config/default.yaml"))
-        got = harness(settings, pd.read_parquet(PANEL), Registry(settings.registry_path))
+        legs = tuple(argv[1].split(",")) if len(argv) > 1 else ("spy", "cheater", "random")
+        got = harness(settings, pd.read_parquet(PANEL), Registry(settings.registry_path), legs=legs)
         print(json.dumps(got["verdict"], indent=1))
+    elif job in ("preregister12", "trial12"):
+        from pathlib import Path
+
+        import pandas as pd
+
+        from stoa.config import load_settings
+        from stoa.experiments import Registry
+        from stoa.newsbrain import spycore
+        from stoa.newsbrain.panel import PANEL
+
+        settings = load_settings(Path("config/default.yaml"))
+        registry = Registry(settings.registry_path)
+        spycore.preregister(registry)  # written once, never rewritten
+        if job == "preregister12":
+            print(
+                f"trial 12 pre-registered in {settings.registry_path} (spec {spycore.spec_hash()})"
+            )
+        else:
+            from stoa.newsbrain.alpaca_pull import LIMITS, client_from_env
+            from stoa.newsbrain.pace import Pace
+            from stoa.newsbrain.trial import EntryPrices
+
+            entry = EntryPrices(client_from_env(), Pace("entry", 60, LIMITS), ROOT / "entry")
+            got = spycore.run_trial12(settings, pd.read_parquet(PANEL), entry.at_945, registry)
+            print(json.dumps({"verdict": got["verdict"], "checks": got["checks"]}, indent=1))
     elif job == "coverage":
         from stoa.newsbrain.coverage import report
 
