@@ -1,7 +1,8 @@
 """Run one background job: ``python -m stoa.newsbrain <job>``.
 
 Jobs: news, minute, sec, score, panel, trial9, trial10, preregister11, trial11,
-news_timing, harness, preregister12, trial12, coverage. Each logs to data/newsbrain/logs/
+news_timing, harness, preregister12, trial12, preregister12h,
+holdout12, coverage. Each logs to data/newsbrain/logs/
 and can be stopped and restarted at any time.
 """
 
@@ -179,6 +180,26 @@ def main(argv: list[str]) -> int:
 
             entry = EntryPrices(client_from_env(), Pace("entry", 60, LIMITS), ROOT / "entry")
             got = spycore.run_trial12(settings, pd.read_parquet(PANEL), entry.at_945, registry)
+            print(json.dumps({"verdict": got["verdict"], "checks": got["checks"]}, indent=1))
+    elif job in ("preregister12h", "holdout12"):
+        from pathlib import Path
+
+        from stoa.config import load_settings
+        from stoa.experiments import Registry
+        from stoa.newsbrain import holdout12
+
+        settings = load_settings(Path("config/default.yaml"))
+        registry = Registry(settings.registry_path)
+        holdout12.preregister(registry)  # written once, never rewritten
+        if job == "preregister12h":
+            print(f"trial 12 holdout pre-registered (spec {holdout12.spec_hash()})")
+        else:
+            from stoa.newsbrain.alpaca_pull import LIMITS, client_from_env
+            from stoa.newsbrain.pace import Pace
+            from stoa.newsbrain.trial import EntryPrices
+
+            entry = EntryPrices(client_from_env(), Pace("entry", 60, LIMITS), ROOT / "entry")
+            got = holdout12.run(settings, entry.at_945, registry)
             print(json.dumps({"verdict": got["verdict"], "checks": got["checks"]}, indent=1))
     elif job == "coverage":
         from stoa.newsbrain.coverage import report

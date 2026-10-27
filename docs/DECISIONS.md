@@ -501,3 +501,19 @@ Pre-registered on 2026-10-27, before any trial 12 code ran on data. Trained once
 ## Harness known-answer test, 2026-10-27
 
 Run before trial 10 through trial 9's own code on 2023-01-01 to 2026-06-30 (`stoa/newsbrain/harness.py`), never the holdout, and kept out of the registry. A lookahead cheater passed every check (Sharpe 10.97, 701 trades). Random picks, 5 seeds, averaged -0.75% a trade against SPY, within 3 standard errors of the known -0.44% for the average eligible row after the same costs (33 to 36 bps a round trip). An S&P 500 buy and hold (IVV, since the event strategy never trades the benchmark symbol SPY) returned its exposure times IVV day by day (Sharpe 0.62 against an exact 0.65; the 0.28% gap is costs) but failed a Sharpe rule set beforehand that wrongly assumed a fully invested book; the rails held it in only 61% of sessions at 20%. No engine bug was found, so no earlier trial is touched. The owner reviewed this and released the gate for trial 10 the same day.
+
+## Trial 12 on the holdout
+
+Decided 2026-10-27, written before anything read the holdout.
+
+Owner opens the holdout (2026-07-01 to 2026-10-23) once, for trial 12 as pre-registered (spec e75fa8775469de92), after trial 12 passed 7 of 9 checks on 2023 to mid-2026 and beat SPY. One run. No tuning, no retries, no other trial on this window, ever. After this the holdout is spent, and the next proof is live paper trading.
+
+**Pre-registration, before any run** (also in the registry as `trial12:holdout`, spec hash `2c9d9e8a89e908d5`, `stoa/newsbrain/holdout12.py`, `spec()`):
+
+- **Same as trial 12:** trial 9's frozen models (no refit), the 13 features, the 1 session graded horizon, the SPY core, p of at least 0.55 and up to 10 a session, 9:45 am fills (fetched by the same code as trial 12), the cost model and every risk rail. Only the window changes, to 2026-07-01 to 2026-10-23 (81 sessions). Features are built the same way through 2026-10-23.
+- **Reported beside it, not graded:** the cash version and the 5 and 20 session runs.
+- **Expected trades:** 17.9, trial 12's test-window rate (193 graded trades in 875 sessions) times the holdout's 81 sessions. A run with fewer than a quarter of that (4.47) is STARVED; the 30 trade floor is not reachable in 81 sessions.
+- **Pass bar on the holdout,** for the 1 session SPY core run: Sharpe at or above SPY's, return at or above SPY's, max drawdown at or below SPY's, max drawdown under 25%, and not starved. All five, or it fails.
+- **Reported, not graded:** MTUM and the deflated Sharpe. Four months is too short for either to mean much.
+- **The wall.** `stoa.newsbrain.sealed.opened` lifts the wall for this one run, up to 2026-10-23, and nothing else. A marker is written the moment it opens; once the run finishes the holdout is spent and no run can open it again. A run that stops part way reopens only on the owner's word. The formal `stoa holdout seal` and `score` path was never sealed and is not used; this decision takes its place for trial 12. The result is logged in the registry as kind `holdout`, not as a new trial.
+- **When.** After the minute-bar compaction in the after-pull chain and before the backup, so it never runs while the minute bars are being rewritten. One run, stop and alert on failure, never rerun without the owner's word.
