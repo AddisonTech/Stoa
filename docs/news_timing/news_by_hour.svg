@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="470" viewBox="0 0 960 470" role="img" aria-label="When news lands, by hour" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+<title>When news lands, by hour</title>
+<rect width="960" height="470" fill="#fcfcfb"/>
+<text x="60" y="28" font-size="16" font-weight="600" fill="#0b0b0b">When news lands, by hour (New York time), 2016 to 2022</text>
+<text x="60" y="46" font-size="12" fill="#52514e">Share of each size's articles in each hour. Weekdays on top, weekends below.</text>
+<text x="60" y="56" font-size="12" font-weight="600" fill="#0b0b0b">Small caps, weekdays (95,466 articles)</text>
+<line x1="60" x2="340" y1="139.0" y2="139.0" stroke="#e6e5e0"/>
+<text x="54" y="143.0" font-size="11" fill="#52514e" text-anchor="end">10%</text>
+<line x1="60" x2="340" y1="64.0" y2="64.0" stroke="#e6e5e0"/>
+<text x="54" y="68.0" font-size="11" fill="#52514e" text-anchor="end">20%</text>
+<rect x="61.0" y="213.6" width="9.7" height="0.4" rx="2" fill="#2a78d6"><title>small weekday 12:00 am: 49 articles (0.1%)</title></rect>
+<rect x="72.7" y="213.8" width="9.7" height="0.2" rx="2" fill="#2a78d6"><title>small weekday 1:00 am: 24 articles (0.0%)</title></rect>
+<rect x="84.3" y="213.9" width="9.7" height="0.1" rx="2" fill="#2a78d6"><title>small weekday 2:00 am: 19 articles (0.0%)</title></rect>
+<rect x="96.0" y="211.6" width="9.7" height="2.4" rx="2" fill="#2a78d6"><title>small weekday 3:00 am: 305 articles (0.3%)</title></rect>
+<rect x="107.7" y="203.3" width="9.7" height="10.7" rx="2" fill="#2a78d6"><title>small weekday 4:00 am: 1,363 articles (1.4%)</title></rect>
+<rect x="119.3" y="200.3" width="9.7" height="13.7" rx="2" fill="#2a78d6"><title>small weekday 5:00 am: 1,748 articles (1.8%)</title></rect>
+<rect x="131.0" y="138.2" width="9.7" height="75.8" rx="2" fill="#2a78d6"><title>small weekday 6:00 am: 9,646 articles (10.1%)</title></rect>
+<rect x="142.7" y="105.1" width="9.7" height="108.9" rx="2" fill="#2a78d6"><title>small weekday 7:00 am: 13,863 articles (14.5%)</title></rect>
+<rect x="154.3" y="113.5" width="9.7" height="100.5" rx="2" fill="#2a78d6"><title>small weekday 8:00 am: 12,788 articles (13.4%)</title></rect>
+<rect x="166.0" y="140.8" width="9.7" height="73.2" rx="2" fill="#2a78d6"><title>small weekday 9:00 am: 9,319 articles (9.8%)</title></rect>
+<rect x="177.7" y="159.6" width="9.7" height="54.4" rx="2" fill="#2a78d6"><title>small weekday 10:00 am: 6,919 articles (7.2%)</title></rect>
+<rect x="189.3" y="180.0" width="9.7" height="34.0" rx="2" fill="#2a78d6"><title>small weekday 11:00 am: 4,326 articles (4.5%)</title></rect>
+<rect x="201.0" y="186.8" width="9.7" height="27.2" rx="2" fill="#2a78d6"><title>small weekday 12:00 pm: 3,456 articles (3.6%)</title></rect>
+<rect x="212.7" y="192.0" width="9.7" height="22.0" rx="2" fill="#2a78d6"><title>small weekday 1:00 pm: 2,797 articles (2.9%)</title></rect>
+<rect x="224.3" y="194.6" width="9.7" height="19.4" rx="2" fill="#2a78d6"><title>small weekday 2:00 pm: 2,465 articles (2.6%)</title></rect>
+<rect x="236.0" y="198.2" width="9.7" height="15.8" rx="2" fill="#2a78d6"><title>small weekday 3:00 pm: 2,006 articles (2.1%)</title></rect>
+<rect x="247.7" y="75.4" width="9.7" height="138.6" rx="2" fill="#2a78d6"><title>small weekday 4:00 pm: 17,647 articles (18.5%)</title></rect>
+<rect x="259.3" y="169.6" width="9.7" height="44.4" rx="2" fill="#2a78d6"><title>small weekday 5:00 pm: 5,650 articles (5.9%)</title></rect>
+<rect x="271.0" y="208.0" width="9.7" height="6.0" rx="2" fill="#2a78d6"><title>small weekday 6:00 pm: 759 articles (0.8%)</title></rect>
+<rect x="282.7" y="213.2" width="9.7" height="0.8" rx="2" fill="#2a78d6"><title>small weekday 7:00 pm: 106 articles (0.1%)</title></rect>
+<rect x="294.3" y="213.6" width="9.7" height="0.4" rx="2" fill="#2a78d6"><title>small weekday 8:00 pm: 47 articles (0.0%)</title></rect>
+<rect x="306.0" y="213.6" width="9.7" height="0.4" rx="2" fill="#2a78d6"><title>small weekday 9:00 pm: 48 articles (0.1%)</title></rect>
+<rect x="317.7" y="213.7" width="9.7" height="0.3" rx="2" fill="#2a78d6"><title>small weekday 10:00 pm: 32 articles (0.0%)</title></rect>
+<rect x="329.3" y="213.3" width="9.7" height="0.7" rx="2" fill="#2a78d6"><title>small weekday 11:00 pm: 84 articles (0.1%)</title></rect>
+<text x="65.8" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">12 am</text>
+<text x="112.5" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">4 am</text>
+<text x="159.2" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">8 am</text>
+<text x="205.8" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">12 pm</text>
+<text x="252.5" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">4 pm</text>
+<text x="299.2" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">8 pm</text>
+<line x1="60.0" x2="340.0" y1="214.0" y2="214.0" stroke="#52514e"/>
+<text x="376" y="56" font-size="12" font-weight="600" fill="#0b0b0b">Mid caps, weekdays (177,461 articles)</text>
+<line x1="376" x2="656" y1="139.0" y2="139.0" stroke="#e6e5e0"/>
+<line x1="376" x2="656" y1="64.0" y2="64.0" stroke="#e6e5e0"/>
+<rect x="377.0" y="213.6" width="9.7" height="0.4" rx="2" fill="#eb6834"><title>mid weekday 12:00 am: 93 articles (0.1%)</title></rect>
+<rect x="388.7" y="213.6" width="9.7" height="0.4" rx="2" fill="#eb6834"><title>mid weekday 1:00 am: 105 articles (0.1%)</title></rect>
+<rect x="400.3" y="213.6" width="9.7" height="0.4" rx="2" fill="#eb6834"><title>mid weekday 2:00 am: 86 articles (0.0%)</title></rect>
+<rect x="412.0" y="211.3" width="9.7" height="2.7" rx="2" fill="#eb6834"><title>mid weekday 3:00 am: 634 articles (0.4%)</title></rect>
+<rect x="423.7" y="200.5" width="9.7" height="13.5" rx="2" fill="#eb6834"><title>mid weekday 4:00 am: 3,193 articles (1.8%)</title></rect>
+<rect x="435.3" y="197.2" width="9.7" height="16.8" rx="2" fill="#eb6834"><title>mid weekday 5:00 am: 3,974 articles (2.2%)</title></rect>
+<rect x="447.0" y="136.2" width="9.7" height="77.8" rx="2" fill="#eb6834"><title>mid weekday 6:00 am: 18,404 articles (10.4%)</title></rect>
+<rect x="458.7" y="110.2" width="9.7" height="103.8" rx="2" fill="#eb6834"><title>mid weekday 7:00 am: 24,567 articles (13.8%)</title></rect>
+<rect x="470.3" y="117.9" width="9.7" height="96.1" rx="2" fill="#eb6834"><title>mid weekday 8:00 am: 22,748 articles (12.8%)</title></rect>
+<rect x="482.0" y="131.8" width="9.7" height="82.2" rx="2" fill="#eb6834"><title>mid weekday 9:00 am: 19,446 articles (11.0%)</title></rect>
+<rect x="493.7" y="149.5" width="9.7" height="64.5" rx="2" fill="#eb6834"><title>mid weekday 10:00 am: 15,256 articles (8.6%)</title></rect>
+<rect x="505.3" y="168.9" width="9.7" height="45.1" rx="2" fill="#eb6834"><title>mid weekday 11:00 am: 10,682 articles (6.0%)</title></rect>
+<rect x="517.0" y="175.4" width="9.7" height="38.6" rx="2" fill="#eb6834"><title>mid weekday 12:00 pm: 9,125 articles (5.1%)</title></rect>
+<rect x="528.7" y="184.4" width="9.7" height="29.6" rx="2" fill="#eb6834"><title>mid weekday 1:00 pm: 7,002 articles (3.9%)</title></rect>
+<rect x="540.3" y="189.3" width="9.7" height="24.7" rx="2" fill="#eb6834"><title>mid weekday 2:00 pm: 5,843 articles (3.3%)</title></rect>
+<rect x="552.0" y="192.6" width="9.7" height="21.4" rx="2" fill="#eb6834"><title>mid weekday 3:00 pm: 5,053 articles (2.8%)</title></rect>
+<rect x="563.7" y="118.6" width="9.7" height="95.4" rx="2" fill="#eb6834"><title>mid weekday 4:00 pm: 22,579 articles (12.7%)</title></rect>
+<rect x="575.3" y="184.6" width="9.7" height="29.4" rx="2" fill="#eb6834"><title>mid weekday 5:00 pm: 6,962 articles (3.9%)</title></rect>
+<rect x="587.0" y="209.6" width="9.7" height="4.4" rx="2" fill="#eb6834"><title>mid weekday 6:00 pm: 1,042 articles (0.6%)</title></rect>
+<rect x="598.7" y="213.0" width="9.7" height="1.0" rx="2" fill="#eb6834"><title>mid weekday 7:00 pm: 239 articles (0.1%)</title></rect>
+<rect x="610.3" y="213.4" width="9.7" height="0.6" rx="2" fill="#eb6834"><title>mid weekday 8:00 pm: 135 articles (0.1%)</title></rect>
+<rect x="622.0" y="213.5" width="9.7" height="0.5" rx="2" fill="#eb6834"><title>mid weekday 9:00 pm: 108 articles (0.1%)</title></rect>
+<rect x="633.7" y="213.7" width="9.7" height="0.3" rx="2" fill="#eb6834"><title>mid weekday 10:00 pm: 71 articles (0.0%)</title></rect>
+<rect x="645.3" y="213.5" width="9.7" height="0.5" rx="2" fill="#eb6834"><title>mid weekday 11:00 pm: 114 articles (0.1%)</title></rect>
+<text x="381.8" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">12 am</text>
+<text x="428.5" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">4 am</text>
+<text x="475.2" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">8 am</text>
+<text x="521.8" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">12 pm</text>
+<text x="568.5" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">4 pm</text>
+<text x="615.2" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">8 pm</text>
+<line x1="376.0" x2="656.0" y1="214.0" y2="214.0" stroke="#52514e"/>
+<text x="692" y="56" font-size="12" font-weight="600" fill="#0b0b0b">Large caps, weekdays (379,733 articles)</text>
+<line x1="692" x2="972" y1="139.0" y2="139.0" stroke="#e6e5e0"/>
+<line x1="692" x2="972" y1="64.0" y2="64.0" stroke="#e6e5e0"/>
+<rect x="693.0" y="212.6" width="9.7" height="1.4" rx="2" fill="#1baf7a"><title>large weekday 12:00 am: 720 articles (0.2%)</title></rect>
+<rect x="704.7" y="212.4" width="9.7" height="1.6" rx="2" fill="#1baf7a"><title>large weekday 1:00 am: 832 articles (0.2%)</title></rect>
+<rect x="716.3" y="212.5" width="9.7" height="1.5" rx="2" fill="#1baf7a"><title>large weekday 2:00 am: 778 articles (0.2%)</title></rect>
+<rect x="728.0" y="210.4" width="9.7" height="3.6" rx="2" fill="#1baf7a"><title>large weekday 3:00 am: 1,830 articles (0.5%)</title></rect>
+<rect x="739.7" y="199.0" width="9.7" height="15.0" rx="2" fill="#1baf7a"><title>large weekday 4:00 am: 7,585 articles (2.0%)</title></rect>
+<rect x="751.3" y="197.0" width="9.7" height="17.0" rx="2" fill="#1baf7a"><title>large weekday 5:00 am: 8,592 articles (2.3%)</title></rect>
+<rect x="763.0" y="163.2" width="9.7" height="50.8" rx="2" fill="#1baf7a"><title>large weekday 6:00 am: 25,710 articles (6.8%)</title></rect>
+<rect x="774.7" y="142.9" width="9.7" height="71.1" rx="2" fill="#1baf7a"><title>large weekday 7:00 am: 36,004 articles (9.5%)</title></rect>
+<rect x="786.3" y="135.9" width="9.7" height="78.1" rx="2" fill="#1baf7a"><title>large weekday 8:00 am: 39,551 articles (10.4%)</title></rect>
+<rect x="798.0" y="134.4" width="9.7" height="79.6" rx="2" fill="#1baf7a"><title>large weekday 9:00 am: 40,286 articles (10.6%)</title></rect>
+<rect x="809.7" y="134.1" width="9.7" height="79.9" rx="2" fill="#1baf7a"><title>large weekday 10:00 am: 40,462 articles (10.7%)</title></rect>
+<rect x="821.3" y="148.0" width="9.7" height="66.0" rx="2" fill="#1baf7a"><title>large weekday 11:00 am: 33,393 articles (8.8%)</title></rect>
+<rect x="833.0" y="150.8" width="9.7" height="63.2" rx="2" fill="#1baf7a"><title>large weekday 12:00 pm: 31,979 articles (8.4%)</title></rect>
+<rect x="844.7" y="163.4" width="9.7" height="50.6" rx="2" fill="#1baf7a"><title>large weekday 1:00 pm: 25,614 articles (6.7%)</title></rect>
+<rect x="856.3" y="168.6" width="9.7" height="45.4" rx="2" fill="#1baf7a"><title>large weekday 2:00 pm: 22,980 articles (6.1%)</title></rect>
+<rect x="868.0" y="175.5" width="9.7" height="38.5" rx="2" fill="#1baf7a"><title>large weekday 3:00 pm: 19,503 articles (5.1%)</title></rect>
+<rect x="879.7" y="156.8" width="9.7" height="57.2" rx="2" fill="#1baf7a"><title>large weekday 4:00 pm: 28,962 articles (7.6%)</title></rect>
+<rect x="891.3" y="194.7" width="9.7" height="19.3" rx="2" fill="#1baf7a"><title>large weekday 5:00 pm: 9,770 articles (2.6%)</title></rect>
+<rect x="903.0" y="209.8" width="9.7" height="4.2" rx="2" fill="#1baf7a"><title>large weekday 6:00 pm: 2,115 articles (0.6%)</title></rect>
+<rect x="914.7" y="212.5" width="9.7" height="1.5" rx="2" fill="#1baf7a"><title>large weekday 7:00 pm: 755 articles (0.2%)</title></rect>
+<rect x="926.3" y="212.9" width="9.7" height="1.1" rx="2" fill="#1baf7a"><title>large weekday 8:00 pm: 539 articles (0.1%)</title></rect>
+<rect x="938.0" y="212.8" width="9.7" height="1.2" rx="2" fill="#1baf7a"><title>large weekday 9:00 pm: 615 articles (0.2%)</title></rect>
+<rect x="949.7" y="212.8" width="9.7" height="1.2" rx="2" fill="#1baf7a"><title>large weekday 10:00 pm: 588 articles (0.2%)</title></rect>
+<rect x="961.3" y="212.9" width="9.7" height="1.1" rx="2" fill="#1baf7a"><title>large weekday 11:00 pm: 570 articles (0.2%)</title></rect>
+<text x="697.8" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">12 am</text>
+<text x="744.5" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">4 am</text>
+<text x="791.2" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">8 am</text>
+<text x="837.8" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">12 pm</text>
+<text x="884.5" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">4 pm</text>
+<text x="931.2" y="228.0" font-size="11" fill="#52514e" text-anchor="middle">8 pm</text>
+<line x1="692.0" x2="972.0" y1="214.0" y2="214.0" stroke="#52514e"/>
+<text x="60" y="276" font-size="12" font-weight="600" fill="#0b0b0b">Small caps, weekends (417 articles)</text>
+<line x1="60" x2="340" y1="359.0" y2="359.0" stroke="#e6e5e0"/>
+<text x="54" y="363.0" font-size="11" fill="#52514e" text-anchor="end">10%</text>
+<line x1="60" x2="340" y1="284.0" y2="284.0" stroke="#e6e5e0"/>
+<text x="54" y="288.0" font-size="11" fill="#52514e" text-anchor="end">20%</text>
+<rect x="61.0" y="432.2" width="9.7" height="1.8" rx="2" fill="#2a78d6"><title>small weekend 12:00 am: 1 articles (0.2%)</title></rect>
+<rect x="72.7" y="434.0" width="9.7" height="0.0" rx="2" fill="#2a78d6"><title>small weekend 1:00 am: 0 articles (0.0%)</title></rect>
+<rect x="84.3" y="434.0" width="9.7" height="0.0" rx="2" fill="#2a78d6"><title>small weekend 2:00 am: 0 articles (0.0%)</title></rect>
+<rect x="96.0" y="434.0" width="9.7" height="0.0" rx="2" fill="#2a78d6"><title>small weekend 3:00 am: 0 articles (0.0%)</title></rect>
+<rect x="107.7" y="432.2" width="9.7" height="1.8" rx="2" fill="#2a78d6"><title>small weekend 4:00 am: 1 articles (0.2%)</title></rect>
+<rect x="119.3" y="432.2" width="9.7" height="1.8" rx="2" fill="#2a78d6"><title>small weekend 5:00 am: 1 articles (0.2%)</title></rect>
+<rect x="131.0" y="423.2" width="9.7" height="10.8" rx="2" fill="#2a78d6"><title>small weekend 6:00 am: 6 articles (1.4%)</title></rect>
+<rect x="142.7" y="410.6" width="9.7" height="23.4" rx="2" fill="#2a78d6"><title>small weekend 7:00 am: 13 articles (3.1%)</title></rect>
+<rect x="154.3" y="378.2" width="9.7" height="55.8" rx="2" fill="#2a78d6"><title>small weekend 8:00 am: 31 articles (7.4%)</title></rect>
+<rect x="166.0" y="358.5" width="9.7" height="75.5" rx="2" fill="#2a78d6"><title>small weekend 9:00 am: 42 articles (10.1%)</title></rect>
+<rect x="177.7" y="378.2" width="9.7" height="55.8" rx="2" fill="#2a78d6"><title>small weekend 10:00 am: 31 articles (7.4%)</title></rect>
+<rect x="189.3" y="389.0" width="9.7" height="45.0" rx="2" fill="#2a78d6"><title>small weekend 11:00 am: 25 articles (6.0%)</title></rect>
+<rect x="201.0" y="396.2" width="9.7" height="37.8" rx="2" fill="#2a78d6"><title>small weekend 12:00 pm: 21 articles (5.0%)</title></rect>
+<rect x="212.7" y="403.4" width="9.7" height="30.6" rx="2" fill="#2a78d6"><title>small weekend 1:00 pm: 17 articles (4.1%)</title></rect>
+<rect x="224.3" y="394.4" width="9.7" height="39.6" rx="2" fill="#2a78d6"><title>small weekend 2:00 pm: 22 articles (5.3%)</title></rect>
+<rect x="236.0" y="389.0" width="9.7" height="45.0" rx="2" fill="#2a78d6"><title>small weekend 3:00 pm: 25 articles (6.0%)</title></rect>
+<rect x="247.7" y="380.0" width="9.7" height="54.0" rx="2" fill="#2a78d6"><title>small weekend 4:00 pm: 30 articles (7.2%)</title></rect>
+<rect x="259.3" y="358.5" width="9.7" height="75.5" rx="2" fill="#2a78d6"><title>small weekend 5:00 pm: 42 articles (10.1%)</title></rect>
+<rect x="271.0" y="374.6" width="9.7" height="59.4" rx="2" fill="#2a78d6"><title>small weekend 6:00 pm: 33 articles (7.9%)</title></rect>
+<rect x="282.7" y="367.5" width="9.7" height="66.5" rx="2" fill="#2a78d6"><title>small weekend 7:00 pm: 37 articles (8.9%)</title></rect>
+<rect x="294.3" y="392.6" width="9.7" height="41.4" rx="2" fill="#2a78d6"><title>small weekend 8:00 pm: 23 articles (5.5%)</title></rect>
+<rect x="306.0" y="414.2" width="9.7" height="19.8" rx="2" fill="#2a78d6"><title>small weekend 9:00 pm: 11 articles (2.6%)</title></rect>
+<rect x="317.7" y="425.0" width="9.7" height="9.0" rx="2" fill="#2a78d6"><title>small weekend 10:00 pm: 5 articles (1.2%)</title></rect>
+<rect x="329.3" y="434.0" width="9.7" height="0.0" rx="2" fill="#2a78d6"><title>small weekend 11:00 pm: 0 articles (0.0%)</title></rect>
+<text x="65.8" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">12 am</text>
+<text x="112.5" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">4 am</text>
+<text x="159.2" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">8 am</text>
+<text x="205.8" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">12 pm</text>
+<text x="252.5" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">4 pm</text>
+<text x="299.2" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">8 pm</text>
+<line x1="60.0" x2="340.0" y1="434.0" y2="434.0" stroke="#52514e"/>
+<text x="376" y="276" font-size="12" font-weight="600" fill="#0b0b0b">Mid caps, weekends (1,108 articles)</text>
+<line x1="376" x2="656" y1="359.0" y2="359.0" stroke="#e6e5e0"/>
+<line x1="376" x2="656" y1="284.0" y2="284.0" stroke="#e6e5e0"/>
+<rect x="377.0" y="433.3" width="9.7" height="0.7" rx="2" fill="#eb6834"><title>mid weekend 12:00 am: 1 articles (0.1%)</title></rect>
+<rect x="388.7" y="434.0" width="9.7" height="0.0" rx="2" fill="#eb6834"><title>mid weekend 1:00 am: 0 articles (0.0%)</title></rect>
+<rect x="400.3" y="434.0" width="9.7" height="0.0" rx="2" fill="#eb6834"><title>mid weekend 2:00 am: 0 articles (0.0%)</title></rect>
+<rect x="412.0" y="434.0" width="9.7" height="0.0" rx="2" fill="#eb6834"><title>mid weekend 3:00 am: 0 articles (0.0%)</title></rect>
+<rect x="423.7" y="434.0" width="9.7" height="0.0" rx="2" fill="#eb6834"><title>mid weekend 4:00 am: 0 articles (0.0%)</title></rect>
+<rect x="435.3" y="432.0" width="9.7" height="2.0" rx="2" fill="#eb6834"><title>mid weekend 5:00 am: 3 articles (0.3%)</title></rect>
+<rect x="447.0" y="427.9" width="9.7" height="6.1" rx="2" fill="#eb6834"><title>mid weekend 6:00 am: 9 articles (0.8%)</title></rect>
+<rect x="458.7" y="413.7" width="9.7" height="20.3" rx="2" fill="#eb6834"><title>mid weekend 7:00 am: 30 articles (2.7%)</title></rect>
+<rect x="470.3" y="388.6" width="9.7" height="45.4" rx="2" fill="#eb6834"><title>mid weekend 8:00 am: 67 articles (6.0%)</title></rect>
+<rect x="482.0" y="368.3" width="9.7" height="65.7" rx="2" fill="#eb6834"><title>mid weekend 9:00 am: 97 articles (8.8%)</title></rect>
+<rect x="493.7" y="387.3" width="9.7" height="46.7" rx="2" fill="#eb6834"><title>mid weekend 10:00 am: 69 articles (6.2%)</title></rect>
+<rect x="505.3" y="390.0" width="9.7" height="44.0" rx="2" fill="#eb6834"><title>mid weekend 11:00 am: 65 articles (5.9%)</title></rect>
+<rect x="517.0" y="396.1" width="9.7" height="37.9" rx="2" fill="#eb6834"><title>mid weekend 12:00 pm: 56 articles (5.1%)</title></rect>
+<rect x="528.7" y="390.7" width="9.7" height="43.3" rx="2" fill="#eb6834"><title>mid weekend 1:00 pm: 64 articles (5.8%)</title></rect>
+<rect x="540.3" y="383.2" width="9.7" height="50.8" rx="2" fill="#eb6834"><title>mid weekend 2:00 pm: 75 articles (6.8%)</title></rect>
+<rect x="552.0" y="373.8" width="9.7" height="60.2" rx="2" fill="#eb6834"><title>mid weekend 3:00 pm: 89 articles (8.0%)</title></rect>
+<rect x="563.7" y="374.4" width="9.7" height="59.6" rx="2" fill="#eb6834"><title>mid weekend 4:00 pm: 88 articles (7.9%)</title></rect>
+<rect x="575.3" y="352.8" width="9.7" height="81.2" rx="2" fill="#eb6834"><title>mid weekend 5:00 pm: 120 articles (10.8%)</title></rect>
+<rect x="587.0" y="383.2" width="9.7" height="50.8" rx="2" fill="#eb6834"><title>mid weekend 6:00 pm: 75 articles (6.8%)</title></rect>
+<rect x="598.7" y="384.6" width="9.7" height="49.4" rx="2" fill="#eb6834"><title>mid weekend 7:00 pm: 73 articles (6.6%)</title></rect>
+<rect x="610.3" y="384.6" width="9.7" height="49.4" rx="2" fill="#eb6834"><title>mid weekend 8:00 pm: 73 articles (6.6%)</title></rect>
+<rect x="622.0" y="413.0" width="9.7" height="21.0" rx="2" fill="#eb6834"><title>mid weekend 9:00 pm: 31 articles (2.8%)</title></rect>
+<rect x="633.7" y="421.1" width="9.7" height="12.9" rx="2" fill="#eb6834"><title>mid weekend 10:00 pm: 19 articles (1.7%)</title></rect>
+<rect x="645.3" y="431.3" width="9.7" height="2.7" rx="2" fill="#eb6834"><title>mid weekend 11:00 pm: 4 articles (0.4%)</title></rect>
+<text x="381.8" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">12 am</text>
+<text x="428.5" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">4 am</text>
+<text x="475.2" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">8 am</text>
+<text x="521.8" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">12 pm</text>
+<text x="568.5" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">4 pm</text>
+<text x="615.2" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">8 pm</text>
+<line x1="376.0" x2="656.0" y1="434.0" y2="434.0" stroke="#52514e"/>
+<text x="692" y="276" font-size="12" font-weight="600" fill="#0b0b0b">Large caps, weekends (6,454 articles)</text>
+<line x1="692" x2="972" y1="359.0" y2="359.0" stroke="#e6e5e0"/>
+<line x1="692" x2="972" y1="284.0" y2="284.0" stroke="#e6e5e0"/>
+<rect x="693.0" y="433.0" width="9.7" height="1.0" rx="2" fill="#1baf7a"><title>large weekend 12:00 am: 9 articles (0.1%)</title></rect>
+<rect x="704.7" y="433.7" width="9.7" height="0.3" rx="2" fill="#1baf7a"><title>large weekend 1:00 am: 3 articles (0.0%)</title></rect>
+<rect x="716.3" y="433.9" width="9.7" height="0.1" rx="2" fill="#1baf7a"><title>large weekend 2:00 am: 1 articles (0.0%)</title></rect>
+<rect x="728.0" y="434.0" width="9.7" height="0.0" rx="2" fill="#1baf7a"><title>large weekend 3:00 am: 0 articles (0.0%)</title></rect>
+<rect x="739.7" y="433.9" width="9.7" height="0.1" rx="2" fill="#1baf7a"><title>large weekend 4:00 am: 1 articles (0.0%)</title></rect>
+<rect x="751.3" y="433.3" width="9.7" height="0.7" rx="2" fill="#1baf7a"><title>large weekend 5:00 am: 6 articles (0.1%)</title></rect>
+<rect x="763.0" y="431.0" width="9.7" height="3.0" rx="2" fill="#1baf7a"><title>large weekend 6:00 am: 26 articles (0.4%)</title></rect>
+<rect x="774.7" y="412.2" width="9.7" height="21.8" rx="2" fill="#1baf7a"><title>large weekend 7:00 am: 188 articles (2.9%)</title></rect>
+<rect x="786.3" y="380.0" width="9.7" height="54.0" rx="2" fill="#1baf7a"><title>large weekend 8:00 am: 465 articles (7.2%)</title></rect>
+<rect x="798.0" y="368.3" width="9.7" height="65.7" rx="2" fill="#1baf7a"><title>large weekend 9:00 am: 565 articles (8.8%)</title></rect>
+<rect x="809.7" y="371.4" width="9.7" height="62.6" rx="2" fill="#1baf7a"><title>large weekend 10:00 am: 539 articles (8.4%)</title></rect>
+<rect x="821.3" y="381.5" width="9.7" height="52.5" rx="2" fill="#1baf7a"><title>large weekend 11:00 am: 452 articles (7.0%)</title></rect>
+<rect x="833.0" y="386.9" width="9.7" height="47.1" rx="2" fill="#1baf7a"><title>large weekend 12:00 pm: 405 articles (6.3%)</title></rect>
+<rect x="844.7" y="380.9" width="9.7" height="53.1" rx="2" fill="#1baf7a"><title>large weekend 1:00 pm: 457 articles (7.1%)</title></rect>
+<rect x="856.3" y="376.7" width="9.7" height="57.3" rx="2" fill="#1baf7a"><title>large weekend 2:00 pm: 493 articles (7.6%)</title></rect>
+<rect x="868.0" y="375.0" width="9.7" height="59.0" rx="2" fill="#1baf7a"><title>large weekend 3:00 pm: 508 articles (7.9%)</title></rect>
+<rect x="879.7" y="371.0" width="9.7" height="63.0" rx="2" fill="#1baf7a"><title>large weekend 4:00 pm: 542 articles (8.4%)</title></rect>
+<rect x="891.3" y="374.2" width="9.7" height="59.8" rx="2" fill="#1baf7a"><title>large weekend 5:00 pm: 515 articles (8.0%)</title></rect>
+<rect x="903.0" y="391.7" width="9.7" height="42.3" rx="2" fill="#1baf7a"><title>large weekend 6:00 pm: 364 articles (5.6%)</title></rect>
+<rect x="914.7" y="400.1" width="9.7" height="33.9" rx="2" fill="#1baf7a"><title>large weekend 7:00 pm: 292 articles (4.5%)</title></rect>
+<rect x="926.3" y="408.4" width="9.7" height="25.6" rx="2" fill="#1baf7a"><title>large weekend 8:00 pm: 220 articles (3.4%)</title></rect>
+<rect x="938.0" y="413.8" width="9.7" height="20.2" rx="2" fill="#1baf7a"><title>large weekend 9:00 pm: 174 articles (2.7%)</title></rect>
+<rect x="949.7" y="420.9" width="9.7" height="13.1" rx="2" fill="#1baf7a"><title>large weekend 10:00 pm: 113 articles (1.8%)</title></rect>
+<rect x="961.3" y="420.5" width="9.7" height="13.5" rx="2" fill="#1baf7a"><title>large weekend 11:00 pm: 116 articles (1.8%)</title></rect>
+<text x="697.8" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">12 am</text>
+<text x="744.5" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">4 am</text>
+<text x="791.2" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">8 am</text>
+<text x="837.8" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">12 pm</text>
+<text x="884.5" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">4 pm</text>
+<text x="931.2" y="448.0" font-size="11" fill="#52514e" text-anchor="middle">8 pm</text>
+<line x1="692.0" x2="972.0" y1="434.0" y2="434.0" stroke="#52514e"/>
+</svg>

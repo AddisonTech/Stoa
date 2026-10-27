@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="380" viewBox="0 0 760 380" role="img" aria-label="Share of the 1 session move by hour of the news, 2016 to 2022" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+<title>Share of the 1 session move by hour of the news, 2016 to 2022</title>
+<rect width="760" height="380" fill="#fcfcfb"/>
+<text x="70" y="28" font-size="16" font-weight="600" fill="#0b0b0b">Share of the 1 session move by hour of the news, 2016 to 2022</text>
+<text x="70" y="46" font-size="12" fill="#52514e">Absolute move against SPY after each hour's news, as a share of the size's total.</text>
+<line x1="70" x2="630" y1="310.0" y2="310.0" stroke="#52514e"/>
+<text x="62" y="314.0" font-size="11" fill="#52514e" text-anchor="end">0%</text>
+<line x1="70" x2="630" y1="250.0" y2="250.0" stroke="#e6e5e0"/>
+<text x="62" y="254.0" font-size="11" fill="#52514e" text-anchor="end">6%</text>
+<line x1="70" x2="630" y1="190.0" y2="190.0" stroke="#e6e5e0"/>
+<text x="62" y="194.0" font-size="11" fill="#52514e" text-anchor="end">13%</text>
+<line x1="70" x2="630" y1="130.0" y2="130.0" stroke="#e6e5e0"/>
+<text x="62" y="134.0" font-size="11" fill="#52514e" text-anchor="end">20%</text>
+<line x1="70" x2="630" y1="70.0" y2="70.0" stroke="#e6e5e0"/>
+<text x="62" y="74.0" font-size="11" fill="#52514e" text-anchor="end">26%</text>
+<text x="70.0" y="328" font-size="11" fill="#52514e" text-anchor="middle">12 am</text>
+<text x="167.4" y="328" font-size="11" fill="#52514e" text-anchor="middle">4 am</text>
+<text x="264.8" y="328" font-size="11" fill="#52514e" text-anchor="middle">8 am</text>
+<text x="362.2" y="328" font-size="11" fill="#52514e" text-anchor="middle">12 pm</text>
+<text x="459.6" y="328" font-size="11" fill="#52514e" text-anchor="middle">4 pm</text>
+<text x="557.0" y="328" font-size="11" fill="#52514e" text-anchor="middle">8 pm</text>
+<text x="350.0" y="348" font-size="12" fill="#52514e" text-anchor="middle">Hour the article was known (New York time)</text>
+<polyline points="70.0,309.6 94.3,309.7 118.7,309.6 143.0,307.4 167.4,297.4 191.7,292.0 216.1,202.6 240.4,156.5 264.8,191.2 289.1,223.6 313.5,258.9 337.8,284.3 362.2,291.1 386.5,296.7 410.9,299.1 435.2,303.4 459.6,87.1 483.9,250.3 508.3,300.3 532.6,308.7 557.0,309.5 581.3,309.5 605.7,309.7 630.0,308.8" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="70.0" cy="309.6" r="7" fill="transparent"><title>small: 12 am, 0%</title></circle>
+<circle cx="94.3" cy="309.7" r="7" fill="transparent"><title>small: 1 am, 0%</title></circle>
+<circle cx="118.7" cy="309.6" r="7" fill="transparent"><title>small: 2 am, 0%</title></circle>
+<circle cx="143.0" cy="307.4" r="7" fill="transparent"><title>small: 3 am, 0%</title></circle>
+<circle cx="167.4" cy="297.4" r="7" fill="transparent"><title>small: 4 am, 1%</title></circle>
+<circle cx="191.7" cy="292.0" r="7" fill="transparent"><title>small: 5 am, 2%</title></circle>
+<circle cx="216.1" cy="202.6" r="7" fill="transparent"><title>small: 6 am, 12%</title></circle>
+<circle cx="240.4" cy="156.5" r="7" fill="transparent"><title>small: 7 am, 17%</title></circle>
+<circle cx="264.8" cy="191.2" r="7" fill="transparent"><title>small: 8 am, 13%</title></circle>
+<circle cx="289.1" cy="223.6" r="7" fill="transparent"><title>small: 9 am, 9%</title></circle>
+<circle cx="313.5" cy="258.9" r="7" fill="transparent"><title>small: 10 am, 6%</title></circle>
+<circle cx="337.8" cy="284.3" r="7" fill="transparent"><title>small: 11 am, 3%</title></circle>
+<circle cx="362.2" cy="291.1" r="7" fill="transparent"><title>small: 12 pm, 2%</title></circle>
+<circle cx="386.5" cy="296.7" r="7" fill="transparent"><title>small: 1 pm, 1%</title></circle>
+<circle cx="410.9" cy="299.1" r="7" fill="transparent"><title>small: 2 pm, 1%</title></circle>
+<circle cx="435.2" cy="303.4" r="7" fill="transparent"><title>small: 3 pm, 1%</title></circle>
+<circle cx="459.6" cy="87.1" r="7" fill="transparent"><title>small: 4 pm, 24%</title></circle>
+<circle cx="483.9" cy="250.3" r="7" fill="transparent"><title>small: 5 pm, 6%</title></circle>
+<circle cx="508.3" cy="300.3" r="7" fill="transparent"><title>small: 6 pm, 1%</title></circle>
+<circle cx="532.6" cy="308.7" r="7" fill="transparent"><title>small: 7 pm, 0%</title></circle>
+<circle cx="557.0" cy="309.5" r="7" fill="transparent"><title>small: 8 pm, 0%</title></circle>
+<circle cx="581.3" cy="309.5" r="7" fill="transparent"><title>small: 9 pm, 0%</title></circle>
+<circle cx="605.7" cy="309.7" r="7" fill="transparent"><title>small: 10 pm, 0%</title></circle>
+<circle cx="630.0" cy="308.8" r="7" fill="transparent"><title>small: 11 pm, 0%</title></circle>
+<polyline points="70.0,309.3 94.3,308.9 118.7,309.6 143.0,306.6 167.4,294.9 191.7,288.4 216.1,199.1 240.4,160.9 264.8,191.9 289.1,207.1 313.5,252.3 337.8,275.9 362.2,282.6 386.5,290.3 410.9,296.7 435.2,301.1 459.6,130.6 483.9,264.5 508.3,302.3 532.6,307.7 557.0,308.7 581.3,309.0 605.7,309.3 630.0,309.1" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="70.0" cy="309.3" r="7" fill="transparent"><title>mid: 12 am, 0%</title></circle>
+<circle cx="94.3" cy="308.9" r="7" fill="transparent"><title>mid: 1 am, 0%</title></circle>
+<circle cx="118.7" cy="309.6" r="7" fill="transparent"><title>mid: 2 am, 0%</title></circle>
+<circle cx="143.0" cy="306.6" r="7" fill="transparent"><title>mid: 3 am, 0%</title></circle>
+<circle cx="167.4" cy="294.9" r="7" fill="transparent"><title>mid: 4 am, 2%</title></circle>
+<circle cx="191.7" cy="288.4" r="7" fill="transparent"><title>mid: 5 am, 2%</title></circle>
+<circle cx="216.1" cy="199.1" r="7" fill="transparent"><title>mid: 6 am, 12%</title></circle>
+<circle cx="240.4" cy="160.9" r="7" fill="transparent"><title>mid: 7 am, 16%</title></circle>
+<circle cx="264.8" cy="191.9" r="7" fill="transparent"><title>mid: 8 am, 13%</title></circle>
+<circle cx="289.1" cy="207.1" r="7" fill="transparent"><title>mid: 9 am, 11%</title></circle>
+<circle cx="313.5" cy="252.3" r="7" fill="transparent"><title>mid: 10 am, 6%</title></circle>
+<circle cx="337.8" cy="275.9" r="7" fill="transparent"><title>mid: 11 am, 4%</title></circle>
+<circle cx="362.2" cy="282.6" r="7" fill="transparent"><title>mid: 12 pm, 3%</title></circle>
+<circle cx="386.5" cy="290.3" r="7" fill="transparent"><title>mid: 1 pm, 2%</title></circle>
+<circle cx="410.9" cy="296.7" r="7" fill="transparent"><title>mid: 2 pm, 1%</title></circle>
+<circle cx="435.2" cy="301.1" r="7" fill="transparent"><title>mid: 3 pm, 1%</title></circle>
+<circle cx="459.6" cy="130.6" r="7" fill="transparent"><title>mid: 4 pm, 19%</title></circle>
+<circle cx="483.9" cy="264.5" r="7" fill="transparent"><title>mid: 5 pm, 5%</title></circle>
+<circle cx="508.3" cy="302.3" r="7" fill="transparent"><title>mid: 6 pm, 1%</title></circle>
+<circle cx="532.6" cy="307.7" r="7" fill="transparent"><title>mid: 7 pm, 0%</title></circle>
+<circle cx="557.0" cy="308.7" r="7" fill="transparent"><title>mid: 8 pm, 0%</title></circle>
+<circle cx="581.3" cy="309.0" r="7" fill="transparent"><title>mid: 9 pm, 0%</title></circle>
+<circle cx="605.7" cy="309.3" r="7" fill="transparent"><title>mid: 10 pm, 0%</title></circle>
+<circle cx="630.0" cy="309.1" r="7" fill="transparent"><title>mid: 11 pm, 0%</title></circle>
+<polyline points="70.0,307.7 94.3,307.2 118.7,307.5 143.0,305.1 167.4,289.8 191.7,283.1 216.1,216.4 240.4,184.9 264.8,197.2 289.1,192.8 313.5,234.8 337.8,260.0 362.2,268.9 386.5,282.9 410.9,290.9 435.2,299.2 459.6,174.7 483.9,273.3 508.3,302.5 532.6,307.0 557.0,308.2 581.3,307.6 605.7,307.5 630.0,307.8" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="70.0" cy="307.7" r="7" fill="transparent"><title>large: 12 am, 0%</title></circle>
+<circle cx="94.3" cy="307.2" r="7" fill="transparent"><title>large: 1 am, 0%</title></circle>
+<circle cx="118.7" cy="307.5" r="7" fill="transparent"><title>large: 2 am, 0%</title></circle>
+<circle cx="143.0" cy="305.1" r="7" fill="transparent"><title>large: 3 am, 1%</title></circle>
+<circle cx="167.4" cy="289.8" r="7" fill="transparent"><title>large: 4 am, 2%</title></circle>
+<circle cx="191.7" cy="283.1" r="7" fill="transparent"><title>large: 5 am, 3%</title></circle>
+<circle cx="216.1" cy="216.4" r="7" fill="transparent"><title>large: 6 am, 10%</title></circle>
+<circle cx="240.4" cy="184.9" r="7" fill="transparent"><title>large: 7 am, 14%</title></circle>
+<circle cx="264.8" cy="197.2" r="7" fill="transparent"><title>large: 8 am, 12%</title></circle>
+<circle cx="289.1" cy="192.8" r="7" fill="transparent"><title>large: 9 am, 13%</title></circle>
+<circle cx="313.5" cy="234.8" r="7" fill="transparent"><title>large: 10 am, 8%</title></circle>
+<circle cx="337.8" cy="260.0" r="7" fill="transparent"><title>large: 11 am, 5%</title></circle>
+<circle cx="362.2" cy="268.9" r="7" fill="transparent"><title>large: 12 pm, 4%</title></circle>
+<circle cx="386.5" cy="282.9" r="7" fill="transparent"><title>large: 1 pm, 3%</title></circle>
+<circle cx="410.9" cy="290.9" r="7" fill="transparent"><title>large: 2 pm, 2%</title></circle>
+<circle cx="435.2" cy="299.2" r="7" fill="transparent"><title>large: 3 pm, 1%</title></circle>
+<circle cx="459.6" cy="174.7" r="7" fill="transparent"><title>large: 4 pm, 15%</title></circle>
+<circle cx="483.9" cy="273.3" r="7" fill="transparent"><title>large: 5 pm, 4%</title></circle>
+<circle cx="508.3" cy="302.5" r="7" fill="transparent"><title>large: 6 pm, 1%</title></circle>
+<circle cx="532.6" cy="307.0" r="7" fill="transparent"><title>large: 7 pm, 0%</title></circle>
+<circle cx="557.0" cy="308.2" r="7" fill="transparent"><title>large: 8 pm, 0%</title></circle>
+<circle cx="581.3" cy="307.6" r="7" fill="transparent"><title>large: 9 pm, 0%</title></circle>
+<circle cx="605.7" cy="307.5" r="7" fill="transparent"><title>large: 10 pm, 0%</title></circle>
+<circle cx="630.0" cy="307.8" r="7" fill="transparent"><title>large: 11 pm, 0%</title></circle>
+<circle cx="630.0" cy="307.8" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"/>
+<text x="640.0" y="311.8" font-size="12" fill="#0b0b0b">Large caps</text>
+<circle cx="630.0" cy="308.8" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<text x="640.0" y="326.8" font-size="12" fill="#0b0b0b">Small caps</text>
+<circle cx="630.0" cy="309.1" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"/>
+<text x="640.0" y="341.8" font-size="12" fill="#0b0b0b">Mid caps</text>
+</svg>

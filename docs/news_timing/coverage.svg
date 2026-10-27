@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="380" viewBox="0 0 760 380" role="img" aria-label="Share of the 5 session move caught, by hours scanned" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+<title>Share of the 5 session move caught, by hours scanned</title>
+<rect width="760" height="380" fill="#fcfcfb"/>
+<text x="70" y="28" font-size="16" font-weight="600" fill="#0b0b0b">Share of the 5 session move caught, by hours scanned</text>
+<text x="70" y="46" font-size="12" fill="#52514e">The best single window of each length, weekday and weekend news together.</text>
+<line x1="70" x2="630" y1="310.0" y2="310.0" stroke="#52514e"/>
+<text x="62" y="314.0" font-size="11" fill="#52514e" text-anchor="end">0%</text>
+<line x1="70" x2="630" y1="250.0" y2="250.0" stroke="#e6e5e0"/>
+<text x="62" y="254.0" font-size="11" fill="#52514e" text-anchor="end">25%</text>
+<line x1="70" x2="630" y1="190.0" y2="190.0" stroke="#e6e5e0"/>
+<text x="62" y="194.0" font-size="11" fill="#52514e" text-anchor="end">50%</text>
+<line x1="70" x2="630" y1="130.0" y2="130.0" stroke="#e6e5e0"/>
+<text x="62" y="134.0" font-size="11" fill="#52514e" text-anchor="end">75%</text>
+<line x1="70" x2="630" y1="70.0" y2="70.0" stroke="#e6e5e0"/>
+<text x="62" y="74.0" font-size="11" fill="#52514e" text-anchor="end">100%</text>
+<text x="70.0" y="328" font-size="11" fill="#52514e" text-anchor="middle">1</text>
+<text x="167.4" y="328" font-size="11" fill="#52514e" text-anchor="middle">5</text>
+<text x="264.8" y="328" font-size="11" fill="#52514e" text-anchor="middle">9</text>
+<text x="362.2" y="328" font-size="11" fill="#52514e" text-anchor="middle">13</text>
+<text x="459.6" y="328" font-size="11" fill="#52514e" text-anchor="middle">17</text>
+<text x="557.0" y="328" font-size="11" fill="#52514e" text-anchor="middle">21</text>
+<text x="350.0" y="348" font-size="12" fill="#52514e" text-anchor="middle">Hours scanned a day</text>
+<polyline points="70.0,267.1 94.3,247.6 118.7,223.5 143.0,200.7 167.4,183.3 191.7,171.3 216.1,160.1 240.4,152.0 264.8,145.7 289.1,116.5 313.5,93.8 337.8,81.2 362.2,76.7 386.5,73.9 410.9,71.8 435.2,71.2 459.6,70.8 483.9,70.7 508.3,70.6 532.6,70.5 557.0,70.2 581.3,70.2 605.7,70.1 630.0,70.0" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="70.0" cy="267.1" r="7" fill="transparent"><title>small: 1, 18%</title></circle>
+<circle cx="94.3" cy="247.6" r="7" fill="transparent"><title>small: 2, 26%</title></circle>
+<circle cx="118.7" cy="223.5" r="7" fill="transparent"><title>small: 3, 36%</title></circle>
+<circle cx="143.0" cy="200.7" r="7" fill="transparent"><title>small: 4, 46%</title></circle>
+<circle cx="167.4" cy="183.3" r="7" fill="transparent"><title>small: 5, 53%</title></circle>
+<circle cx="191.7" cy="171.3" r="7" fill="transparent"><title>small: 6, 58%</title></circle>
+<circle cx="216.1" cy="160.1" r="7" fill="transparent"><title>small: 7, 62%</title></circle>
+<circle cx="240.4" cy="152.0" r="7" fill="transparent"><title>small: 8, 66%</title></circle>
+<circle cx="264.8" cy="145.7" r="7" fill="transparent"><title>small: 9, 68%</title></circle>
+<circle cx="289.1" cy="116.5" r="7" fill="transparent"><title>small: 10, 81%</title></circle>
+<circle cx="313.5" cy="93.8" r="7" fill="transparent"><title>small: 11, 90%</title></circle>
+<circle cx="337.8" cy="81.2" r="7" fill="transparent"><title>small: 12, 95%</title></circle>
+<circle cx="362.2" cy="76.7" r="7" fill="transparent"><title>small: 13, 97%</title></circle>
+<circle cx="386.5" cy="73.9" r="7" fill="transparent"><title>small: 14, 98%</title></circle>
+<circle cx="410.9" cy="71.8" r="7" fill="transparent"><title>small: 15, 99%</title></circle>
+<circle cx="435.2" cy="71.2" r="7" fill="transparent"><title>small: 16, 100%</title></circle>
+<circle cx="459.6" cy="70.8" r="7" fill="transparent"><title>small: 17, 100%</title></circle>
+<circle cx="483.9" cy="70.7" r="7" fill="transparent"><title>small: 18, 100%</title></circle>
+<circle cx="508.3" cy="70.6" r="7" fill="transparent"><title>small: 19, 100%</title></circle>
+<circle cx="532.6" cy="70.5" r="7" fill="transparent"><title>small: 20, 100%</title></circle>
+<circle cx="557.0" cy="70.2" r="7" fill="transparent"><title>small: 21, 100%</title></circle>
+<circle cx="581.3" cy="70.2" r="7" fill="transparent"><title>small: 22, 100%</title></circle>
+<circle cx="605.7" cy="70.1" r="7" fill="transparent"><title>small: 23, 100%</title></circle>
+<circle cx="630.0" cy="70.0" r="7" fill="transparent"><title>small: 24, 100%</title></circle>
+<polyline points="70.0,275.5 94.3,248.9 118.7,222.2 143.0,198.8 167.4,177.8 191.7,164.3 216.1,152.1 240.4,142.7 264.8,134.8 289.1,116.5 313.5,93.1 337.8,83.4 362.2,78.2 386.5,74.6 410.9,72.8 435.2,72.0 459.6,71.4 483.9,71.2 508.3,70.9 532.6,70.7 557.0,70.5 581.3,70.4 605.7,70.1 630.0,70.0" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="70.0" cy="275.5" r="7" fill="transparent"><title>mid: 1, 14%</title></circle>
+<circle cx="94.3" cy="248.9" r="7" fill="transparent"><title>mid: 2, 25%</title></circle>
+<circle cx="118.7" cy="222.2" r="7" fill="transparent"><title>mid: 3, 37%</title></circle>
+<circle cx="143.0" cy="198.8" r="7" fill="transparent"><title>mid: 4, 46%</title></circle>
+<circle cx="167.4" cy="177.8" r="7" fill="transparent"><title>mid: 5, 55%</title></circle>
+<circle cx="191.7" cy="164.3" r="7" fill="transparent"><title>mid: 6, 61%</title></circle>
+<circle cx="216.1" cy="152.1" r="7" fill="transparent"><title>mid: 7, 66%</title></circle>
+<circle cx="240.4" cy="142.7" r="7" fill="transparent"><title>mid: 8, 70%</title></circle>
+<circle cx="264.8" cy="134.8" r="7" fill="transparent"><title>mid: 9, 73%</title></circle>
+<circle cx="289.1" cy="116.5" r="7" fill="transparent"><title>mid: 10, 81%</title></circle>
+<circle cx="313.5" cy="93.1" r="7" fill="transparent"><title>mid: 11, 90%</title></circle>
+<circle cx="337.8" cy="83.4" r="7" fill="transparent"><title>mid: 12, 94%</title></circle>
+<circle cx="362.2" cy="78.2" r="7" fill="transparent"><title>mid: 13, 97%</title></circle>
+<circle cx="386.5" cy="74.6" r="7" fill="transparent"><title>mid: 14, 98%</title></circle>
+<circle cx="410.9" cy="72.8" r="7" fill="transparent"><title>mid: 15, 99%</title></circle>
+<circle cx="435.2" cy="72.0" r="7" fill="transparent"><title>mid: 16, 99%</title></circle>
+<circle cx="459.6" cy="71.4" r="7" fill="transparent"><title>mid: 17, 99%</title></circle>
+<circle cx="483.9" cy="71.2" r="7" fill="transparent"><title>mid: 18, 100%</title></circle>
+<circle cx="508.3" cy="70.9" r="7" fill="transparent"><title>mid: 19, 100%</title></circle>
+<circle cx="532.6" cy="70.7" r="7" fill="transparent"><title>mid: 20, 100%</title></circle>
+<circle cx="557.0" cy="70.5" r="7" fill="transparent"><title>mid: 21, 100%</title></circle>
+<circle cx="581.3" cy="70.4" r="7" fill="transparent"><title>mid: 22, 100%</title></circle>
+<circle cx="605.7" cy="70.1" r="7" fill="transparent"><title>mid: 23, 100%</title></circle>
+<circle cx="630.0" cy="70.0" r="7" fill="transparent"><title>mid: 24, 100%</title></circle>
+<polyline points="70.0,283.3 94.3,258.5 118.7,234.2 143.0,210.1 167.4,190.2 191.7,171.8 216.1,154.1 240.4,140.0 264.8,128.4 289.1,112.5 313.5,94.8 337.8,87.7 362.2,81.8 386.5,77.3 410.9,75.7 435.2,74.6 459.6,74.0 483.9,73.4 508.3,72.7 532.6,72.1 557.0,71.6 581.3,71.0 605.7,70.4 630.0,70.0" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="70.0" cy="283.3" r="7" fill="transparent"><title>large: 1, 11%</title></circle>
+<circle cx="94.3" cy="258.5" r="7" fill="transparent"><title>large: 2, 21%</title></circle>
+<circle cx="118.7" cy="234.2" r="7" fill="transparent"><title>large: 3, 32%</title></circle>
+<circle cx="143.0" cy="210.1" r="7" fill="transparent"><title>large: 4, 42%</title></circle>
+<circle cx="167.4" cy="190.2" r="7" fill="transparent"><title>large: 5, 50%</title></circle>
+<circle cx="191.7" cy="171.8" r="7" fill="transparent"><title>large: 6, 58%</title></circle>
+<circle cx="216.1" cy="154.1" r="7" fill="transparent"><title>large: 7, 65%</title></circle>
+<circle cx="240.4" cy="140.0" r="7" fill="transparent"><title>large: 8, 71%</title></circle>
+<circle cx="264.8" cy="128.4" r="7" fill="transparent"><title>large: 9, 76%</title></circle>
+<circle cx="289.1" cy="112.5" r="7" fill="transparent"><title>large: 10, 82%</title></circle>
+<circle cx="313.5" cy="94.8" r="7" fill="transparent"><title>large: 11, 90%</title></circle>
+<circle cx="337.8" cy="87.7" r="7" fill="transparent"><title>large: 12, 93%</title></circle>
+<circle cx="362.2" cy="81.8" r="7" fill="transparent"><title>large: 13, 95%</title></circle>
+<circle cx="386.5" cy="77.3" r="7" fill="transparent"><title>large: 14, 97%</title></circle>
+<circle cx="410.9" cy="75.7" r="7" fill="transparent"><title>large: 15, 98%</title></circle>
+<circle cx="435.2" cy="74.6" r="7" fill="transparent"><title>large: 16, 98%</title></circle>
+<circle cx="459.6" cy="74.0" r="7" fill="transparent"><title>large: 17, 98%</title></circle>
+<circle cx="483.9" cy="73.4" r="7" fill="transparent"><title>large: 18, 99%</title></circle>
+<circle cx="508.3" cy="72.7" r="7" fill="transparent"><title>large: 19, 99%</title></circle>
+<circle cx="532.6" cy="72.1" r="7" fill="transparent"><title>large: 20, 99%</title></circle>
+<circle cx="557.0" cy="71.6" r="7" fill="transparent"><title>large: 21, 99%</title></circle>
+<circle cx="581.3" cy="71.0" r="7" fill="transparent"><title>large: 22, 100%</title></circle>
+<circle cx="605.7" cy="70.4" r="7" fill="transparent"><title>large: 23, 100%</title></circle>
+<circle cx="630.0" cy="70.0" r="7" fill="transparent"><title>large: 24, 100%</title></circle>
+<circle cx="630.0" cy="70.0" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"/>
+<text x="640.0" y="74.0" font-size="12" fill="#0b0b0b">Mid caps</text>
+<circle cx="630.0" cy="70.0" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"/>
+<text x="640.0" y="89.0" font-size="12" fill="#0b0b0b">Large caps</text>
+<circle cx="630.0" cy="70.0" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"/>
+<text x="640.0" y="104.0" font-size="12" fill="#0b0b0b">Small caps</text>
+</svg>
