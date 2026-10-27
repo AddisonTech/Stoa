@@ -269,3 +269,52 @@ def test_github_errors_raise_and_the_cli_swallows_them(monkeypatch: pytest.Monke
         ["--config", str(ROOT / "config" / "default.yaml"), "triggers", "check", "--job", "sweep"],
     )
     assert res.exit_code == 0 and "Not on GitHub Actions" in res.output
+
+
+# ---- one failure alert a day -------------------------------------------------------------
+
+
+def failed(title: str, at: datetime, rid: int, workflow: str = "daily.yml") -> t.Run:
+    return t.Run(workflow, title, at.astimezone(UTC), "failure", rid)
+
+
+def test_a_backup_clock_skips_a_job_that_already_failed_today() -> None:
+    first = failed("execute via cron-job.org", ny(MON, "09:45", 2), 1)
+    me = t.Run("daily.yml", "schedule 50 13 * * 1-5", ny(MON, "09:50", 30).astimezone(UTC), "", 2)
+    assert t.failed_earlier_today(me, "execute", [first, me]) == first
+    dell = t.Run("daily.yml", "execute via dell", ny(MON, "09:45", 40).astimezone(UTC), "", 3)
+    assert t.failed_earlier_today(dell, "execute", [first, dell]) == first
+
+
+def test_hand_starts_other_jobs_other_days_and_successes_do_not_skip() -> None:
+    me = t.Run("daily.yml", "execute via dell", ny(MON, "09:46").astimezone(UTC), "", 9)
+    by_hand = t.Run("daily.yml", "execute via manual", ny(MON, "09:46").astimezone(UTC), "", 9)
+    ok = t.Run(
+        "daily.yml", "execute via cron-job.org", ny(MON, "09:45").astimezone(UTC), "success", 1
+    )
+    other_job = failed("decide via cron-job.org", ny(MON, "09:00"), 2)
+    yesterday = failed("execute via cron-job.org", ny(MON - timedelta(days=3), "09:45"), 3)
+    assert t.failed_earlier_today(me, "execute", [ok, other_job, yesterday]) is None
+    assert (
+        t.failed_earlier_today(
+            by_hand, "execute", [failed("execute via dell", ny(MON, "09:45"), 4)]
+        )
+        is None
+    )
+
+
+def test_every_scheduled_job_runs_only_when_no_clock_failed_it_today() -> None:
+    gates = {
+        "daily": ("run", "Run"),
+        "close": ("close", "Close approvals"),
+        "analyst": ("shadow", "Score the session in shadow mode"),
+    }
+    for name, (job_key, main_step) in gates.items():
+        wf = yaml.safe_load((WF / f"{name}.yml").read_text(encoding="utf-8"))
+        steps = wf["jobs"][job_key]["steps"]
+        dd = next(s for s in steps if s.get("id") == "dedupe")
+        assert dd["run"].startswith("stoa triggers already-failed --job ")
+        assert f"--workflow {name}.yml" in dd["run"] and dd["continue-on-error"] is True
+        main = next(s for s in steps if s.get("name") == main_step)
+        assert "steps.dedupe.outputs.skip != 'true'" in main["if"]
+        assert steps.index(dd) < steps.index(main)

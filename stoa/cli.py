@@ -596,6 +596,47 @@ def triggers_check(ctx: Ctx, job: str) -> None:
         click.echo(f"Trigger check skipped: {type(exc).__name__}: {redact.redact(str(exc))}")
 
 
+@triggers.command("already-failed")
+@click.option(
+    "--job",
+    "job",
+    required=True,
+    type=click.Choice([slot[0] for slot in trigger_check.SLOTS]),
+    help="The job this run is.",
+)
+@click.option("--workflow", "workflow", required=True, help="This workflow's file name.")
+def triggers_already_failed(job: str, workflow: str) -> None:
+    """Print skip=true to $GITHUB_OUTPUT when a clock already reported this job failing today.
+
+    One failure alert a day: the backup clocks then skip the job. Never fails the run; if
+    GitHub cannot be read, the job runs as usual.
+    """
+    repo, token, run_id = (
+        os.environ.get("GITHUB_REPOSITORY", ""),
+        os.environ.get("GITHUB_TOKEN", ""),
+        os.environ.get("GITHUB_RUN_ID", ""),
+    )
+    skip = False
+    if repo and token and run_id:
+        github = trigger_check.GitHubRuns(
+            repo, token, api=os.environ.get("GITHUB_API_URL", "https://api.github.com")
+        )
+        try:
+            line = trigger_check.already_failed(job, workflow, run_id, github)
+        except Exception as exc:
+            line = None
+            click.echo(f"Could not check earlier runs ({type(exc).__name__}); running the job.")
+        if line:
+            click.echo(line)
+            skip = True
+    out = os.environ.get("GITHUB_OUTPUT")
+    if out:
+        with open(out, "a", encoding="utf-8") as fh:
+            fh.write(f"skip={'true' if skip else 'false'}\n")
+    if not skip:
+        click.echo("No earlier failure today; running the job.")
+
+
 # ---- kill switch -----------------------------------------------------------------------------
 
 

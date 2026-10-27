@@ -21,6 +21,10 @@ on:
         description: "What started this run: cron-job.org, dell, or blank for by hand"
         type: string
         default: ""
+      explain:
+        description: "First say why items failed in the last finished batches (free)"
+        type: boolean
+        default: false
 
 concurrency:
   group: stoa-analyst
@@ -81,8 +85,24 @@ jobs:
         if: steps.secrets.outputs.ready == 'true'
         run: pip install .
 
-      - name: Score the session in shadow mode
+      # One failure alert a day: when a clock already ran this job today and it failed (and
+      # alerted), a backup start skips it. A start by hand always runs.
+      - name: Skip if this job already failed today
+        id: dedupe
         if: steps.secrets.outputs.ready == 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          JOB: analyst
+        run: stoa triggers already-failed --job "$JOB" --workflow analyst.yml
+
+      - name: Explain earlier failures
+        if: steps.secrets.outputs.ready == 'true' && inputs.explain
+        continue-on-error: true
+        run: stoa analyst explain-failures
+
+      - name: Score the session in shadow mode
+        if: steps.secrets.outputs.ready == 'true' && steps.dedupe.outputs.skip != 'true'
         run: stoa analyst shadow
 
       - name: Save shadow scores

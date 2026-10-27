@@ -81,6 +81,8 @@ class Run:
     workflow: str  # file name, e.g. daily.yml
     title: str  # the run name (display_title)
     created: datetime
+    conclusion: str = ""  # success, failure, cancelled, ... ("" while running)
+    run_id: int = 0
 
 
 def _clock_time(ts: datetime) -> str:
@@ -221,6 +223,16 @@ class GitHubRuns:
     def created(self, run_id: str) -> datetime:
         return _ts(self._get(f"/actions/runs/{run_id}")["created_at"])
 
+    def run(self, workflow: str, run_id: str) -> Run:
+        r = self._get(f"/actions/runs/{run_id}")
+        return Run(
+            workflow,
+            str(r.get("display_title") or ""),
+            _ts(r["created_at"]),
+            str(r.get("conclusion") or ""),
+            int(r["id"]),
+        )
+
     def runs(self, workflow: str, since: datetime) -> list[Run]:
         stamp = since.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
         data = self._get(
@@ -228,7 +240,13 @@ class GitHubRuns:
             {"created": f">={stamp}", "per_page": "100"},
         )
         return [
-            Run(workflow, str(r.get("display_title") or ""), _ts(r["created_at"]))
+            Run(
+                workflow,
+                str(r.get("display_title") or ""),
+                _ts(r["created_at"]),
+                str(r.get("conclusion") or ""),
+                int(r.get("id") or 0),
+            )
             for r in data.get("workflow_runs", [])
         ]
 
@@ -266,3 +284,40 @@ def check(
             return f"{slot.label}: missed, already reported"
     alerts.safe_send(notifier, alert)
     return f"{slot.label}: missed, alert sent"
+
+
+# ---- one failure alert a day ------------------------------------------------------------------
+
+CLOCKS = (PRIMARY, "dell", "schedule")
+
+
+def failed_earlier_today(me: Run, job: str, runs: Iterable[Run]) -> Run | None:
+    """An earlier run of this job today (New York date) that failed, if this run came from a
+    clock. A run started by hand is never skipped."""
+    if source_of(me) not in CLOCKS:
+        return None
+    day = me.created.astimezone(clock.NY).date()
+    for r in sorted(runs, key=lambda r: r.created):
+        if (
+            r.run_id != me.run_id
+            and r.conclusion == "failure"
+            and job_of(r) == job
+            and r.created < me.created
+            and r.created.astimezone(clock.NY).date() == day
+        ):
+            return r
+    return None
+
+
+def already_failed(job: str, workflow: str, run_id: str, github: GitHubRuns) -> str | None:
+    """A line for the log when a clock already reported this job failing today, else None."""
+    me = github.run(workflow, run_id)
+    midnight = clock.at_ny(me.created.astimezone(clock.NY).date(), "00:00")
+    earlier = failed_earlier_today(me, job, github.runs(workflow, midnight))
+    if earlier is None:
+        return None
+    return (
+        f"The {job} job already failed today at {_clock_time(earlier.created)} "
+        f"({SOURCE_NAMES.get(source_of(earlier), source_of(earlier))} started it) and that "
+        "run sent the alert. This backup start skips the job and sends nothing."
+    )

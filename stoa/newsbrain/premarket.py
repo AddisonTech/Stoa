@@ -519,6 +519,7 @@ def log_trials(
     now = datetime.now(UTC)
     for entry, by_h in runs.items():
         for h, rep in by_h.items():
+            starved = len(rep["test"].result.trades) < t9.MIN_TRADES
             rets = list(rep["validation"].run.daily_returns)
             registry.append(
                 kind="backtest",
@@ -531,6 +532,7 @@ def log_trials(
                     **rep["validation"].run.metrics.to_dict(),
                 },
                 returns=pd.Series(rets),
+                tags=["starved"] if starved else [],
                 now=now,
             )
     graded = runs["premarket"][t9.GRADED]["validation"].run.daily_returns
@@ -672,6 +674,7 @@ def run_trial11(
     report = {
         "trial": 11,
         "passed": passed,
+        "verdict": t9.verdict(passed, len(graded["test"].result.trades)),
         "checks": chk,
         "deflated": deflated,
         "walkforward": wf,

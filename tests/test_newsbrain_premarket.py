@@ -230,3 +230,14 @@ def test_decisions_md_states_the_registered_numbers() -> None:
         pm.spec_hash(),
     ):
         assert needle in sec, needle
+
+
+def test_verdict_labels_starved_runs_without_changing_pass_or_fail() -> None:
+    from stoa.newsbrain import trial as t9
+
+    assert t9.verdict(True, 45) == "PASS"
+    assert t9.verdict(False, 45) == "FAIL"
+    assert t9.verdict(False, 6) == "STARVED"  # trial 9's graded run
+    assert t9.verdict(False, 29) == "STARVED" and t9.verdict(False, 30) == "FAIL"
+    assert t9.verdict(False, 40, expected_trades=200) == "STARVED"  # under a quarter
+    assert t9.verdict(False, 50, expected_trades=200) == "FAIL"

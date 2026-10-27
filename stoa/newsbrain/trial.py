@@ -65,6 +65,17 @@ HGB = {
     "min_samples_leaf": 200,
 }
 SPEC = "trial9:newsbrain:v1"  # the registered design; changing it is a new trial
+MIN_TRADES = 30  # fewer closed trades in the test window and a run is STARVED, not FAIL
+
+
+def verdict(passed: bool, trades: int, expected_trades: int | None = None) -> str:
+    """PASS, FAIL or STARVED (docs/DECISIONS.md, "Starved runs"). Pass or fail math is
+    unchanged: a starved run has failed; the label says it never traded enough to be judged."""
+    if passed:
+        return "PASS"
+    if trades < MIN_TRADES or (expected_trades is not None and trades < expected_trades / 4):
+        return "STARVED"
+    return "FAIL"
 
 
 def classifier() -> HistGradientBoostingClassifier:
@@ -458,9 +469,13 @@ def config_hash(h: int) -> str:
 def log_trials(
     registry: Registry, runs: dict[int, dict[str, Replay]], trial: int
 ) -> dict[str, float]:
-    """Log one backtest trial per horizon (validation window), then deflate the graded one."""
+    """Log one backtest trial per horizon (validation window), then deflate the graded one.
+
+    A horizon whose test window closed too few trades is tagged "starved".
+    """
     now = datetime.now(UTC)
     for h, rep in runs.items():
+        starved = len(rep["test"].result.trades) < MIN_TRADES
         rets = list(rep["validation"].run.daily_returns)
         registry.append(
             kind="backtest",
@@ -473,6 +488,7 @@ def log_trials(
                 **rep["validation"].run.metrics.to_dict(),
             },
             returns=pd.Series(rets),
+            tags=["starved"] if starved else [],
             now=now,
         )
     return deflate(
@@ -543,6 +559,7 @@ def run_trial(
     report = {
         "trial": trial,
         "passed": passed,
+        "verdict": verdict(passed, len(graded["test"].result.trades)),
         "checks": chk,
         "deflated": deflated,
         "walkforward": wf,

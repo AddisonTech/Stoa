@@ -26,7 +26,7 @@ concurrency:
 
 permissions:
   contents: read
-  actions: read # the trigger check lists runs
+  actions: read # the trigger checks list runs
 
 jobs:
   close:
@@ -57,7 +57,19 @@ jobs:
       - name: Install
         run: pip install .
 
+      # One failure alert a day: when a clock already ran this job today and it failed (and
+      # alerted), a backup start skips it. A start by hand always runs.
+      - name: Skip if this job already failed today
+        id: dedupe
+        if: "!cancelled()"
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          JOB: close
+        run: stoa triggers already-failed --job "$JOB" --workflow close.yml
+
       - name: Close approvals
+        if: steps.dedupe.outputs.skip != 'true'
         run: stoa close
 
       # Did cron-job.org start the sweep within 5 minutes? Never fails the run.

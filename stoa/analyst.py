@@ -29,6 +29,7 @@ import hashlib
 import json
 import logging
 import math
+import re
 import time
 from collections.abc import Callable, Iterable, MutableMapping
 from dataclasses import dataclass, field
@@ -581,7 +582,9 @@ class Analyst:
             kind = str(getattr(result, "type", ""))
             if kind != "succeeded":
                 rep.failed += 1
-                rep.failures.append(f"{cid}: {kind}")
+                err = getattr(getattr(result, "error", None), "error", None)
+                detail = getattr(err, "type", "") if err is not None else ""
+                rep.failures.append(f"{cid}: {kind}" + (f" ({detail})" if detail else ""))
                 continue
             message = result.message
             cost = price(
@@ -596,7 +599,8 @@ class Analyst:
             score = parse_message(message)
             if score is None or it is None:
                 rep.failed += 1
-                rep.failures.append(f"{cid}: unparsable")
+                why = failure_reason(message) if it is not None else "unknown item"
+                rep.failures.append(f"{cid}: unparsable, {why}")
                 continue
             self.cache.put(self.key(it), score, cost)
             rep.scored += 1
@@ -616,6 +620,45 @@ def parse_message(message: Any) -> AnalystScore | None:
         except ValidationError:
             return None
     return None
+
+
+def failure_reason(message: Any) -> str:
+    """Why a batch result could not be read as a score, for the logs."""
+    stop = getattr(message, "stop_reason", None)
+    out = usage_of(message).output_tokens
+    if stop == "max_tokens":
+        return f"cut off at max_tokens ({out} output tokens)"
+    if stop == "refusal":
+        details = getattr(message, "stop_details", None)
+        return f"refusal ({getattr(details, 'category', None) or 'no category'})"
+    texts = [getattr(b, "text", None) for b in getattr(message, "content", []) or []]
+    if not any(texts):
+        return f"no text block (stop {stop}, {out} output tokens)"
+    return f"answer does not match the schema (stop {stop}, {out} output tokens)"
+
+
+def summarize_failures(failures: list[str]) -> str:
+    """'cut off at max_tokens x 9, refusal (cyber) x 1': the reasons without item ids."""
+    counts: dict[str, int] = {}
+    for f in failures:
+        reason = f.split(": ", 1)[1] if ": " in f else f
+        reason = re.sub(r" \(\d+ output tokens\)| \(stop \w+, \d+ output tokens\)", "", reason)
+        counts[reason] = counts.get(reason, 0) + 1
+    return ", ".join(f"{r} x {n}" for r, n in sorted(counts.items(), key=lambda kv: -kv[1]))
+
+
+def batch_failures(client: Any, batch_ids: Iterable[str]) -> list[str]:
+    """Re-read finished batches (free) and list every result that was not a usable score."""
+    out: list[str] = []
+    for batch_id in batch_ids:
+        for line in client.messages.batches.results(batch_id):
+            result = line.result
+            kind = str(getattr(result, "type", ""))
+            if kind != "succeeded":
+                out.append(f"{line.custom_id}: {kind}")
+            elif parse_message(result.message) is None:
+                out.append(f"{line.custom_id}: unparsable, {failure_reason(result.message)}")
+    return out
 
 
 class BatchJournal:

@@ -222,7 +222,7 @@ events:
 analyst:
   enabled: true                    # used only when ANTHROPIC_API_KEY is set
   model: claude-haiku-5-5
-  max_tokens: 400
+  max_tokens: 4000                 # room for the model's own thinking before the JSON; 400 cut answers off
   text_chars: 1200
   max_items_per_symbol_per_day: 3
   contamination_cutoff: 2026-07-01 # scores for items before this are flagged as possibly contaminated

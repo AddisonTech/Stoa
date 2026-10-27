@@ -233,13 +233,16 @@ def run_session(
             ledger.skipped = [*ledger.skipped, Skip(session=session, reason="over budget")]
             return ShadowRun(session, "over_budget", items=len(items), note=str(exc))
         run.scored, run.failed, run.spent_usd = rep.scored + rep.cached, rep.failed, rep.spent_usd
+        if rep.failures:
+            run.note = f"Failed items: {an.summarize_failures(rep.failures)}."
         an.merge_scores(scores_path(s), a.rows(items))
     heads_up = spendcap.warn_if_due(merged_view(state, ledger), s.budget, now())
     if heads_up is not None:
         ledger.cap_warned_months = sorted({*ledger.cap_warned_months, g.month})
         send(heads_up)
     if run.failed:
-        ledger.skipped = [*ledger.skipped, Skip(session=session, reason="items failed")]
+        reason = f"items failed: {an.summarize_failures(rep.failures)}" if items else "items failed"
+        ledger.skipped = [*ledger.skipped, Skip(session=session, reason=reason[:300])]
         run.status = "incomplete"
         return run
     ledger.sessions = sorted({*ledger.sessions, session})

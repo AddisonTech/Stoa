@@ -296,6 +296,35 @@ def register(main: click.Group, pass_ctx: Deco, friendly_errors: Deco) -> None:
             f"spent ${rep.spent_usd:.2f}. {len(rows)} scores in {s.analyst_scores_path}."
         )
 
+    @analyst.command("explain-failures")
+    @click.option("--last", "last", default=10, show_default=True, help="How many batches back.")
+    @pass_ctx
+    @friendly_errors
+    def analyst_explain_failures(ctx: Any, last: int) -> None:
+        """Re-read the shadow job's finished batches and say why items failed. Costs nothing."""
+        import json
+
+        from stoa import analyst as an
+        from stoa import shadow
+
+        key = ctx.secrets.llm_api_key
+        if key is None:
+            raise click.ClickException("ANTHROPIC_API_KEY is not set")
+        path = shadow.shadow_dir(ctx.settings) / "batches.json"
+        closed = (
+            json.loads(path.read_text(encoding="utf-8")).get("closed", []) if path.exists() else []
+        )
+        ids = [str(b) for b in closed][-last:]
+        if not ids:
+            click.echo("No finished batches to explain.")
+            return
+        failures = an.batch_failures(an.make_client(key.get_secret_value()), ids)
+        click.echo(f"{len(ids)} batches, {len(failures)} failed items.")
+        if failures:
+            click.echo(f"Reasons: {an.summarize_failures(failures)}.")
+            for f in failures[:20]:
+                click.echo(f"  {f}")
+
     @analyst.command("shadow")
     @pass_ctx
     @friendly_errors
