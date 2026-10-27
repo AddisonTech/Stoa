@@ -1,0 +1,197 @@
+{
+ "spy": {
+  "passed": false,
+  "fund": "IVV",
+  "expected": "Sharpe near SPY's 1.42 (within 0.35); return near 4.93%, the book's exposure (13% on average) times IVV day by day (within 3%); SPY returned 103.10%",
+  "actual": {
+   "return": 0.04649393022836912,
+   "sharpe": 0.6243507673179983,
+   "sortino": 0.8274507751524018,
+   "max_drawdown": 0.025746355360296347,
+   "trades": 26
+  },
+  "spy": {
+   "return": 1.030953971069116,
+   "sharpe": 1.4193787352912088
+  },
+  "expected_return": 0.04926898715407102,
+  "exposure": 0.1252442840168972,
+  "charged": {
+   "buys": 27,
+   "sells": 26,
+   "buy_slip_bps": 5.000000000000272,
+   "sell_slip_bps": 4.999999999999834,
+   "fee_bps": 4.846307018731168,
+   "round_trip_bps": 14.846307018731274
+  }
+ },
+ "cheater": {
+  "passed": true,
+  "expected": "every check passes, Sharpe at least 3.0",
+  "actual": {
+   "return": 1311263451695536.5,
+   "sharpe": 10.970171623911652,
+   "sortino": 65.01736093747517,
+   "max_drawdown": 0.1017296098080942,
+   "trades": 701
+  },
+  "checks": [
+   {
+    "name": "drawdown_vs_spy",
+    "passed": true,
+    "detail": "9.35% vs SPY 18.75% (validation)"
+   },
+   {
+    "name": "sharpe_vs_spy",
+    "passed": true,
+    "detail": "11.42 vs SPY 1.04 (validation)"
+   },
+   {
+    "name": "sortino_vs_spy",
+    "passed": true,
+    "detail": "70.81 vs SPY 1.57 (validation)"
+   },
+   {
+    "name": "tune_c_sharpe_vs_spy",
+    "passed": true,
+    "detail": "10.76 vs SPY 1.82 (2023 to 2024)"
+   },
+   {
+    "name": "drawdown_cap",
+    "passed": true,
+    "detail": "worst 10.17% (cap 25%)"
+   },
+   {
+    "name": "trade_count",
+    "passed": true,
+    "detail": "701 closed trades (need 30)"
+   },
+   {
+    "name": "api_cost",
+    "passed": true,
+    "detail": "$0.00 in every month (no paid calls)"
+   },
+   {
+    "name": "deflated_sharpe",
+    "passed": true,
+    "detail": "DSR 1.000 (need 0.95)"
+   },
+   {
+    "name": "sharpe_vs_mtum",
+    "passed": true,
+    "detail": "11.42 vs MTUM 1.50 (validation)"
+   }
+  ],
+  "dsr": 1.0,
+  "charged": {
+   "buys": 705,
+   "sells": 701,
+   "buy_slip_bps": 14.625741522233596,
+   "sell_slip_bps": 13.315161924639037,
+   "fee_bps": 0.6380848391171735,
+   "round_trip_bps": 28.578988285989805
+  }
+ },
+ "random": {
+  "passed": true,
+  "expected": "mean trade beats SPY by -0.44% after costs (the average eligible row; -0.19% before costs), within 3 standard errors",
+  "actual": {
+   "mean_trade_excess": -0.007544880261126613,
+   "standard_error": 0.001375586271594278,
+   "trades": 1327
+  },
+  "seeds": [
+   {
+    "seed": 1,
+    "return": -0.18054268278175456,
+    "sharpe": -0.33444513481235705,
+    "sortino": -0.46993076111640025,
+    "max_drawdown": 0.25241707069286357,
+    "trades": 442,
+    "mean_trade_excess": -0.005320674362702084,
+    "charged": {
+     "buys": 441,
+     "sells": 441,
+     "buy_slip_bps": 12.39286812652779,
+     "sell_slip_bps": 12.39042986226998,
+     "fee_bps": 8.546234825897393,
+     "round_trip_bps": 33.32953281469516
+    }
+   },
+   {
+    "seed": 2,
+    "return": -0.22929435231754558,
+    "sharpe": -0.8173119559422305,
+    "sortino": -1.0446525717709532,
+    "max_drawdown": 0.26290527748621095,
+    "trades": 151,
+    "mean_trade_excess": -0.010711490841844645,
+    "charged": {
+     "buys": 150,
+     "sells": 151,
+     "buy_slip_bps": 14.41918972760963,
+     "sell_slip_bps": 14.808768012000504,
+     "fee_bps": 6.443483641027628,
+     "round_trip_bps": 35.67144138063776
+    }
+   },
+   {
+    "seed": 3,
+    "return": -0.23415214993758282,
+    "sharpe": -0.6330301821737899,
+    "sortino": -0.871297713517545,
+    "max_drawdown": 0.2601212280225823,
+    "trades": 256,
+    "mean_trade_excess": -0.007939968821655062,
+    "charged": {
+     "buys": 256,
+     "sells": 254,
+     "buy_slip_bps": 12.071195103446176,
+     "sell_slip_bps": 12.02950727424715,
+     "fee_bps": 8.422300749605593,
+     "round_trip_bps": 32.52300312729892
+    }
+   },
+   {
+    "seed": 4,
+    "return": -0.24672735278167512,
+    "sharpe": -0.5712830443473739,
+    "sortino": -0.772701232093486,
+    "max_drawdown": 0.2688857166637352,
+    "trades": 332,
+    "mean_trade_excess": -0.00689879242610422,
+    "charged": {
+     "buys": 332,
+     "sells": 332,
+     "buy_slip_bps": 13.58248135325848,
+     "sell_slip_bps": 13.668822997927302,
+     "fee_bps": 8.520345113182062,
+     "round_trip_bps": 35.77164946436784
+    }
+   },
+   {
+    "seed": 5,
+    "return": -0.24649006541307406,
+    "sharpe": -0.8551105461041416,
+    "sortino": -1.07062919291475,
+    "max_drawdown": 0.2693128693242174,
+    "trades": 146,
+    "mean_trade_excess": -0.011779806967615441,
+    "charged": {
+     "buys": 144,
+     "sells": 146,
+     "buy_slip_bps": 13.818539094239274,
+     "sell_slip_bps": 13.9330063133307,
+     "fee_bps": 7.025503680050687,
+     "round_trip_bps": 34.77704908762066
+    }
+   }
+  ],
+  "known_answer": -0.004395804643244216,
+  "pre_cost": -0.0019135083268474154,
+  "spy": {
+   "return": 1.030953971069116,
+   "sharpe": 1.4193787352912088
+  }
+ }
+}

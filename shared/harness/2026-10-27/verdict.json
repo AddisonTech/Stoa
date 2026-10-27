@@ -1,0 +1,13 @@
+{
+ "verdict": "bug",
+ "passed": {
+  "spy": false,
+  "cheater": true,
+  "random": true
+ },
+ "prices": {
+  "cache": 0,
+  "minute bars": 561,
+  "none": 0
+ }
+}

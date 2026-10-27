@@ -1,0 +1,18 @@
+{
+ "leg": "spy (IVV)",
+ "finding": "no engine bug; the leg's Sharpe rule assumed a fully invested book",
+ "days": 876,
+ "days_holding": 534,
+ "share_holding": 0.61,
+ "exposure_while_holding": 0.205,
+ "sharpe_actual": 0.624,
+ "sharpe_exact_known_answer": 0.653,
+ "ivv_sharpe": 1.463,
+ "daily_return_correlation": 0.948,
+ "mean_abs_daily_gap_bps": 0.77,
+ "total_gap": -0.0028,
+ "holding_days_sharpe_actual": 0.79,
+ "holding_days_sharpe_ivv": 0.805,
+ "return_actual": 0.0465,
+ "return_exact_known_answer": 0.0493
+}
