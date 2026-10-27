@@ -21,6 +21,7 @@ from xml.sax.saxutils import escape
 
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 
 from stoa import clock
 from stoa.newsbrain import ROOT, sealed
@@ -72,6 +73,8 @@ def month_minutes(stamp: str, symbols: set[str], root: Path = MINUTE_DIR) -> pd.
     parts = []
     want = sorted(symbols)
     for path in sorted((root / stamp).glob("*.parquet")):
+        if pq.ParquetFile(path).metadata.num_rows == 0:
+            continue  # an empty group file: no bars that month, and no text type to filter
         df = pd.read_parquet(path, columns=["symbol", "t", "c"], filters=[("symbol", "in", want)])
         if len(df):
             parts.append(df)

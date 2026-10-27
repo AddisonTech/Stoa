@@ -27,6 +27,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 
 from stoa import clock, event_signals, wide
 from stoa.backtest import run_backtest
@@ -260,6 +261,8 @@ def month_premarket(root: Path, stamp: str, symbols: set[str]) -> pd.DataFrame:
     parts = []
     want = sorted(symbols)
     for path in sorted((root / stamp).glob("*.parquet")):
+        if pq.ParquetFile(path).metadata.num_rows == 0:
+            continue  # an empty group file: no bars that month, and no text type to filter
         df = pd.read_parquet(
             path, columns=["symbol", "t", "c", "v", "vw", "n"], filters=[("symbol", "in", want)]
         )

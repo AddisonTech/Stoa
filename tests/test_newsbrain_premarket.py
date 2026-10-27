@@ -241,3 +241,21 @@ def test_verdict_labels_starved_runs_without_changing_pass_or_fail() -> None:
     assert t9.verdict(False, 29) == "STARVED" and t9.verdict(False, 30) == "FAIL"
     assert t9.verdict(False, 40, expected_trades=200) == "STARVED"  # under a quarter
     assert t9.verdict(False, 50, expected_trades=200) == "FAIL"
+
+
+def test_empty_group_files_are_skipped_not_fatal(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from stoa.newsbrain import news_timing as nt
+
+    month = tmp_path / "2018-02"
+    month.mkdir()
+    # The pull writes an empty file for a group with no bars; its symbol column has no text type.
+    pd.DataFrame({c: [] for c in ("symbol", "t", "c", "v", "vw", "n")}).to_parquet(
+        month / "g0385.parquet"
+    )
+    t = pd.Timestamp("2018-02-05 13:00", tz="UTC")
+    pd.DataFrame(
+        {"symbol": ["AAA"], "t": [t], "c": [10.0], "v": [100], "vw": [10.0], "n": [3]}
+    ).to_parquet(month / "g0001.parquet")
+    got = pm.month_premarket(tmp_path, "2018-02", {"AAA", "SPY"})
+    assert list(got["symbol"]) == ["AAA"]
+    assert list(nt.month_minutes("2018-02", {"AAA"}, tmp_path)["symbol"]) == ["AAA"]
