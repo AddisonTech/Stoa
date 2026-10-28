@@ -10,10 +10,16 @@ session's 9:00 am cutoff, from the full history, into ``big_paper.feed_dir``. ``
 uploads that folder once to ``big_paper.feed_repo`` (HF_TOKEN in the environment only;
 ``scripts/push-feed-seed.ps1`` asks for it without saving it). ``feedreset <commit>`` puts
 the dataset's live state back to an earlier commit (an id or a message such as
-"seed 2026-10-26"), run from the bigpaper workflow (job ``feed-reset``). ``feedpull`` downloads the
-whole dataset, the dry runs' pulls and checks included, into
+"seed 2026-10-26"), run from the bigpaper workflow (job ``feed-reset``). ``feedpull``
+downloads the whole dataset, the dry runs' pulls and checks included, into
 ``data/newsbrain/feedcheck/hf`` for the Dell's rebuild to compare
 (``scripts/pull-feed.ps1``, a read token, never saved).
+
+``retrain <last session>`` refits trial 12's model on every session labelled by the open
+of that session (stoa/newsbrain/retrain.py). ``backfill <version> <session>...`` scores
+those sessions' Dell rows with that model for the shadow scoreboard, marked backfill.
+``modelpush <version>`` uploads the model and its backfill to ``big_paper.feed_repo``
+(``scripts/push-model.ps1``, a write token, never saved).
 """
 
 from __future__ import annotations
@@ -274,6 +280,31 @@ def main(argv: list[str]) -> int:
         seeded = fd.record().get("seeded")
         feed.push_state(fd, settings.big_paper.feed_repo, token, f"seed {seeded}")
         print(json.dumps({"pushed": str(fd.root), "to": settings.big_paper.feed_repo}))
+    elif job == "retrain":
+        from stoa.newsbrain import retrain
+
+        meta = retrain.run(date.fromisoformat(argv[1]))
+        print(json.dumps({k: meta[k] for k in ("version", "train_window", "rows", "sha256")}))
+    elif job == "backfill":
+        from stoa.newsbrain import retrain
+
+        days = [date.fromisoformat(a) for a in argv[2:]]
+        for meta in retrain.backfill(argv[1], days):
+            print(json.dumps({k: meta[k] for k in ("session", "rows", "above", "picks")}))
+    elif job == "modelpush":
+        import os
+        from pathlib import Path
+
+        from stoa.config import load_settings
+        from stoa.newsbrain import retrain
+
+        settings = load_settings(Path("config/default.yaml"))
+        token = os.environ.get("HF_TOKEN", "")
+        if not token:
+            print("HF_TOKEN is not set in this process; nothing sent")
+            return 2
+        retrain.push(argv[1], settings.big_paper.feed_repo, token)
+        print(json.dumps({"pushed": argv[1], "to": settings.big_paper.feed_repo}))
     elif job == "feedreset":
         import os
         import tempfile

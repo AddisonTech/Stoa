@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -470,7 +471,7 @@ def test_the_feed_state_lives_only_in_the_private_dataset() -> None:
     assert make_settings().big_paper.feed_repo == "ASmith91/stoa-feed"
     assert "feed" in str(wf[True]["workflow_dispatch"]["inputs"]["job"]["options"])
     # The feed and the picks compute on Windows without AVX-512, the way the Dell did.
-    assert "windows-latest" in job["runs-on"] and '["feed","picks"]' in job["runs-on"]
+    assert "windows-latest" in job["runs-on"] and '["feed","picks","model-check"]' in job["runs-on"]
     assert "X86_V4" in run["env"]["NPY_DISABLE_CPU_FEATURES"]
     assert "--replay-from" in run["run"]
 
@@ -543,3 +544,41 @@ def test_the_kill_switch_is_reset_only_by_hand(tmp_path: Path) -> None:
     st = store.load()
     assert not st.kill_switch.active and st.high_water_mark == D(70000)
     assert rec.alerts[-1].title == "BIG PAPER: Kill switch reset"
+
+
+def test_the_picks_model_is_pinned_by_version_and_hash_and_rolls_back() -> None:
+    from stoa.newsbrain.feed import FeedError
+
+    def rt(**over: str) -> bigpaper.BigRuntime:
+        return bigpaper.BigRuntime(
+            base=make_settings(**over),
+            secrets=Secrets.from_env({}),
+            notifier=alerts.RecordingNotifier(),
+        )
+
+    assert make_settings().big_paper.model == ""  # trial 9's frozen model until switched
+    assert bigpaper.model_choice(rt()) == (None, None)
+    pinned = rt(big_paper__model="t12-all-x", big_paper__model_sha256="ab" * 32)
+    assert bigpaper.model_choice(pinned) == ("t12-all-x", "ab" * 32)
+    with pytest.raises(FeedError, match="model_sha256"):
+        bigpaper.model_choice(rt(big_paper__model="t12-all-x"))
+    dry = rt()
+    dry.model_override = "t12-all-y"
+    assert bigpaper.model_choice(dry) == ("t12-all-y", None)  # its meta.json gives the hash
+
+
+def test_a_scoreboard_failure_never_stops_the_picks(tmp_path: Path) -> None:
+    class Broken:
+        def __getattr__(self, name: str) -> Any:
+            raise RuntimeError("the dataset is down")
+
+    r = bigpaper.BigRuntime(
+        base=settings(tmp_path),
+        secrets=Secrets.from_env({**BIG, "HF_TOKEN": "tok"}),
+        notifier=alerts.RecordingNotifier(),
+    )
+    r.hub = Broken()
+    rows = pd.DataFrame({"symbol": ["AAA"], "p": [0.6], "adv": [1e8]})
+    assert bigpaper.lock_scoreboard(r, SESSION, rows, "v1", at(SESSION, "09:03")) is None
+    line = bigpaper.shadow_summary_line(r, at(SESSION, "17:15"))
+    assert line.startswith("Shadow: not graded today")

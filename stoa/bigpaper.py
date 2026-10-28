@@ -127,6 +127,10 @@ class BigRuntime:
     # A dry replay of past mornings: the dataset's state as of this commit (id or message),
     # carried between the replay's steps in a local copy; the live state is never touched.
     replay_from: str | None = None
+    # A dry run on a model version other than the configured one (big_paper.model).
+    model_override: str | None = None
+    hub: Any = None  # huggingface_hub.HfApi for the shadow scoreboard; from HF_TOKEN when None
+    prices_945: Any = None  # shadowboard.Prices for grading; Alpaca's minute bars when None
 
     def __post_init__(self) -> None:
         self.notifier = Tagged(self.notifier, self.base.big_paper.tag)
@@ -364,7 +368,15 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
     stale = feed.problems(fd, session, now)
     if stale:
         raise feed.FeedError("; ".join(stale))
-    rows, sigs = feed.scored(fd, session)
+    version, sha = model_choice(rt)
+    path = fd.root / "models" / version / "model_h1.pkl" if version else None
+    if version and sha is None:  # a dry run's override: the hash its own meta.json gives
+        meta = json.loads((fd.root / "models" / version / "meta.json").read_text(encoding="utf-8"))
+        sha = str(meta["sha256"])
+    rows, sigs = feed.scored(fd, session, path, sha)
+    log.info("picks model: %s", version or FROZEN_VERSION)
+    if not rt.dry:
+        lock_scoreboard(rt, session, rows, version or FROZEN_VERSION, now)
     if rt.dry:
         feed.save_check(fd, session, rows, sigs)
         log.info("dry picks for %s: %s", session, [(x.symbol, round(x.score, 4)) for x in sigs])
@@ -377,6 +389,107 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
                 only=[f"raw/{fd.raw_tag}/**", f"checks/{fd.raw_tag}/**"],
             )
     return sigs
+
+
+FROZEN_VERSION = "t9-frozen"  # trial 9's frozen model, in the feed state's static/
+
+
+def model_choice(rt: BigRuntime) -> tuple[str | None, str | None]:
+    """The picks' model version and its pinned sha256: a dry run's override (its hash is read
+    from its meta.json), else big_paper.model and model_sha256; (None, None) is the frozen
+    model in the feed state."""
+    if rt.model_override:
+        return rt.model_override, None
+    bp = rt.base.big_paper
+    if not bp.model:
+        return None, None
+    if not bp.model_sha256:
+        from stoa.newsbrain.feed import FeedError
+
+        raise FeedError(f"big_paper.model {bp.model} has no model_sha256 to check it against")
+    return bp.model, bp.model_sha256
+
+
+def hub(rt: BigRuntime, token: str) -> Any:
+    from stoa.newsbrain.feed import private_or_refuse
+
+    if rt.hub is not None:
+        return rt.hub
+    from huggingface_hub import HfApi
+
+    api = HfApi(token=token)
+    private_or_refuse(api, rt.base.big_paper.feed_repo)
+    return api
+
+
+def lock_scoreboard(
+    rt: BigRuntime, session: date, rows: Any, version: str, now: datetime
+) -> dict[str, Any] | None:
+    """Lock the morning's full list before the open (stoa/shadowboard.py). Never stops the
+    picks: a failure is logged and the day goes ungraded."""
+    from stoa import shadowboard
+
+    token = hf_token(rt)
+    if token is None or rows is None or len(rows) == 0:
+        return None
+    try:
+        work = Path(f"{rt.base.big_paper.feed_dir}-scoreboard")
+        meta = shadowboard.lock(
+            hub(rt, token),
+            rt.base.big_paper.feed_repo,
+            rt.root,
+            work,
+            session,
+            shadowboard.predictions(rows, version),
+            now,
+        )
+    except Exception as exc:
+        log.warning("shadow scoreboard not locked for %s: %s", session, exc)
+        return None
+    log.info(
+        "shadow scoreboard locked %s: %s rows, sha256 %s", session, meta["rows"], meta["sha256"]
+    )
+    return meta
+
+
+def grade_scoreboard(rt: BigRuntime, now: datetime) -> list[dict[str, Any]]:
+    """Grade every locked or backfilled morning whose exit price is in."""
+    from stoa import shadowboard
+    from stoa.data.factory import alpaca_data_client
+
+    token = hf_token(rt)
+    if token is None:
+        return []
+    prices = rt.prices_945
+    if prices is None:
+        prices = shadowboard.alpaca_945(alpaca_data_client(rt.settings, data_secrets(rt.secrets)))
+    return shadowboard.grade_pending(
+        hub(rt, token),
+        rt.base.big_paper.feed_repo,
+        rt.root,
+        Path(f"{rt.base.big_paper.feed_dir}-scoreboard"),
+        prices,
+        now,
+    )
+
+
+def shadow_summary_line(rt: BigRuntime, now: datetime) -> str:
+    """The 5:15 pm summary's shadow line; grading never stops the summary."""
+    from stoa import shadowboard
+
+    try:
+        grade_scoreboard(rt, now)
+    except Exception as exc:
+        log.warning("shadow scoreboard not graded: %s", exc)
+        return f"Shadow: not graded today ({type(exc).__name__})."
+    day = shadowboard.latest_locked(rt.root)
+    waiting = None
+    if day is None:
+        locks = sorted(shadowboard.logged_hashes(rt.root))
+        if locks:
+            nxt = clock.next_session(date.fromisoformat(locks[0]))
+            waiting = f"first locked day {locks[0]} is graded after 9:45 am on {nxt}."
+    return shadowboard.shadow_line(day, waiting)
 
 
 def replay_store(rt: BigRuntime) -> Path:
@@ -393,7 +506,9 @@ def load_feed(rt: BigRuntime, fd: Any, token: str | None) -> None:
         return
     repo = rt.base.big_paper.feed_repo
     if rt.replay_from is None:
-        feed.pull_state(fd, repo, token)
+        version, _ = model_choice(rt)
+        only = [*feed.STATE_FILES, f"models/{version}/**"] if version else None
+        feed.pull_state(fd, repo, token, only=only)
         return
     store = replay_store(rt)
     if not (store / "feed.json").exists():
@@ -971,8 +1086,72 @@ def _summary(rt: BigRuntime, force: bool) -> Result:
     lines.append(f"Drawdown {off_high:.1%} from the high.{brake}")
     if state.kill_switch.active:
         lines.append("Kill switch ON: tomorrow's 9:45 am run sells everything.")
+    lines.append(shadow_summary_line(rt, now))
     send(rt, result, alerts.Alert(title=f"Day summary {session}", message="\n".join(lines)))
     return result
+
+
+def scoreboard(rt: BigRuntime) -> Result:
+    """Grade the shadow scoreboard now, with no alert (the summary does it each evening)."""
+    if off_reason(rt.base, rt.secrets, dry=True):
+        return Result(EXIT_OK, "off")
+    graded = grade_scoreboard(rt, rt.now())
+    log.info("shadow scoreboard: %s", [(d["kind"], d["session"], d.get("refused")) for d in graded])
+    return Result(EXIT_OK, "graded")
+
+
+def model_check(rt: BigRuntime, version: str) -> Result:
+    """A model version against the Dell: download it and the backfilled days, score each day's
+    rows (the Dell's, which match the feed's) again here, and require the same p to the last
+    bit and picks without errors. Raises on any difference."""
+    import hashlib
+    import pickle
+
+    import pandas as pd
+
+    from stoa import shadowboard
+    from stoa.newsbrain import feed
+
+    token = hf_token(rt)
+    if token is None:
+        raise feed.FeedError("HF_TOKEN is not set")
+    fd = feed.Feed(Path(f"{rt.base.big_paper.feed_dir}-check"))
+    feed.pull_state(
+        fd,
+        rt.base.big_paper.feed_repo,
+        token,
+        only=[f"models/{version}/**", f"{shadowboard.PREFIX}/backfill/**"],
+    )
+    meta = json.loads((fd.root / "models" / version / "meta.json").read_text(encoding="utf-8"))
+    blob = (fd.root / "models" / version / "model_h1.pkl").read_bytes()
+    if hashlib.sha256(blob).hexdigest() != meta["sha256"]:
+        raise feed.FeedError(f"{version}: the model does not match its meta.json")
+    brain = pickle.loads(blob)
+    t9.register_kind(sc.GRADED)
+    days = sorted((fd.root / shadowboard.PREFIX / "backfill").glob("*/predictions.parquet"))
+    checked = 0
+    for path in days:
+        rows = pd.read_parquet(path)
+        if set(rows["model_version"]) != {version}:
+            continue
+        p = brain.predict(rows)
+        same = bool((p == rows["p"].to_numpy()).all())
+        sigs = sc.signals(rows.assign(sidx=0), p, sc.GRADED)
+        log.info(
+            "model check %s %s: %s rows, p %s, %s picks %s",
+            version,
+            path.parent.name,
+            len(rows),
+            "equal to the Dell's" if same else "DIFFERENT from the Dell's",
+            len(sigs),
+            [(x.symbol, round(x.score, 4)) for x in sigs],
+        )
+        if not same:
+            raise feed.FeedError(f"{version} on {path.parent.name}: p differs from the Dell's")
+        checked += 1
+    if not checked:
+        raise feed.FeedError(f"no backfilled days scored by {version} to check against")
+    return Result(EXIT_OK, "checked")
 
 
 # ---- by hand ---------------------------------------------------------------------------------

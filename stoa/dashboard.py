@@ -32,7 +32,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from stoa import __version__, clock, exam, holdout, redact, shadow, spendcap
+from stoa import __version__, clock, exam, holdout, redact, shadow, shadowboard, spendcap
 from stoa.config import SECRET_ENV, Settings
 from stoa.journal import read_journal
 from stoa.state import State, StateStore
@@ -481,6 +481,7 @@ def collect(
         },
         "fallback": {"active": track.fallback_active, "reason": track.fallback_reason},
         "big_paper": big_paper(settings),
+        "shadow_board": shadowboard.read_board(settings.big_paper.state_dir),
         "analyst": analyst_spend(shadow.merged_view(state, ledger), settings, built),
         "shadow": {
             k: v
@@ -818,6 +819,90 @@ def render_trades(data: dict[str, Any], note: str | None = None) -> str:
         "placed. P&amp;L is realized on closed trades and at the last close on positions "
         "still held. Paper money.</p>"
     )
+
+
+def _rate(x: float | None) -> str:
+    return "" if x is None else f"{x:.0%}"
+
+
+def _vs(x: float | None) -> str:
+    return "" if x is None else f"{x * 100:+.2f}%"
+
+
+def _shadow_table(labels: tuple[str, ...], rows: list[tuple[str, ...]]) -> str:
+    head = "".join(f"<th>{_e(k)}</th>" for k in labels)
+    body = "".join(
+        "<tr>"
+        + "".join(f'<td data-label="{_e(k)}">{_e(v)}</td>' for k, v in zip(labels, r, strict=True))
+        + "</tr>"
+        for r in rows
+    )
+    return f'<table class="stack"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>'
+
+
+def render_shadow(data: dict[str, Any]) -> str:
+    """The shadow scoreboard: every stock the big account's brain scores, graded."""
+    b = data.get("shadow_board") or {}
+    t = b.get("locked") or {}
+    note = (
+        '<p class="muted small">Every stock the big account&#39;s news brain scores each '
+        "morning is locked before the 9:30 open, buys or not, and graded the next morning: in "
+        "at 9:45 am, out at 9:45 am a session later, against SPY over the same span, the "
+        "trades&#39; own rule. A hit beat SPY after costs. Backfilled days, scored after the "
+        "fact, are kept apart and never counted here.</p>"
+    )
+    bf = b.get("backfill") or {}
+    back = (
+        '<p class="muted small">Backfill (scored after the fact, inside the retrained '
+        f"model's training window): {bf['days']} mornings, above-line average vs SPY "
+        f"{_vs(bf.get('above_avg_vs_spy')) or 'n/a'}, top 10 vs SPY "
+        f"{_vs(bf.get('top_avg_vs_spy')) or 'n/a'}.</p>"
+        if bf.get("days")
+        else ""
+    )
+    if not t.get("days"):
+        return (
+            _empty(
+                "No locked morning graded yet. The first lock is the next 9:00 am picks; it is "
+                "graded after 9:45 am the session after."
+            )
+            + back
+            + note
+        )
+    tiles = (
+        f"<p>Since {_e(t['first'])}: {t['days']} mornings, {t['scored']} stocks scored, "
+        f"{t['above']} above the {b.get('line', 0.55):.2f} line. Hit rate above the line "
+        f"{_rate(t.get('hit_rate')) or 'n/a'}; above-line average vs SPY "
+        f"{_vs(t.get('above_avg_vs_spy')) or 'n/a'}; top 10 vs SPY "
+        f"{_vs(t.get('top_avg_vs_spy')) or 'n/a'}.</p>"
+    )
+    cal = _shadow_table(
+        ("Bucket", "Stocks", "Average p", "Beat SPY after costs"),
+        [
+            (
+                c["bucket"],
+                str(c["n"]),
+                f"{c['mean_p']:.3f}" if c["mean_p"] is not None else "",
+                _rate(c["hit_rate"]),
+            )
+            for c in t.get("calibration", [])
+        ],
+    )
+    days = _shadow_table(
+        ("Morning", "Scored", "Above line", "Hit rate", "Above-line vs SPY", "Top 10 vs SPY"),
+        [
+            (
+                d["session"],
+                str(d["scored"]),
+                str(d["above"]),
+                _rate(d.get("hit_rate")),
+                _vs(d.get("above_avg_vs_spy")),
+                _vs(d.get("top_avg_vs_spy")),
+            )
+            for d in (b.get("locked_days") or [])[:10]
+        ],
+    )
+    return tiles + "<h3>Calibration</h3>" + cal + "<h3>Recent mornings</h3>" + days + back + note
 
 
 INTRO_TRIAL12 = (
@@ -1190,6 +1275,7 @@ def render(data: dict[str, Any]) -> str:
         f'<section class="card"><h2>Trade log</h2>{render_trades(data)}</section>'
         f'<section class="card"><h2>{_e(big_paper_title(data))}</h2>'
         f"{render_big_paper(data)}</section>"
+        f'<section class="card"><h2>Shadow scoreboard</h2>{render_shadow(data)}</section>'
         f'<section class="card"><h2>Last {DECISIONS_SHOWN} decisions</h2>'
         f"{render_decisions(data)}</section>"
         f'<section class="card"><h2>Model calibration</h2>{render_calibration(data)}</section>'

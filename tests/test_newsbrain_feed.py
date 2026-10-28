@@ -405,3 +405,36 @@ def test_a_public_dataset_is_refused(
     with pytest.raises(feed.FeedError, match="not private"):
         feed.pull_state(feed.Feed(root / "runner"), "ASmith91/stoa-feed", "tok")
     assert not any(c[0] in ("upload", "download") for c in fake.calls)
+
+
+class Always:
+    """A stand-in model that gives every stock the same p."""
+
+    def __init__(self, p: float) -> None:
+        self.p = p
+
+    def predict(self, x: pd.DataFrame) -> np.ndarray:
+        return np.full(len(x), self.p)
+
+
+def test_the_picks_model_can_be_swapped_and_rolled_back(dell: tuple[Path, Dell]) -> None:
+    import hashlib
+
+    root, fake = dell
+    fd = seeded(root)
+    src = fake.sources()
+    day = SEED
+    for _ in range(2):
+        day = clock.next_session(day)
+        feed.run(fd, src, at(day, "09:00", 30))
+    base, _ = feed.scored(fd, day)  # the feed state's own model
+    path = root / "models" / "v2" / "model_h1.pkl"
+    path.parent.mkdir(parents=True)
+    blob = pickle.dumps(Always(0.9))
+    path.write_bytes(blob)
+    rows, sigs = feed.scored(fd, day, path, hashlib.sha256(blob).hexdigest())
+    assert len(rows) and (rows["p"] == 0.9).all() and len(sigs) > 0
+    with pytest.raises(feed.FeedError, match="sha256"):
+        feed.scored(fd, day, path, "0" * 64)
+    back, _ = feed.scored(fd, day)  # rolled back: the same p as before the swap
+    assert back["p"].tolist() == base["p"].tolist()

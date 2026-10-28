@@ -272,6 +272,8 @@ big_paper:                         # a news brain trial on its own ~$100,000 Alp
   tag: BIG PAPER                   # every alert from this account starts with this
   starting_equity: "100000"
   auto_approve: true               # paper and hundreds of trades: picks go through without a tap
+  model: ""                        # blank: trial 9's frozen model in the feed state; a version: models/<version>/ in feed_repo
+  model_sha256: ""                 # the pinned version's sha256 (its meta.json); blank model rolls back
 
 sweep:
   enabled: true

@@ -406,7 +406,18 @@ def execute(ctx: Ctx, force: bool) -> None:
 @main.command("bigpaper")
 @click.argument(
     "job",
-    type=click.Choice(["feed", "picks", "execute", "summary", "status", "kill-switch-reset"]),
+    type=click.Choice(
+        [
+            "feed",
+            "picks",
+            "execute",
+            "summary",
+            "status",
+            "kill-switch-reset",
+            "scoreboard",
+            "model-check",
+        ]
+    ),
 )
 @click.option("--force", is_flag=True, help="Run outside the window or again for the same session.")
 @click.option("--dry", is_flag=True, help="Feed or picks with no orders and nothing saved.")
@@ -416,8 +427,17 @@ def execute(ctx: Ctx, force: bool) -> None:
     default="",
     help="Dry runs only: start from this commit of the feed's dataset; the live state stays.",
 )
+@click.option(
+    "--model",
+    "model",
+    default="",
+    help="Dry picks on this model version (models/<version>/ in the feed's dataset); "
+    "model-check checks it.",
+)
 @pass_ctx
-def bigpaper_cmd(ctx: Ctx, job: str, force: bool, dry: bool, at: str, replay_from: str) -> None:
+def bigpaper_cmd(
+    ctx: Ctx, job: str, force: bool, dry: bool, at: str, replay_from: str, model: str
+) -> None:
     """The big paper account: 8:15 am feed, 9:00 am picks, 9:45 am execute, 5:15 pm summary."""
     from stoa import bigpaper
 
@@ -430,12 +450,15 @@ def bigpaper_cmd(ctx: Ctx, job: str, force: bool, dry: bool, at: str, replay_fro
         raise click.UsageError("--dry runs only the feed and the picks")
     if (at or replay_from) and not dry:
         raise click.UsageError("--at and --replay-from need --dry")
+    if model and not (dry or job == "model-check"):
+        raise click.UsageError("--model is for dry runs and model-check only")
     rt = bigpaper.BigRuntime(
         base=s,
         secrets=sec,
         notifier=make_notifier(s, sec),
         dry=dry,
         replay_from=replay_from or None,
+        model_override=model or None,
     )
     if at:
         when = datetime.fromisoformat(at)
@@ -446,6 +469,16 @@ def bigpaper_cmd(ctx: Ctx, job: str, force: bool, dry: bool, at: str, replay_fro
         reset = bigpaper.reset_kill_switch(rt)
         click.echo(f"big paper kill switch: {reset.status}")
         sys.exit(reset.code)
+    if job == "scoreboard":
+        graded = bigpaper.scoreboard(rt)
+        click.echo(f"big paper scoreboard: {graded.status}")
+        sys.exit(graded.code)
+    if job == "model-check":
+        if not model:
+            raise click.UsageError("model-check needs --model <version>")
+        checked = bigpaper.model_check(rt, model)
+        click.echo(f"big paper model-check {model}: {checked.status}")
+        sys.exit(checked.code)
     run = {
         "feed": bigpaper.feed,
         "picks": bigpaper.picks,

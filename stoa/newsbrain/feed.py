@@ -19,6 +19,7 @@ the last digits of the running sums, so the feed refuses to run on one.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import pickle
@@ -593,8 +594,12 @@ def signals(feed: Feed, session: date) -> list[event_signals.Signal]:
     return scored(feed, session)[1]
 
 
-def scored(feed: Feed, session: date) -> tuple[pd.DataFrame, list[event_signals.Signal]]:
-    """The session's rows with the model's p, and the picks from them."""
+def scored(
+    feed: Feed, session: date, model: Path | None = None, sha256: str | None = None
+) -> tuple[pd.DataFrame, list[event_signals.Signal]]:
+    """The session's rows with the model's p, and the picks from them. ``model`` is a
+    pickle to use instead of the state's own (trial 9's frozen model); ``sha256`` must
+    match it when given."""
     st = feed.state()
     if st.session != session:
         raise FeedError(f"the news brain state is at {st.session}, not {session}")
@@ -602,9 +607,12 @@ def scored(feed: Feed, session: date) -> tuple[pd.DataFrame, list[event_signals.
         rows = st.rows()
     if rows.empty:
         return rows, []
-    model = pickle.loads((st.root / "static" / "model_h1.pkl").read_bytes())
+    blob = (model or st.root / "static" / "model_h1.pkl").read_bytes()
+    if sha256 is not None and hashlib.sha256(blob).hexdigest() != sha256:
+        raise FeedError(f"the model {model} does not match its pinned sha256")
+    brain = pickle.loads(blob)
     t9.register_kind(sc.GRADED)
-    p = model.predict(rows)
+    p = brain.predict(rows)
     return rows.assign(p=p), sc.signals(rows, p, sc.GRADED)
 
 

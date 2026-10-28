@@ -553,3 +553,13 @@ Decided 2026-10-28 by the owner: he does not want to approve trades he cannot ju
 - **What.** On paper, the $100 account's buys no longer wait for Approve. At about 9:00 am one FYI alert lists what will be bought and sold at 9:45 am, with no buttons, the same way the big account's picks work. The setting is `approval.buys: mode`: buys follow `approval.mode`, which asks for no tap on paper.
 - **Unchanged.** The v1 rules, the sizing, the keys, every risk cap, the price sanity and cross-checks, the broker-side stops and the kill switch.
 - **Still in the code.** The Approve and Skip machinery. `approval.mode: auto` still asks for a tap on every trade in the first 30 days of live trading; whether to keep that is a separate decision before going live. `approval.buys: always` puts the buttons back on paper.
+
+## Trial 12 retrain-all, judged by a shadow scoreboard
+
+Decided 2026-10-28 by the owner.
+
+- **What.** Trial 9's model, as trial 12 uses it, refit on every labelled session from 2016 to the last completed trading day: the 2023 to 2026 test window and the spent holdout included. Same 13 features, same 1 session label (open of t to open of t+1, against SPY, after costs), same classifier, same fit and calibration split, same p >= 0.55 buy line, same SPY core for idle money. Only the training window changes. Logged in the trial registry as `trial12:retrain-all`.
+- **Rows.** The Dell's own, built on Windows like the feed and picks runners, so log and log1p round as they do live: trial 12's holdout panel, then the Dell's rebuilds of the sessions after it, which matched the feed exactly. The Dell's daily bars end on 2026-10-23, so the labels after 2026-10-22 use Yahoo's opens, adjusted for splits and dividends like the Dell's Alpaca bars (they agree to about 0.001% where both exist).
+- **No out-of-sample test is left.** Every session it could be tested on is in its training window. Its test is the shadow scoreboard: every stock it scores each morning, locked before the open with a hash on the state branch, graded the session after on the trades' own 9:45 am to 9:45 am rule (docs/RUNBOOK.md 13b). Backfilled mornings are in-sample and kept apart.
+- **Swap.** The picks move to it only after a dry picks run on the Windows runner with it, `model-check` (the Dell's p to the last bit, picks without errors) and the feature match of the dry runs; else the frozen model stays. `big_paper.model` back to blank rolls back; the frozen model stays in the feed state.
+- **Unchanged.** The big account's sizing, rails, kill switch and keys, the $100 account, trial 12's and trial 13's code and records.

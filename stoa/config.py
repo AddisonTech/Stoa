@@ -455,6 +455,11 @@ class BigPaperConfig(_Frozen):
     tag: str = "BIG PAPER"
     starting_equity: Decimal = Decimal("100000")
     auto_approve: bool = True  # paper: picks go through without a tap
+    # The picks' model: blank is trial 9's frozen model in the feed state (static/); a
+    # version reads models/<version>/model_h1.pkl from feed_repo, and must match model_sha256.
+    # Back to blank rolls back.
+    model: str = ""
+    model_sha256: str = ""
 
     @field_validator("tag")
     @classmethod
