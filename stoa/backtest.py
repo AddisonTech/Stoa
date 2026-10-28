@@ -28,10 +28,12 @@ from stoa.data.base import Bars, DataError
 from stoa.features import build_features, cell, slice_features
 from stoa.journal import Journal, hash_obj
 from stoa.models import ClosedTrade, Fill, Holding, PositionMeta, Side, dec
+from stoa.overlay import Overlay
 from stoa.planner import Decision, DecisionInput, Strategy, make_plan
 from stoa.portfolio import Portfolio
 from stoa.risk import next_high_water_mark
 from stoa.state import Plan, State
+from stoa.stops import engine_stop
 from stoa.trader import execute_baseline, execute_plan
 from stoa.universe import Universe
 
@@ -55,6 +57,7 @@ class BacktestResult:
     kills_by_gate: dict[str, int] = field(default_factory=dict)
     rejections_by_reason: dict[str, int] = field(default_factory=dict)
     sweep: Any = None  # SweepStats when idle money sat in a fund (trial 12), else None
+    stop_outs: int = 0  # broker-side stops hit (trial 13's overlay)
 
     @property
     def final_equity(self) -> Decimal:
@@ -88,6 +91,7 @@ def run_backtest(
     slippage: Slippage | None = None,
     fill_prices: Callable[[date, set[str], set[str]], dict[str, Decimal]] | None = None,
     sweep_symbol: str | None = None,
+    overlay: Overlay | None = None,
 ) -> BacktestResult:
     """Run ``strategy`` over the sessions from ``start`` to ``end``.
 
@@ -98,6 +102,9 @@ def run_backtest(
 
     ``sweep_symbol`` (trial 12's SPY core, backtest only) holds idle money in that fund
     through a ``SweepBroker``: the strategy sees the fund as cash, never as a holding.
+
+    ``overlay`` (trial 13) is the one the strategy sizes with: the sweep keeps picks plus
+    the fund under its exposure cap, and its broker-side stops are simulated.
     """
     bench = settings.benchmark
     if bench not in bars:
@@ -143,7 +150,7 @@ def run_backtest(
     llm_cost: dict[str, float] = defaultdict(float)
     kills: dict[str, int] = defaultdict(int)
     rejections: dict[str, int] = defaultdict(int)
-    fallbacks = trips = decisions = 0
+    fallbacks = trips = decisions = stop_outs = 0
     pending: Plan | None = None
     prev_equity: Decimal = equity0
 
@@ -231,11 +238,14 @@ def run_backtest(
                 trips += int(report.kill_switch_tripped)
             else:
                 execute_baseline(pending, broker, state, day)
+        if overlay is not None and overlay.cfg.broker_stops:
+            stop_outs += _broker_stops(broker, state, bars, settings, day, fills, sweep_symbol)
         if sweep_symbol is not None:
             from stoa.broker.sweep import SweepBroker
 
             assert isinstance(broker, SweepBroker)
-            broker.sweep(state.kill_switch.active)
+            cap = overlay.current.exposure_cap if overlay and overlay.current else None
+            broker.sweep(state.kill_switch.active, cap)
         broker.mark(_prices(bars, ts, "close"))
         equity = portfolio.equity(broker.prices)
         invested = portfolio.market_value(broker.prices)
@@ -266,4 +276,46 @@ def run_backtest(
         kills_by_gate=dict(kills),
         rejections_by_reason=dict(rejections),
         sweep=getattr(broker, "stats", None) if sweep_symbol is not None else None,
+        stop_outs=stop_outs,
     )
+
+
+def _broker_stops(
+    broker: SimBroker,
+    state: State,
+    bars: Bars,
+    settings: Settings,
+    day: date,
+    fills: dict[str, Decimal],
+    sweep_symbol: str | None,
+) -> int:
+    """The overlay's broker-side stops for one session, after the session's orders.
+
+    As live (stops.py): every position held from a prior session has a stop from the
+    close before (the ATR stop, or the trailing stop once higher); a position bought
+    today has none. A stop already crossed at the 9:45 am price fills there; else it
+    fills at the stop when the day's low reaches it. Slippage and fees apply as to any sell.
+    """
+    ts = pd.Timestamp(day)
+    hit = 0
+    for sym in sorted(broker.portfolio.positions):
+        meta = state.positions_meta.get(sym)
+        df = bars.get(sym)
+        if sym == sweep_symbol or meta is None or meta.entry_session >= day or df is None:
+            continue
+        if ts not in df.index:
+            continue
+        stop = engine_stop(meta, df.loc[: ts - pd.Timedelta(days=1)], settings.exits)
+        if stop is None:
+            continue
+        placed_at = fills.get(sym)
+        if placed_at is not None and placed_at <= stop:
+            price = placed_at
+        elif dec(cell(df, ts, "low")) <= stop:
+            price = stop
+        else:
+            continue
+        broker.force_close(sym, price, day, "broker_stop")
+        state.positions_meta = {k: v for k, v in state.positions_meta.items() if k != sym}
+        hit += 1
+    return hit

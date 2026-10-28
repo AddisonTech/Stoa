@@ -28,6 +28,7 @@ from stoa.exits import initial_stop, trailing_stop
 from stoa.features import cell, regime_is_bull, snapshot
 from stoa.model_strategy import daily_returns
 from stoa.models import Candidate, ClosedTrade, ExitSignal, Holding, Side, dec
+from stoa.overlay import BRAKE_NOTE, HALT_NOTE, Overlay
 from stoa.planner import Decision, DecisionInput, ScoutRun
 
 UNKNOWN_SECTOR = "Unknown"
@@ -51,6 +52,7 @@ class EventStrategy:
     risk_managed: bool = True
     kind_of: dict[str, str] = field(default_factory=dict)  # held symbol -> signal kind
     entries: list[Entry] = field(default_factory=list)  # every planned entry, for diagnostics
+    overlay: Overlay | None = None  # trial 13's risk overlay; None leaves every rule as it was
 
     def decide(self, inp: DecisionInput) -> Decision:
         s = self.settings
@@ -90,6 +92,17 @@ class EventStrategy:
             halt_reason=inp.halt_reason,
             fallback_active=False,
         )
+        if self.overlay is not None:
+            st = self.overlay.step(
+                inp.session, inp.equity, inp.high_water_mark, s.risk.max_gross_exposure_pct
+            )
+            ctx = dataclasses.replace(
+                ctx,
+                limits=self.overlay.limits(s.risk, st),
+                size_multiplier=st.size_multiplier,
+                size_note=BRAKE_NOTE,
+                halt_reason=inp.halt_reason or (HALT_NOTE if st.halted else None),
+            )
         entries_possible = (
             not inp.kill_switch_active
             and not risk.kill_switch_breached(inp.equity, inp.high_water_mark, s.risk)
@@ -119,6 +132,11 @@ class EventStrategy:
                         ref_price=dec(close),
                         atr=dec(atr),
                         stop_price=dec(round(initial_stop(close, atr, s.exits), 4)),
+                        target_weight=(
+                            self.overlay.weight(close, atr, s.exits)
+                            if self.overlay is not None
+                            else None
+                        ),
                     )
                 )
                 picked.append(sig)

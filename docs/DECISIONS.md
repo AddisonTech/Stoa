@@ -517,3 +517,22 @@ Owner opens the holdout (2026-07-01 to 2026-10-23) once, for trial 12 as pre-reg
 - **Reported, not graded:** MTUM and the deflated Sharpe. Four months is too short for either to mean much.
 - **The wall.** `stoa.newsbrain.sealed.opened` lifts the wall for this one run, up to 2026-10-23, and nothing else. A marker is written the moment it opens; once the run finishes the holdout is spent and no run can open it again. A run that stops part way reopens only on the owner's word. The formal `stoa holdout seal` and `score` path was never sealed and is not used; this decision takes its place for trial 12. The result is logged in the registry as kind `holdout`, not as a new trial.
 - **When.** After the minute-bar compaction in the after-pull chain and before the backup, so it never runs while the minute bars are being rewritten. One run, stop and alert on failure, never rerun without the owner's word.
+
+## Trial 13: trial 12's picks with a risk overlay
+
+Decided 2026-10-28, written and registered before any run.
+
+Trial 12 beat SPY but failed its holdout on one check, drawdown. Its worst walk-forward drop (2025-03-05 to 2025-04-08, 14.9%, back by 2025-05-13) was the SPY core falling with the market in the tariff selloff; the three picks held in that stretch made money. Its holdout drop (5.8% on 2026-07-29, made back the next day) was three chip and AI stocks (MU, MRVL, NBIS) bought the same morning at 20% each. Trial 13 keeps trial 12's picks exactly and adds a risk overlay only.
+
+**Pre-registration** (registry `trial13:preregistration`, spec hash `c74642fefb0fac6b`, `stoa/newsbrain/trial13.py`, `spec()`; the overlay is `stoa/overlay.py`):
+
+- **Same as trial 12** (spec e75fa8775469de92): trial 9's frozen 1 session model, the 13 features, p of at least 0.55 and up to 10 a session, SPY never a pick, buy at 9:45 am and sell at 9:45 am one session later, the SPY core, the cost model and every trial 12 rail (5 positions, 10 orders a day, the 2% reserve, the 3% daily loss stop, the regime filter, the 40% sector cap, the 0.8 correlation limit, the close-based ATR exits, the 25% kill switch).
+- **Account:** $100,000, the big paper account's size.
+- **a. Volatility-scaled size:** each new position risks 1% of equity at the engine's existing 2.5 ATR(14) stop, so money in it is 1% of equity divided by 2.5 ATR as a share of the price. 1% is the common fixed-fraction rule; nothing was tried and compared.
+- **b. Per-position cap:** 5% of equity (the owner's number).
+- **c. Exposure cap:** picks plus SPY at most 100% of equity normally (the existing no-borrowing rail), and at most 50% while the account is 10% or more off its high or the brake is holding entries. Money above it sits in cash, not SPY. Halving at the brake's line keeps one drawdown measure for every lever.
+- **d. Drawdown brake:** 10% off the high, new positions at half size; 15% off, no new positions until it is back within 10% (the owner's numbers).
+- **e. Broker-side ATR stops** from the existing stop code: 2.5 ATR under entry, then 3 ATR under the highest high, placed after the 9:45 am orders on every position held from a prior session. A position bought that morning gets none (no same-day round trip), and with a 1 session hold most positions are sold at 9:45 am before a stop is placed, so the stops mostly guard a sale that fails.
+- **Which piece aims at which drop:** c and d at the walk-forward drop (SPY falling with the market); a and b at the holdout drop (several big positions falling together). The numbers were not changed for either.
+- **Run:** once, on trial 12's windows (2023-01-01 to 2026-06-30), with trial 12's checks (trial 9's pass bar). One configuration, logged as one trial. Fewer than 30 trades is STARVED.
+- **In-sample.** Trial 12 already ran on this window and its drawdown was seen before the overlay was set, so this run is in-sample for the overlay: a lead, not proof. The holdout was spent by trial 12 and is never read again. The real grade is the live big paper account.

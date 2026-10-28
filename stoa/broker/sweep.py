@@ -9,6 +9,10 @@ same session: spare cash on a session the fund was sold waits for the next one. 
 kill switch is on, the fund is sold and nothing is swept until it is off. Fund trades are
 swaps, not trades: they are kept out of the closed trades the strategy is graded on and
 counted on their own.
+
+Trial 13's overlay adds an exposure cap: picks plus the fund at most a share of equity.
+Above it the fund is sold down to cash (never on a session it was bought), and the sweep
+buys only up to it.
 """
 
 from __future__ import annotations
@@ -134,8 +138,12 @@ class SweepBroker(SimBroker):
                     self._sell_for(short)
         return super().submit(request)
 
-    def sweep(self, kill_switch: bool) -> None:
-        """After the session's orders: idle cash above the reserve into the fund, or all out."""
+    def sweep(self, kill_switch: bool, cap: Decimal | None = None) -> None:
+        """After the session's orders: idle cash above the reserve into the fund, or all out.
+
+        ``cap`` (trial 13's overlay) is the most of equity in picks plus the fund; None
+        means no cap beyond the cash reserve.
+        """
         if self.session is None:
             return
         self.stats.sessions += 1
@@ -148,11 +156,29 @@ class SweepBroker(SimBroker):
             if held > 0:
                 self._swap(Side.SELL, held)
             return
+        if cap is not None and self._trim(cap):
+            return
         if Side.SELL in self.portfolio.sides_traded(self.session, self.symbol):
             return  # no same-session round trip in the fund: today's spare cash waits a session
         equity = self.portfolio.equity(self.prices)
         spare = self.portfolio.cash - self.reserve_pct * equity
+        if cap is not None:
+            spare = min(spare, cap * equity - (equity - self.portfolio.cash))
         if spare < MIN_SWAP:
             return
         price = buy_fill_price(self.prices[self.symbol], self._slip(self.symbol))
         self._swap(Side.BUY, spare / price)
+
+    def _trim(self, cap: Decimal) -> bool:
+        """Sell the fund down to the exposure cap. True when it is over the cap."""
+        assert self.session is not None
+        equity = self.portfolio.equity(self.prices)
+        over = (equity - self.portfolio.cash) - cap * equity
+        held = self.portfolio.qty(self.symbol)
+        if over < MIN_SWAP or held <= 0:
+            return False
+        if Side.BUY in self.portfolio.sides_traded(self.session, self.symbol):
+            return True  # bought this session: the cut waits a session
+        price = self.prices[self.symbol]
+        self._swap(Side.SELL, min(held, over / price))
+        return True

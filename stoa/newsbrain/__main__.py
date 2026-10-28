@@ -2,7 +2,7 @@
 
 Jobs: news, minute, sec, score, panel, trial9, trial10, preregister11, trial11,
 news_timing, harness, preregister12, trial12, preregister12h,
-holdout12, coverage. Each logs to data/newsbrain/logs/
+holdout12, preregister13, trial13, coverage. Each logs to data/newsbrain/logs/
 and can be stopped and restarted at any time.
 """
 
@@ -200,6 +200,31 @@ def main(argv: list[str]) -> int:
 
             entry = EntryPrices(client_from_env(), Pace("entry", 60, LIMITS), ROOT / "entry")
             got = holdout12.run(settings, entry.at_945, registry)
+            print(json.dumps({"verdict": got["verdict"], "checks": got["checks"]}, indent=1))
+    elif job in ("preregister13", "trial13"):
+        from pathlib import Path
+
+        import pandas as pd
+
+        from stoa.config import load_settings
+        from stoa.experiments import Registry
+        from stoa.newsbrain import trial13
+        from stoa.newsbrain.panel import PANEL
+
+        settings = load_settings(Path("config/default.yaml"))
+        registry = Registry(settings.registry_path)
+        if job == "preregister13":
+            trial13.preregister(registry)  # written once, never rewritten
+            print(
+                f"trial 13 pre-registered in {settings.registry_path} (spec {trial13.spec_hash()})"
+            )
+        else:
+            from stoa.newsbrain.alpaca_pull import LIMITS, client_from_env
+            from stoa.newsbrain.pace import Pace
+            from stoa.newsbrain.trial import EntryPrices
+
+            entry = EntryPrices(client_from_env(), Pace("entry", 60, LIMITS), ROOT / "entry")
+            got = trial13.run_trial13(settings, pd.read_parquet(PANEL), entry.at_945, registry)
             print(json.dumps({"verdict": got["verdict"], "checks": got["checks"]}, indent=1))
     elif job == "coverage":
         from stoa.newsbrain.coverage import report
