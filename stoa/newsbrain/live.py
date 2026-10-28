@@ -1,10 +1,12 @@
 """The news brain for one live session: trial 13's picks for the big paper account.
 
-The rows are built by the same code that built trial 9's panel (``panel.build``), over
-the 400 sessions up to the live session, so every feature is computed exactly as the
-frozen model was trained on: the news baselines, the first-break test, the filings of
-the last 5 sessions and the 15 month supplier links. The wall's ``live`` mode lets it
-read up to the session; nothing is labelled or graded.
+The rows are built by the same code that built trial 9's panel (``panel.build``), from
+the panel's first session up to the live session, so every feature is computed exactly as
+the frozen model was trained on. The full history matters: a stock's news surprise is
+measured against its last 60 days with news, which for a quiet stock reach back years.
+Checked on 2026-06-29: all 13 features of all 762 rows match the trial 9 panel (about 16
+minutes on the Dell); starting 400 sessions back, 160 rows had a different surprise.
+The wall's ``live`` mode lets it read up to the session; nothing is labelled or graded.
 
 The data must be current first: news and its FinBERT scores up to 9:00 am, SEC filings
 and the daily bars up to the close before. ``freshness`` says what is missing, and no
@@ -26,12 +28,11 @@ from stoa.newsbrain import ROOT, sealed
 from stoa.newsbrain import spycore as sc
 from stoa.newsbrain import trial as t9
 from stoa.newsbrain.alpaca_pull import NEWS_DIR, WIDE_BARS
-from stoa.newsbrain.panel import build
+from stoa.newsbrain.panel import PANEL_START, build
 from stoa.newsbrain.score import SCORE_DIR
 
 log = logging.getLogger(__name__)
 
-SESSIONS_BACK = 400  # more than the 315 session supplier links need
 FROZEN = ROOT / "trial9"
 
 
@@ -67,9 +68,8 @@ def freshness(session: date, news_dir: Path = NEWS_DIR, bars_dir: Path = WIDE_BA
     return problems
 
 
-def rows_for(session: date, sessions_back: int = SESSIONS_BACK) -> pd.DataFrame:
+def rows_for(session: date, start: date = PANEL_START) -> pd.DataFrame:
     """The news brain's rows for ``session``, built as trial 9's panel was."""
-    start = clock.sessions_between(date(2015, 1, 2), session)[-sessions_back]
     if session > sealed.HOLDOUT_END:
         with sealed.live(session):
             rows = build(start, session)
