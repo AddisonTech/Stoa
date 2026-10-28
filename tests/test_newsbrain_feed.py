@@ -223,6 +223,7 @@ class FakeHub:
 
     def __init__(self, private: bool, store: Path) -> None:
         self.private, self.store, self.calls = private, store, []
+        self.commits: list[tuple[str, str]] = []  # (message, id), oldest first
 
     def api(self, token: str | None = None) -> FakeHub:
         self.calls.append(("api", token))
@@ -239,20 +240,37 @@ class FakeHub:
         allow = kw.get("allow_patterns")
         self.calls.append(("upload_only", allow))
         src = Path(str(kw["folder_path"]))
+        for f in list(self.store.rglob("*")):
+            rel = f.relative_to(self.store).as_posix()
+            if f.is_file() and any(fnmatch(rel, p) for p in kw.get("delete_patterns") or []):  # type: ignore[attr-defined]
+                f.unlink()
         for f in src.rglob("*"):
             rel = f.relative_to(src).as_posix()
             if f.is_file() and (allow is None or any(fnmatch(rel, p) for p in allow)):  # type: ignore[attr-defined]
                 (self.store / rel).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(f, self.store / rel)
+        cid = commit_id(str(kw["commit_message"]))
+        self.commits.append((str(kw["commit_message"]), cid))
+        shutil.copytree(self.store, self.store.parent / f"hub-{cid}")
 
     def snapshot_download(self, **kw: object) -> None:
         self.calls.append(("download", kw["repo_id"], kw["token"]))
         self.calls.append(("download_only", kw.get("allow_patterns")))
-        self.calls.append(("download_rev", kw.get("revision")))
-        shutil.copytree(self.store, Path(str(kw["local_dir"])), dirs_exist_ok=True)
+        rev = kw.get("revision")
+        self.calls.append(("download_rev", rev))
+        src = self.store if rev is None else self.store.parent / f"hub-{rev}"
+        shutil.copytree(src, Path(str(kw["local_dir"])), dirs_exist_ok=True)
 
     def list_repo_commits(self, repo: str, **kw: object) -> list[object]:
-        return [type("Commit", (), {"title": "seed", "commit_id": "c" * 40})()]
+        return [
+            type("Commit", (), {"title": t, "commit_id": c})() for t, c in reversed(self.commits)
+        ]
+
+
+def commit_id(message: str) -> str:
+    import hashlib
+
+    return hashlib.sha1(message.encode()).hexdigest()
 
 
 def hub(monkeypatch: pytest.MonkeyPatch, private: bool, store: Path) -> FakeHub:
@@ -349,10 +367,31 @@ def test_a_replay_starts_from_a_past_commit_and_never_moves_the_live_state(
         feed.run(step, fake.sources(), at(day, "08:15", 30))
         bigpaper.save_feed(rt, step, "tok", "feed")
         assert step.state().session == clock.previous_session(day)
-    assert [c for c in hubbed.calls if c[0] == "download_rev"] == [("download_rev", "c" * 40)]
+    seed = commit_id("seed")
+    assert [c for c in hubbed.calls if c[0] == "download_rev"] == [("download_rev", seed)]
     assert ("upload_only", ["raw/t1-feed/**"]) in hubbed.calls
     assert (root / "hub" / "raw" / "t1-feed").exists()
     assert (root / "hub" / "feed.json").read_text(encoding="utf-8") == live  # untouched
+
+
+def test_a_reset_puts_back_the_seed_and_keeps_the_dry_runs(
+    dell: tuple[Path, Dell], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, fake = dell
+    fd = seeded(root)
+    hubbed = hub(monkeypatch, True, root / "hub")
+    feed.push_state(fd, "ASmith91/stoa-feed", "tok", "seed")
+    seed = (root / "hub" / "feed.json").read_text(encoding="utf-8")
+    fd.raw_tag = "t0-feed"
+    feed.run(fd, fake.sources(), at(clock.next_session(clock.next_session(SEED)), "08:15", 30))
+    (fd.pending / "extra.parquet").write_bytes(b"later")  # a file the seed never had
+    feed.push_state(fd, "ASmith91/stoa-feed", "tok", "feed")
+    assert (root / "hub" / "feed.json").read_text(encoding="utf-8") != seed
+    rev = feed.reset_state(feed.Feed(root / "empty"), "ASmith91/stoa-feed", "tok", "seed")
+    assert rev == commit_id("seed") and ("download_rev", rev) in hubbed.calls
+    assert (root / "hub" / "feed.json").read_text(encoding="utf-8") == seed
+    assert not (root / "hub" / "pending" / "extra.parquet").exists()
+    assert (root / "hub" / "raw" / "t0-feed").exists()  # the dry runs' pulls stay
 
 
 def test_a_public_dataset_is_refused(

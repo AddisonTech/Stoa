@@ -13,8 +13,11 @@ name: bigpaper
 # step that runs Stoa, which passes it to each call and never saves it.
 # FEED and PICKS (and replays) run on Windows, like the Dell that built trial 12's panel:
 # Windows and Linux round log and log1p differently in the last digit, and the model's cut
-# points sit exactly on the Dell's values, so only Windows gives the Dell's numbers. numpy's
-# AVX-512 paths are switched off because the Dell has none. EXECUTE and SUMMARY stay on Linux.
+# points sit exactly on the Dell's values, so only Windows gives the Dell's numbers (checked
+# on three mornings, every value equal). numpy 2.5.4 goes no further than X86_V3 there, as on
+# the Dell; NPY_DISABLE_CPU_FEATURES keeps any AVX-512 path off, since the Dell has none.
+# EXECUTE and SUMMARY stay on Linux. feed-reset puts the dataset's live state back to the
+# replay_from commit (docs/RUNBOOK.md 13b).
 # The GitHub crons below are the backup, a few minutes late, in both the EDT and EST slot.
 run-name: >-
   ${{ github.event_name == 'schedule' && format('schedule {0}', github.event.schedule)
@@ -34,7 +37,7 @@ on:
       job:
         description: "Which job to run"
         type: choice
-        options: [feed, picks, execute, summary, status, kill-switch-reset]
+        options: [feed, picks, execute, summary, status, kill-switch-reset, feed-reset]
         default: status
       force:
         description: "Run even outside the window or again for the same session"
@@ -53,7 +56,7 @@ on:
         type: string
         default: ""
       replay_from:
-        description: "Replays start from this commit of the feed's dataset (id or message)"
+        description: "Replays and feed-reset start from this commit of the feed's dataset (id or message)"
         type: string
         default: "seed 2026-10-26"
 
@@ -150,7 +153,7 @@ jobs:
         # The feed and the picks run the news brain: the exact versions the rolling state was
         # built and checked with (the state refuses another pandas), CPU-only torch.
         run: |
-          if [ "$JOB" = "feed" ] || [ "$JOB" = "picks" ] || [ "$JOB" = "replay" ]; then
+          if [ "$JOB" = "feed" ] || [ "$JOB" = "picks" ] || [ "$JOB" = "replay" ] || [ "$JOB" = "feed-reset" ]; then
             pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
             pip install ".[yahoo,reader]" pandas==3.1.0 numpy==2.5.4 scikit-learn==1.9.1 \
               transformers==5.20.2 huggingface_hub==2.3.0
@@ -177,6 +180,10 @@ jobs:
         # A replay runs each step from an empty feed folder, as a fresh runner would, with its
         # own copy of the dataset started from REPLAY_FROM: the live state never moves.
         run: |
+          if [ "$JOB" = "feed-reset" ]; then
+            python -m stoa.newsbrain feedreset "$REPLAY_FROM"
+            exit 0
+          fi
           if [ "$JOB" = "replay" ]; then
             clear() { python -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$1"; }
             clear "${STOA__BIG_PAPER__FEED_DIR}-replay"

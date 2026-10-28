@@ -489,6 +489,28 @@ def commit_of(repo: str, token: str, ref: str) -> str:
     raise FeedError(f"no commit named {ref!r} in {repo}")
 
 
+def reset_state(feed: Feed, repo: str, token: str, ref: str) -> str:
+    """Put the dataset's live state back to an earlier commit (``ref``, an id or a message),
+    in one new commit: the state files are exactly that commit's, the dry runs' pulls and
+    checks stay. ``feed`` must be an empty folder. Returns the commit id used."""
+    from huggingface_hub import HfApi
+
+    rev = commit_of(repo, token, ref)
+    pull_state(feed, repo, token, revision=rev)
+    api = HfApi(token=token)
+    private_or_refuse(api, repo)
+    api.upload_folder(
+        repo_id=repo,
+        repo_type="dataset",
+        folder_path=feed.root,
+        commit_message=f"reset to {ref}",
+        allow_patterns=STATE_FILES,
+        delete_patterns=STATE_FILES,
+        ignore_patterns=[".cache/**", "**/*.tmp", "**/*.tmp.npz"],
+    )
+    return rev
+
+
 def copy_state(src: Path, dst: Path) -> None:
     """Copy the state files (``STATE_FILES``) from one feed folder over another. A replay
     keeps its own copy of the dataset this way, so it never moves the live state."""
