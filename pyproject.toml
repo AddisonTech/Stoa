@@ -100,7 +100,7 @@ module = ["exchange_calendars.*", "yfinance.*", "pyarrow.*", "sklearn.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["torch", "torch.*", "transformers", "transformers.*"]
+module = ["torch", "torch.*", "transformers", "transformers.*", "huggingface_hub", "huggingface_hub.*"]
 ignore_missing_imports = true
 follow_imports = "skip"
 
