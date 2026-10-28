@@ -219,12 +219,17 @@ def main(argv: list[str]) -> int:
                 f"trial 13 pre-registered in {settings.registry_path} (spec {trial13.spec_hash()})"
             )
         else:
-            from stoa.newsbrain.alpaca_pull import LIMITS, client_from_env
-            from stoa.newsbrain.pace import Pace
-            from stoa.newsbrain.trial import EntryPrices
+            # 9:45 am prices as the harness reads them: trial 12's cached price, else the
+            # open of the first minute bar from 9:45 to 10:15 on disk (the same rule).
+            from stoa.newsbrain.harness import Prices
+            from stoa.newsbrain.timing import MinuteStore
 
-            entry = EntryPrices(client_from_env(), Pace("entry", 60, LIMITS), ROOT / "entry")
-            got = trial13.run_trial13(settings, pd.read_parquet(PANEL), entry.at_945, registry)
+            prices = Prices(ROOT / "entry", MinuteStore())
+            got = trial13.run_trial13(settings, pd.read_parquet(PANEL), prices.at_945, registry)
+            path = trial13.OUT / "report.json"
+            body = json.loads(path.read_text(encoding="utf-8"))
+            body["price_sources"] = prices.sources
+            path.write_text(json.dumps(body, indent=1, default=str), encoding="utf-8")
             print(json.dumps({"verdict": got["verdict"], "checks": got["checks"]}, indent=1))
     elif job == "coverage":
         from stoa.newsbrain.coverage import report
