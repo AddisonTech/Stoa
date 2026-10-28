@@ -145,7 +145,7 @@ def test_off_until_enabled_and_keyed_and_never_on_the_100_dollar_keys(tmp_path: 
     same = {**SMALL, "ALPACA_BIG_PAPER_KEY_ID": "small-key", "ALPACA_BIG_PAPER_SECRET": "x"}
     assert "must be different" in str(bigpaper.off_reason(on, Secrets.from_env(same)))
     assert bigpaper.off_reason(on, Secrets.from_env({**SMALL, **BIG})) is None
-    assert make_settings().big_paper.enabled is False  # shipped off
+    assert make_settings().big_paper.enabled is True  # on since the dry runs matched the Dell
 
 
 def test_the_two_accounts_never_share_keys_or_state(tmp_path: Path) -> None:

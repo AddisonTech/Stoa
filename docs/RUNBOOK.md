@@ -325,13 +325,15 @@ A second, separate Alpaca paper account of about $100,000 runs trial 12 exactly 
 
 After the seed, nothing in the big account's day needs the Dell.
 
-**Turning it on.** It does nothing until all of these are done:
+**Turning it on.** It trades only when all of these are done. Steps 1 to 4 were done on 2026-10-28, after the dry runs below matched the Dell exactly.
 
 1. In the Alpaca dashboard, create a new paper account with about $100,000 and generate its API keys. It must be a different paper account from the $100 one.
 2. Add two repository secrets (Settings, Secrets and variables, Actions): `ALPACA_BIG_PAPER_KEY_ID` and `ALPACA_BIG_PAPER_SECRET`.
 3. Push the seed once (below), and add the repository secret `HF_TOKEN`: a Hugging Face token with write access to `ASmith91/stoa-feed`.
-4. Set `big_paper.enabled: true` in `config/default.yaml` and push.
-5. Add four cron-job.org jobs that start `bigpaper.yml`, weekdays, New York time, `source` cron-job.org (section 13 shows the request): `feed` at 8:15 am, `picks` at 9:00 am, `execute` at 9:45 am, `summary` at 5:15 pm. The GitHub crons in the workflow are only the late backup.
+4. Set `big_paper.enabled: true` in `config/default.yaml` and push. To stop it, set it back to `false` and push.
+5. Add four cron-job.org jobs that start `bigpaper.yml`, weekdays, America/New_York, each a POST to `https://api.github.com/repos/AddisonTech/Stoa/actions/workflows/bigpaper.yml/dispatches` with the same three headers as the $100 account's jobs (section 13, the same `stoa-cron-job-org` token) and the body `{"ref":"main","inputs":{"job":"feed","source":"cron-job.org"}}`: `feed` at 8:15 am, `picks` at 9:00 am, `execute` at 9:45 am, `summary` at 5:15 pm (change `job` in the body). GitHub answers 204. The GitHub crons in the workflow are only the late backup.
+
+**The dry runs, 2026-10-28.** A replay of the mornings of 2026-10-26, 10-27 and 10-28 from the seed, on Windows, rebuilt on the Dell from its own history plus exactly what the feed pulled: 1,140, 1,288 and 1,391 stocks, every one of the 49,647 feature values and every score equal, no picks on either side (the best score was 0.50; a buy needs 0.55). The same replay on Linux had given the same picks but 261 to 410 values a morning off in the last digit, which is why the feed and the picks run on Windows. Times on Windows: the 8:15 am feed 564 to 638 s for a morning's pulls (about 2,700 articles) plus about 3 minutes of setup, so done by about 8:30; the 9:00 am picks 85 to 183 s plus setup, done by about 9:05. Then the live state was reset to the seed (job `feed-reset`) and caught up by one dry feed on Windows, so it holds no number computed on Linux.
 
 **Where the feed's state lives.** In the private Hugging Face dataset `ASmith91/stoa-feed` (`big_paper.feed_repo`), never on the stoa-state branch or in this repository: the seed is 85 MB (the headline archive is most of it) and the bar sums, about 6 MB, change every morning, which is too big for the stoa-state branch that every Stoa workflow checks out. The 8:15 am feed downloads the folder, updates it and uploads it (only changed files travel); the 9:00 am picks job downloads it and moves its own copy to the session. The runner keeps it in a temporary folder that is never committed. `HF_TOKEN` reaches only the workflow step that runs Stoa, which passes it to each Hugging Face call and never saves it or logs in; both calls refuse a dataset that is not private. If the token is missing or the download fails, the picks make no buys and the alert says why.
 

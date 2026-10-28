@@ -844,10 +844,7 @@ def render_big_paper(data: dict[str, Any]) -> str:
     c = b.get("curve") or {"dates": [], "series": {}}
     intro = INTRO_TRIAL13 if b.get("strategy") == "trial13" else INTRO_TRIAL12
     if not c["dates"]:
-        return intro + _empty(
-            "Not trading yet. It starts once its own Alpaca paper keys are added and it is "
-            "switched on; its first day summary starts this chart."
-        )
+        return intro + _empty("Not trading yet. Its first day summary starts this chart.")
     lines = [
         _Line(name, "s-stoa" if name == "Big paper" else "s-spy", vals)
         for name, vals in c["series"].items()

@@ -264,7 +264,7 @@ dashboard:
   live_url: https://stoa-live.vercel.app/api/positions   # the live positions function on Vercel (live/); blank hides the panel
 
 big_paper:                         # a news brain trial on its own ~$100,000 Alpaca paper account (stoa/bigpaper.py)
-  enabled: false                   # trades only when true AND ALPACA_BIG_PAPER_KEY_ID and ALPACA_BIG_PAPER_SECRET are set
+  enabled: true                    # on since 2026-10-28; trades only with ALPACA_BIG_PAPER_KEY_ID and ALPACA_BIG_PAPER_SECRET set
   strategy: trial12                # trial12 exactly as registered (spec e75fa8775469de92); trial13 adds its overlay
   feed_dir: state/big-paper-feed   # the news brain's rolling state, built by the 8:15 am feed (stoa/newsbrain/feed.py)
   feed_repo: ASmith91/stoa-feed    # private Hugging Face dataset keeping feed_dir (HF_TOKEN), never stoa-state or this repo
