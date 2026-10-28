@@ -7,8 +7,8 @@ minute whose r5 is at most a third of P. No bar is used before it closes, so
 there is no lookahead. If that never happens by 11:00 am, the buy fills at the
 open of the first minute at or after 11:00. Sells stay at 9:45 am.
 
-Minute bars come from the background pull (data/newsbrain/minute/), one file
-per month and group of symbols.
+Minute bars come from the background pull, read from its compacted copy
+(data/newsbrain/minute_c/): per month a few files, each symbol whole in one of them.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ import pandas as pd
 
 from stoa import clock
 from stoa.newsbrain import sealed
-from stoa.newsbrain.alpaca_pull import MINUTE_DIR
+from stoa.newsbrain.alpaca_pull import MINUTE_STORE_DIR
 
 COOL_SHARE = 1 / 3
 FIRST_ENTRY = "09:45"
@@ -72,7 +72,7 @@ def cool_off_price(bars: pd.DataFrame, day: date) -> float | None:
 class MinuteStore:
     """Read one symbol's bars for one session from the monthly group files."""
 
-    def __init__(self, root: Path = MINUTE_DIR) -> None:
+    def __init__(self, root: Path = MINUTE_STORE_DIR) -> None:
         self.root = root
         self._index: dict[str, dict[str, Path]] = {}
 
@@ -98,6 +98,8 @@ class MinuteStore:
             columns=["symbol", "t", "o", "c"],
             filters=[("symbol", "==", symbol), ("t", ">=", lo), ("t", "<=", hi)],
         )
+        for col in ("o", "c"):  # float32 in the compacted files: back to the price as stored
+            df[col] = df[col].astype("float64").round(4)
         return df[["t", "o", "c"]]
 
 

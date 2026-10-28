@@ -27,7 +27,7 @@ from stoa import clock
 from stoa.newsbrain import ROOT, sealed
 from stoa.newsbrain import panel as pn
 from stoa.newsbrain import trial as t9
-from stoa.newsbrain.alpaca_pull import MINUTE_DIR
+from stoa.newsbrain.alpaca_pull import MINUTE_STORE_DIR
 from stoa.newsbrain.premarket import SharesOutstanding
 
 log = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ def last_price_before(minutes: pd.DataFrame, events: pd.DataFrame) -> np.ndarray
     return out
 
 
-def month_minutes(stamp: str, symbols: set[str], root: Path = MINUTE_DIR) -> pd.DataFrame:
+def month_minutes(stamp: str, symbols: set[str], root: Path = MINUTE_STORE_DIR) -> pd.DataFrame:
     parts = []
     want = sorted(symbols)
     for path in sorted((root / stamp).glob("*.parquet")):
@@ -86,7 +86,7 @@ def month_minutes(stamp: str, symbols: set[str], root: Path = MINUTE_DIR) -> pd.
     return df
 
 
-def events(root: Path = MINUTE_DIR) -> pd.DataFrame:
+def events(root: Path = MINUTE_STORE_DIR) -> pd.DataFrame:
     """One row per (article, symbol) from 2016 to 2022 with hour, day type, size and moves."""
     days, cut = pn.calendar(pn.PANEL_START, pn.PANEL_END)
     days_2022 = [d for d in days if d <= END]
@@ -507,7 +507,7 @@ def alert_line(rec: dict[str, Any]) -> str:
     )
 
 
-def run(root: Path = MINUTE_DIR, repo: Path = Path(".")) -> dict[str, Any]:
+def run(root: Path = MINUTE_STORE_DIR, repo: Path = Path(".")) -> dict[str, Any]:
     ev = events(root)
     OUT.mkdir(parents=True, exist_ok=True)
     ev.to_parquet(OUT / "events.parquet", index=False)

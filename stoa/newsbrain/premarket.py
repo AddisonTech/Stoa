@@ -38,7 +38,7 @@ from stoa.experiments import Registry, deflate, return_moments
 from stoa.newsbrain import ROOT, sealed
 from stoa.newsbrain import panel as pn
 from stoa.newsbrain import trial as t9
-from stoa.newsbrain.alpaca_pull import MINUTE_DIR
+from stoa.newsbrain.alpaca_pull import MINUTE_STORE_DIR
 from stoa.scoreboard import summarize
 
 log = logging.getLogger(__name__)
@@ -317,7 +317,7 @@ def exit_price(df: pd.DataFrame, i: int, h: int) -> float:
 
 
 def build_rows(
-    panel: pd.DataFrame, days: list[date], minute_root: Path = MINUTE_DIR
+    panel: pd.DataFrame, days: list[date], minute_root: Path = MINUTE_STORE_DIR
 ) -> pd.DataFrame:
     """Trial 11's rows: features at the decision minute, the fill and the labels."""
     _, cut = pn.calendar(pn.PANEL_START, pn.PANEL_END)

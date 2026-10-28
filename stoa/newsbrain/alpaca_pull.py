@@ -37,7 +37,11 @@ log = logging.getLogger(__name__)
 
 DATA_URL = "https://data.alpaca.markets"
 NEWS_DIR = ROOT / "news"
-MINUTE_DIR = ROOT / "minute"
+MINUTE_DIR = ROOT / "minute"  # the pull writes here: one file per symbol group and month
+# Readers use the compacted copy (2026-10-27): per month, part-NNN files with float32 prices and
+# wide-NNN files with float64 prices for symbols above $131,072, counts as int32, every symbol
+# whole in one file, each value checked against the pull before the switch.
+MINUTE_STORE_DIR = ROOT / "minute_c"
 LIMITS = ROOT / "limits.json"
 WIDE_BARS = Path("data/bars/wide")
 

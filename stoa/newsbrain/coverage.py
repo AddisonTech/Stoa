@@ -8,7 +8,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from stoa.newsbrain import ROOT
-from stoa.newsbrain.alpaca_pull import MINUTE_DIR, NEWS_DIR, universe
+from stoa.newsbrain.alpaca_pull import MINUTE_STORE_DIR, NEWS_DIR, universe
 from stoa.newsbrain.sec_pull import SEC_DIR
 
 
@@ -34,7 +34,7 @@ def minute_by_year() -> pd.DataFrame:
     months: dict[int, set[str]] = defaultdict(set)
     bars: dict[int, int] = defaultdict(int)
     symbols: dict[int, set[str]] = defaultdict(set)
-    for path in sorted(MINUTE_DIR.glob("*/*.parquet")):
+    for path in sorted(MINUTE_STORE_DIR.glob("*/*.parquet")):
         year = int(path.parent.name[:4])
         months[year].add(path.parent.name)
         bars[year] += pq.read_metadata(path).num_rows
