@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import re
 from collections.abc import Mapping
 from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
 from types import ModuleType
 from typing import Any
 
@@ -211,6 +213,56 @@ def test_vercel_serves_api_as_plain_functions() -> None:
     # project's root directory is live/, so "." is live/. A redeploy of the commit
     # already live always builds, so rotated keys can take effect.
     cmd = config["ignoreCommand"]
-    assert cmd.startswith('[ "$VERCEL_GIT_PREVIOUS_SHA" != "$VERCEL_GIT_COMMIT_SHA" ] && ')
-    assert cmd.endswith("git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- .")
-    assert len(cmd) <= 256
+    assert cmd == "bash ignore-build.sh" and (ROOT / "live" / "ignore-build.sh").exists()
+
+
+def test_the_ignored_build_step_works_in_a_shallow_clone(tmp_path: Path) -> None:
+    """Vercel clones only the last few commits; the last deployed one may be missing (it
+    was, from 2026-10-27, and every skipped push failed with "bad object")."""
+    import shutil
+    import subprocess
+
+    bash = shutil.which("bash")
+    if bash is None:
+        pytest.skip("no bash")
+
+    def git(cwd: Path, *args: str) -> str:
+        out = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=True)
+        return out.stdout.strip()
+
+    origin = tmp_path / "origin"
+    (origin / "live").mkdir(parents=True)
+    git(origin, "init", "-q", "-b", "main")
+    git(origin, "config", "user.name", "t")
+    git(origin, "config", "user.email", "t@t")
+    shutil.copy(ROOT / "live" / "ignore-build.sh", origin / "live" / "ignore-build.sh")
+    (origin / "live" / "a.py").write_text("1\n", encoding="utf-8")
+    git(origin, "add", "-A")
+    git(origin, "commit", "-q", "-m", "deployed")
+    deployed = git(origin, "rev-parse", "HEAD")
+    for k in range(3):  # pushes that leave live/ alone
+        (origin / f"other{k}.txt").write_text("x\n", encoding="utf-8")
+        git(origin, "add", "-A")
+        git(origin, "commit", "-q", "-m", f"other {k}")
+    clone = tmp_path / "clone"
+    git(tmp_path, "clone", "-q", "--depth=1", origin.as_uri(), str(clone))
+    head = git(clone, "rev-parse", "HEAD")
+
+    def step(prev: str, remote: str = origin.as_uri()) -> int:
+        env = {
+            **os.environ,
+            "VERCEL_GIT_PREVIOUS_SHA": prev,
+            "VERCEL_GIT_COMMIT_SHA": head,
+            "STOA_IGNORE_REMOTE": remote,
+        }
+        return subprocess.run(
+            [bash, "ignore-build.sh"], cwd=clone / "live", env=env, capture_output=True, check=False
+        ).returncode
+
+    assert step(deployed, remote=str(tmp_path / "nowhere")) == 1  # cannot tell: build
+    assert step(deployed) == 0  # fetched the missing commit; live/ unchanged: skip
+    assert step(head) == 1  # a redeploy of the live commit builds
+    (clone / "live" / "a.py").write_text("2\n", encoding="utf-8")
+    git(clone, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-am", "live")
+    head = git(clone, "rev-parse", "HEAD")
+    assert step(deployed) == 1  # live/ changed: build
