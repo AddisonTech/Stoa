@@ -1,4 +1,10 @@
-"""The big paper account: trial 13 on its own ~$100,000 Alpaca paper account.
+"""The big paper account: a news brain trial on its own ~$100,000 Alpaca paper account.
+
+``big_paper.strategy`` names the trial. ``trial12`` (the setting) runs trial 12 exactly as
+registered (spec e75fa8775469de92): its sizing (up to 5 picks at 20% of the account each),
+its rails, its SPY core, no overlay and no broker-side stops, as its backtest ran.
+``trial13`` adds trial 13's overlay (``stoa/overlay.py``): ATR sizing under a 5% cap, the
+drawdown brake, the exposure cap and broker-side ATR stops.
 
 It is kept apart from the $100 account in every way:
 
@@ -12,15 +18,16 @@ job logs why and stops, sending nothing.
 
 The day, on the $100 account's clock:
 
-- 9:00 am PICKS: trial 13's picks for the session (the news brain, ``newsbrain.live``),
-  run through the event strategy with trial 13's overlay. Paper with hundreds of trades
-  to come, so the picks are auto-approved: the alert says what will be bought and sold.
-- 9:45 am EXECUTE: yesterday's picks sold, today's bought, idle money in SPY under the
-  overlay's exposure cap, broker-side stops on anything held from a prior session. The
-  kill switch sells every position in the account, SPY and any stock bought by hand
-  included, and cancels every working order first.
-- 5:15 pm SUMMARY: the day's equity against SPY, the high-water mark, the kill switch,
-  the drawdown brake for the next morning, stop-outs, and the stops for tomorrow.
+- 9:00 am PICKS: the news brain's picks for the session, read from the rolling state
+  the 8:15 am feed builds (``newsbrain.feed``), run through the event strategy. Paper with
+  hundreds of trades to come, so the picks are auto-approved: the alert says what will be
+  bought and sold. Stale or missing data means no buys that day, and the alert says why.
+- 9:45 am EXECUTE: yesterday's picks sold, today's bought, idle money in SPY. The kill
+  switch sells every position in the account, SPY and any stock bought by hand included,
+  and cancels every working order first. Under trial 13: the overlay's exposure cap on
+  SPY and broker-side stops on anything held from a prior session.
+- 5:15 pm SUMMARY: the day's equity against SPY, the high-water mark and the kill switch;
+  under trial 13 also the drawdown brake for the next morning, stop-outs and stops.
 """
 
 from __future__ import annotations
@@ -51,6 +58,7 @@ from stoa.features import build_features, cell, slice_features
 from stoa.journal import Journal
 from stoa.live import live_calendar
 from stoa.models import ClosedTrade, Holding, PlannedOrder, PositionMeta, Side, dec
+from stoa.newsbrain import spycore as sc
 from stoa.newsbrain import trial as t9
 from stoa.newsbrain import trial13
 from stoa.overlay import Overlay, OverlayState, account_settings
@@ -62,7 +70,7 @@ from stoa.universe import AssetInfo, Universe
 log = logging.getLogger(__name__)
 
 EXIT_OK, EXIT_FAILED = 0, 1
-KIND = t9.kind_for(trial13.GRADED)
+KIND = t9.kind_for(sc.GRADED)  # trial 12's 1 session signal; trial 13 uses the same
 SignalSource = Callable[[date], list[event_signals.Signal]]
 
 
@@ -105,6 +113,7 @@ class BigRuntime:
     broker: Broker | None = None
     bars: Callable[[list[str], date], Bars] | None = None
     signals: SignalSource | None = None
+    feed_sources: Any = None  # newsbrain.feed.Sources; Alpaca, EDGAR and FinBERT when None
     calendar: Callable[[Bars, list[str], date], EarningsCalendar] | None = None
     sectors: Mapping[str, str] | None = None
 
@@ -112,10 +121,26 @@ class BigRuntime:
         self.notifier = Tagged(self.notifier, self.base.big_paper.tag)
 
     @property
+    def strategy(self) -> str:
+        return self.base.big_paper.strategy
+
+    @property
+    def overlaid(self) -> bool:
+        """Trial 13's overlay is on (``big_paper.strategy: trial13``)."""
+        return self.strategy == "trial13"
+
+    @property
     def settings(self) -> Settings:
-        """Trial 13's account: its size cap, its starting money and its own state folder."""
+        """The account's settings: its trial's size cap, its starting money, its state folder.
+
+        Trial 12's are the config's own (20% a position, 5 positions), as its backtest ran.
+        """
         bp = self.base.big_paper
-        s = account_settings(self.base, trial13.OVERLAY, bp.starting_equity)
+        if self.overlaid:
+            s = account_settings(self.base, trial13.OVERLAY, bp.starting_equity)
+        else:
+            bt = self.base.backtest.model_copy(update={"starting_equity": bp.starting_equity})
+            s = self.base.model_copy(update={"backtest": bt})
         return s.model_copy(update={"state": s.state.model_copy(update={"dir": bp.state_dir})})
 
     @property
@@ -281,10 +306,52 @@ def sectors(rt: BigRuntime) -> Mapping[str, str]:
     return {k: sector_of_sic(v) for k, v in raw.items()}
 
 
-def default_signals(session: date) -> list[event_signals.Signal]:
-    from stoa.newsbrain import live
+def feed_sources(rt: BigRuntime, static: Any) -> Any:
+    """Alpaca on the big account's own keys, EDGAR, FinBERT on the CPU."""
+    from stoa.newsbrain import feed
 
-    return live.signals(session)
+    if rt.feed_sources is not None:
+        return rt.feed_sources
+    sec = rt.secrets
+    assert sec.alpaca_big_paper_key_id and sec.alpaca_big_paper_secret
+    return feed.Sources(
+        news=feed.alpaca_news(
+            sec.alpaca_big_paper_key_id.get_secret_value(),
+            sec.alpaca_big_paper_secret.get_secret_value(),
+            set(static.universe),
+        ),
+        filings=feed.edgar_filings({int(c) for c in static.ciks["cik"]}),
+        bars=feed.alpaca_bars(make_provider(rt.settings, data_secrets(sec))),
+        scorer=feed.finbert(),
+    )
+
+
+def hf_token(rt: BigRuntime) -> str | None:
+    """The token for the feed's private dataset, from this process's environment only."""
+    if not rt.base.big_paper.feed_repo:
+        return None
+    tok = rt.secrets.hf_token
+    if tok is None:
+        from stoa.newsbrain.feed import FeedError
+
+        raise FeedError("HF_TOKEN is not set, so the news brain's state cannot be read")
+    return tok.get_secret_value()
+
+
+def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_signals.Signal]:
+    """The 9:00 am step: download the state the 8:15 am feed uploaded, pull what arrived
+    since, bring it to the session's 9:00 am cutoff, and read the picks. Stale data raises."""
+    from stoa.newsbrain import feed
+
+    fd = feed.Feed(rt.base.big_paper.feed_dir)
+    token = hf_token(rt)
+    if token is not None:
+        feed.pull_state(fd, rt.base.big_paper.feed_repo, token)
+    feed.run(fd, feed_sources(rt, fd.state().static), now)
+    stale = feed.problems(fd, session, now)
+    if stale:
+        raise feed.FeedError("; ".join(stale))
+    return feed.signals(fd, session)
 
 
 def calendar(rt: BigRuntime, bars: Bars, symbols: list[str], session: date) -> EarningsCalendar:
@@ -360,11 +427,13 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
     core = raw.get(s.benchmark)
     notes: list[str] = []
     try:
-        sigs = (rt.signals or default_signals)(session)
+        sigs = rt.signals(session) if rt.signals else feed_signals(rt, session, now)
     except Exception as exc:
         sigs = []
-        notes.append(f"No new picks today: the news brain could not run ({exc}).")
-    t9.register_kind(trial13.GRADED)
+        notes.append(
+            f"No buys today; the account stays in SPY. The news brain's data is not ready: {exc}."
+        )
+    t9.register_kind(sc.GRADED)
     wanted = sorted({x.symbol for x in sigs} | set(held))
     bars = fetch_bars(rt, wanted, decided)
     if s.benchmark not in bars:
@@ -378,13 +447,13 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
         assets=assets,
         whole_shares=frozenset(k for k, a in assets.items() if not a.fractionable),
     )
-    ov = load_overlay(rt)
+    ov = load_overlay(rt) if rt.overlaid else None
     strategy = EventStrategy(
         settings=s,
         signals={decided: event_signals.ranked(sigs)},
         earnings=calendar(rt, bars, wanted, decided),
         sectors=sectors(rt),
-        name="trial13",
+        name=rt.strategy,
         kind_of=dict.fromkeys(held, KIND),
         overlay=ov,
     )
@@ -431,7 +500,7 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
         decision = dataclasses.replace(decision, orders=(*decision.orders, *blind))
     plan = make_plan(
         decision,
-        strategy="trial13",
+        strategy=rt.strategy,
         mode="paper",
         session=decided,
         execute_session=session,
@@ -441,7 +510,8 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
     state.pending_plan = plan
     state.swept_sessions = [*state.swept_sessions, session][-60:]
     store.archive_plan(plan)
-    save_overlay(rt, ov)
+    if ov is not None:
+        save_overlay(rt, ov)
     store.save(state)
     rt.journal.write(
         now,
@@ -453,7 +523,8 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
         rejections=[r.model_dump(mode="json") for r in decision.rejections],
         notes=notes,
     )
-    send(rt, result, picks_alert(plan.orders, sigs, ov.current, notes, session))
+    current = ov.current if ov is not None else None
+    send(rt, result, picks_alert(plan.orders, sigs, current, notes, session))
     return result
 
 
@@ -485,7 +556,37 @@ def picks_alert(
             + ("no new positions (the brake)." if st.halted else "new positions at half size.")
         )
     lines += notes
-    return alerts.Alert(title=f"Picks {session}", message="\n".join(lines), priority=alerts.DEFAULT)
+    return alerts.Alert(
+        title=f"Picks {session}",
+        message="\n".join(lines),
+        priority=alerts.HIGH if notes else alerts.DEFAULT,
+    )
+
+
+# ---- 8:15 am: FEED -----------------------------------------------------------------------------
+
+
+def feed(rt: BigRuntime, force: bool = False) -> Result:
+    """The news brain's morning pulls: news, filings and bars, waiting for the 9:00 am step."""
+    return _off(rt, "feed") or _guarded(rt, "feed", lambda: _feed(rt, force))
+
+
+def _feed(rt: BigRuntime, force: bool) -> Result:
+    from stoa.newsbrain import feed as nf
+
+    now = rt.now()
+    day = clock.to_ny(now).date()
+    if not clock.is_session(day) and not force:
+        return Result(EXIT_OK, "not_a_session")
+    fd = nf.Feed(rt.base.big_paper.feed_dir)
+    token = hf_token(rt)
+    if token is not None:
+        nf.pull_state(fd, rt.base.big_paper.feed_repo, token)
+    out = nf.run(fd, feed_sources(rt, fd.state().static), now)
+    log.info("big paper feed: %s", out)
+    if token is not None:
+        nf.push_state(fd, rt.base.big_paper.feed_repo, token, f"feed {now.isoformat()}")
+    return Result(EXIT_OK, "fed", day)
 
 
 # ---- 9:45 am: EXECUTE --------------------------------------------------------------------------
@@ -582,13 +683,16 @@ def _execute(rt: BigRuntime, force: bool) -> Result:
         dd = float(risk.drawdown(account.equity, hwm))
         send(rt, result, alerts.kill_switch_alert(account.equity, hwm, dd))
     if isinstance(broker, CoreBroker):
-        ov = load_overlay(rt)
-        broker.sweep(state.kill_switch.active, ov.current.exposure_cap if ov.current else None)
+        cap = None
+        if rt.overlaid:
+            ov = load_overlay(rt)
+            cap = ov.current.exposure_cap if ov.current else None
+        broker.sweep(state.kill_switch.active, cap)
     closed = closed_trades(report, meta_before)
     state.add_trades(closed)
     for t in closed:
         state.add_realized(session.year, t.pnl)
-    if isinstance(raw, stops.StopBroker):
+    if rt.overlaid and isinstance(raw, stops.StopBroker):
         protect(rt, raw, state, report, session, result)
     rt.journal.write(
         now,
@@ -643,7 +747,7 @@ def protect(
     session: date,
     result: Result,
 ) -> None:
-    """Broker-side ATR stops on every pick held from a prior session (the existing stop code)."""
+    """Trial 13's broker-side ATR stops on every pick held from a prior session."""
     s = rt.settings
     try:
         positions = broker.positions()
@@ -719,7 +823,7 @@ def _summary(rt: BigRuntime, force: bool) -> Result:
     result = Result(EXIT_OK, "summarized", session)
     broker = make_broker(rt)
     positions = broker.positions()
-    if isinstance(broker, stops.StopBroker):
+    if rt.overlaid and isinstance(broker, stops.StopBroker):
         rec = stops.reconcile(broker, state, positions, session, s.costs, "paper")
         state.add_trades(rec.trades)
         for t in rec.trades:
@@ -751,11 +855,12 @@ def _summary(rt: BigRuntime, force: bool) -> Result:
         )
         dd = float(risk.drawdown(equity, hwm))
         send(rt, result, alerts.kill_switch_alert(equity, hwm, dd))
-    ov = load_overlay(rt)
-    st = ov.step(session, equity, hwm, s.risk.max_gross_exposure_pct)
-    save_overlay(rt, ov)
-    feats = build_features(bars, s.benchmark)
-    stops.raise_stops(state, sorted(held), feats, s.exits)
+    st: OverlayState | None = None
+    if rt.overlaid:
+        ov = load_overlay(rt)
+        st = ov.step(session, equity, hwm, s.risk.max_gross_exposure_pct)
+        save_overlay(rt, ov)
+        stops.raise_stops(state, sorted(held), build_features(bars, s.benchmark), s.exits)
     state.last_close_session = session
     state.last_close_equity = equity
     if spy_close is not None:
@@ -782,16 +887,13 @@ def _summary(rt: BigRuntime, force: bool) -> Result:
         f"{len(held)} picks held, {alerts.money(core.market_value if core else 0)} in SPY, "
         f"{alerts.money(account.cash)} cash."
     )
-    lines.append(
-        f"Drawdown {st.drawdown:.1%} from the high."
-        + (
-            " Brake: no new positions."
-            if st.halted
-            else " Brake: half size."
-            if st.in_drawdown
-            else ""
-        )
-    )
+    off_high = st.drawdown if st is not None else risk.drawdown(equity, hwm)
+    brake = ""
+    if st is not None and st.halted:
+        brake = " Brake: no new positions."
+    elif st is not None and st.in_drawdown:
+        brake = " Brake: half size."
+    lines.append(f"Drawdown {off_high:.1%} from the high.{brake}")
     if state.kill_switch.active:
         lines.append("Kill switch ON: tomorrow's 9:45 am run sells everything.")
     send(rt, result, alerts.Alert(title=f"Day summary {session}", message="\n".join(lines)))
@@ -811,10 +913,11 @@ def reset_kill_switch(rt: BigRuntime) -> Result:
     equity = make_broker(rt).account().equity
     state.kill_switch = KillSwitch()
     state.high_water_mark = equity
-    ov = load_overlay(rt)
-    ov.halted = False
-    ov.current = None
-    save_overlay(rt, ov)
+    if rt.overlaid:
+        ov = load_overlay(rt)
+        ov.halted = False
+        ov.current = None
+        save_overlay(rt, ov)
     store.save(state)
     result = Result(EXIT_OK, "reset")
     send(

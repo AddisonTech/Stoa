@@ -1,18 +1,24 @@
 name: bigpaper
 
-# The big paper account: trial 13 on its own ~$100,000 Alpaca paper account
-# (stoa/bigpaper.py). Kept apart from the $100 account: only the big account's keys are
+# The big paper account: trial 12 as registered (big_paper.strategy) on its own ~$100,000
+# Alpaca paper account (stoa/bigpaper.py). Kept apart from the $100 account: only the big account's keys are
 # passed here, its state lives in big-paper/ on the stoa-state branch, its alerts start
 # with BIG PAPER, and it shares no concurrency group with the daily workflow.
 # It does nothing until both ALPACA_BIG_PAPER_KEY_ID and ALPACA_BIG_PAPER_SECRET are set
 # AND big_paper.enabled is true in config/default.yaml.
-# The day: PICKS at 9:00 am (auto-approved), EXECUTE at 9:45 am, SUMMARY at 5:15 pm.
+# The day: FEED at 8:15 am, PICKS at 9:00 am (auto-approved), EXECUTE at 9:45 am, SUMMARY
+# at 5:15 pm. The news brain's rolling state (stoa/newsbrain/feed.py) lives in the private
+# Hugging Face dataset big_paper.feed_repo, never on stoa-state or in this repository: FEED
+# downloads it, updates it and uploads it; PICKS downloads it. HF_TOKEN reaches only the
+# step that runs Stoa, which passes it to each call and never saves it.
 # The GitHub crons below are the backup, a few minutes late, in both the EDT and EST slot.
 run-name: >-
   ${{ github.event_name == 'schedule' && format('schedule {0}', github.event.schedule)
   || format('{0} via {1}', inputs.job, inputs.source || 'manual') }}
 on:
   schedule:
+    - cron: "22 12 * * 1-5" # FEED backup, EDT slot (8:22 am EDT)
+    - cron: "22 13 * * 1-5" # FEED backup, EST slot (8:22 am EST)
     - cron: "22 21 * * 1-5" # SUMMARY backup, EDT slot (5:22 pm EDT)
     - cron: "22 22 * * 1-5" # SUMMARY backup, EST slot (5:22 pm EST)
     - cron: "7 13 * * 1-5" # PICKS backup, EDT slot (9:07 am EDT)
@@ -24,7 +30,7 @@ on:
       job:
         description: "Which job to run"
         type: choice
-        options: [picks, execute, summary, status, kill-switch-reset]
+        options: [feed, picks, execute, summary, status, kill-switch-reset]
         default: status
       force:
         description: "Run even outside the window or again for the same session"
@@ -66,6 +72,8 @@ jobs:
         run: |
           if [ -n "$JOB_INPUT" ]; then
             job="$JOB_INPUT"
+          elif [ "$SCHEDULE" = "22 12 * * 1-5" ] || [ "$SCHEDULE" = "22 13 * * 1-5" ]; then
+            job="feed"
           elif [ "$SCHEDULE" = "22 21 * * 1-5" ] || [ "$SCHEDULE" = "22 22 * * 1-5" ]; then
             job="summary"
           elif [ "$SCHEDULE" = "7 13 * * 1-5" ] || [ "$SCHEDULE" = "7 14 * * 1-5" ]; then
@@ -104,12 +112,32 @@ jobs:
 
       - name: Install
         if: steps.secrets.outputs.ready == 'true'
-        run: pip install ".[yahoo]"
+        env:
+          JOB: ${{ steps.pick.outputs.job }}
+        # The feed and the picks run the news brain: the exact versions the rolling state was
+        # built and checked with (the state refuses another pandas), CPU-only torch.
+        run: |
+          if [ "$JOB" = "feed" ] || [ "$JOB" = "picks" ]; then
+            pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+            pip install ".[yahoo,reader]" pandas==3.1.0 numpy==2.5.4 scikit-learn==1.9.1 \
+              transformers==5.20.2 huggingface_hub==2.3.0
+          else
+            pip install ".[yahoo]"
+          fi
+
+      - name: Cache FinBERT
+        if: steps.secrets.outputs.ready == 'true' && (steps.pick.outputs.job == 'feed' || steps.pick.outputs.job == 'picks')
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface/hub
+          key: finbert-0bc2ac10dda6929bcb1f77ccc43c7ec5c424f031
 
       - name: Run
         if: steps.secrets.outputs.ready == 'true'
         env:
           JOB: ${{ steps.pick.outputs.job }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          STOA__BIG_PAPER__FEED_DIR: ${{ runner.temp }}/stoa-feed
         run: |
           force=()
           if [ "$FORCE_INPUT" = "true" ]; then force=(--force); fi

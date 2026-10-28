@@ -437,14 +437,19 @@ class DashboardConfig(_Frozen):
 
 
 class BigPaperConfig(_Frozen):
-    """The big paper account: trial 13 on its own ~$100,000 Alpaca paper account.
+    """The big paper account: one news brain trial on its own ~$100,000 Alpaca paper account.
 
+    ``strategy`` names the trial: ``trial12`` exactly as registered (its sizing, its rails,
+    its SPY core, no overlay), or ``trial13`` (trial 12's picks with trial 13's overlay).
     Kept apart from the $100 account: its own keys (ALPACA_BIG_PAPER_KEY_ID and
     ALPACA_BIG_PAPER_SECRET), its own state folder and its own alerts, tagged with
     ``tag``. It trades only when ``enabled`` is true and both keys are set.
     """
 
     enabled: bool = False
+    strategy: Literal["trial12", "trial13"] = "trial12"
+    feed_dir: Path = Path("state/big-paper-feed")  # the news brain's rolling state and pulls
+    feed_repo: str = "ASmith91/stoa-feed"  # private Hugging Face dataset that keeps feed_dir
     state_dir: Path = Path("state/big-paper")
     tag: str = "BIG PAPER"
     starting_equity: Decimal = Decimal("100000")
@@ -649,6 +654,9 @@ SECRET_ENV: dict[str, str] = {
     # The big paper account's own keys. Only stoa.bigpaper reads them; the $100 account never does.
     "alpaca_big_paper_key_id": "ALPACA_BIG_PAPER_KEY_ID",
     "alpaca_big_paper_secret": "ALPACA_BIG_PAPER_SECRET",
+    # Write access to the big paper feed's private Hugging Face dataset. Read in the process
+    # that needs it and passed to each call; never written to disk.
+    "hf_token": "HF_TOKEN",
 }
 
 
@@ -670,6 +678,7 @@ class Secrets(BaseModel):
     finnhub_key: SecretStr | None = None
     alpaca_big_paper_key_id: SecretStr | None = None
     alpaca_big_paper_secret: SecretStr | None = None
+    hf_token: SecretStr | None = None
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Secrets:

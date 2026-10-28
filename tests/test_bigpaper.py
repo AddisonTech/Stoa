@@ -1,5 +1,6 @@
-"""The big paper account: kept apart from the $100 account, trial 13's overlay, the SPY core
-at a broker, auto-approved picks, tagged alerts, and a kill switch that sells everything."""
+"""The big paper account: kept apart from the $100 account, trial 12 as registered (trial 13's
+overlay behind the setting), the SPY core at a broker, auto-approved picks, tagged alerts, and
+a kill switch that sells everything."""
 
 from __future__ import annotations
 
@@ -109,10 +110,11 @@ class FakeBroker:
         return [o for o in self.orders.values() if o.session == session]
 
 
-def settings(tmp_path: Path, enabled: bool = True) -> Settings:
+def settings(tmp_path: Path, enabled: bool = True, strategy: str = "trial12") -> Settings:
     return make_settings(
         big_paper__enabled="true" if enabled else "false",
         big_paper__state_dir=str(tmp_path / "big"),
+        big_paper__strategy=strategy,
         earnings__block_when_unknown="false",
         risk__block_entries_when_risk_off="false",
         risk__max_pair_correlation="1.0",
@@ -120,11 +122,11 @@ def settings(tmp_path: Path, enabled: bool = True) -> Settings:
 
 
 def runtime(
-    tmp_path: Path, broker: FakeBroker, **kw: object
+    tmp_path: Path, broker: FakeBroker, strategy: str = "trial12", **kw: object
 ) -> tuple[bigpaper.BigRuntime, alerts.RecordingNotifier]:
     rec = alerts.RecordingNotifier()
     rt = bigpaper.BigRuntime(
-        base=settings(tmp_path),
+        base=settings(tmp_path, strategy=strategy),
         secrets=Secrets.from_env({**SMALL, **BIG}),
         notifier=rec,
         broker=broker,  # type: ignore[arg-type]
@@ -155,7 +157,11 @@ def test_the_two_accounts_never_share_keys_or_state(tmp_path: Path) -> None:
     rt, _ = runtime(tmp_path, FakeBroker(D(100), {"SPY": D(400)}))
     assert rt.settings.state.dir == tmp_path / "big"
     assert make_settings().state.dir != make_settings().big_paper.state_dir
-    assert rt.settings.risk.max_position_pct == D("0.05")  # trial 13's cap
+    assert make_settings().big_paper.strategy == "trial12"  # shipped on trial 12
+    assert rt.settings.risk == rt.base.risk  # trial 12's rails, as registered
+    assert rt.settings.backtest.starting_equity == D(100000)
+    t13, _ = runtime(tmp_path, FakeBroker(D(100), {"SPY": D(400)}), strategy="trial13")
+    assert t13.settings.risk.max_position_pct == D("0.05")  # trial 13's cap, only by setting
     assert make_settings().risk.max_position_pct == D("0.20")  # the $100 account's, unchanged
     assert make_settings().approval.buys == "always"  # the $100 account still needs a tap
 
@@ -234,7 +240,10 @@ def no_earnings(bars: object, symbols: object, session: object) -> EarningsCalen
     return EarningsCalendar(empty_calendar())
 
 
-def test_picks_are_sized_by_trial_13_auto_approved_and_tagged(tmp_path: Path) -> None:
+@pytest.mark.parametrize(("strategy", "size"), [("trial12", D(20000)), ("trial13", None)])
+def test_picks_are_sized_by_the_trial_auto_approved_and_tagged(
+    tmp_path: Path, strategy: str, size: Decimal | None
+) -> None:
     fb = FakeBroker(
         D(100000), {"SPY": D(400), "AAPL": D(100), "MSFT": D(200)}, last_equity=D(100000)
     )
@@ -246,6 +255,7 @@ def test_picks_are_sized_by_trial_13_auto_approved_and_tagged(tmp_path: Path) ->
     rt, rec = runtime(
         tmp_path,
         fb,
+        strategy,
         now=lambda: at(SESSION, "09:00"),
         bars=bars_for,
         signals=lambda d: sigs,
@@ -258,7 +268,12 @@ def test_picks_are_sized_by_trial_13_auto_approved_and_tagged(tmp_path: Path) ->
     assert plan is not None and plan.execute_session == SESSION
     buys = [o for o in plan.orders if o.side is Side.BUY]
     assert {o.symbol for o in buys} == {"AAPL", "MSFT"}
-    assert all(o.notional is not None and o.notional <= D(5000) for o in buys)  # 5% cap
+    if size is not None:  # trial 12: 20% of the account each, as its backtest sized them
+        assert all(o.notional == size for o in buys)
+        assert not (tmp_path / "big" / "overlay.json").exists()
+    else:  # trial 13: ATR sizing under its 5% cap
+        assert all(o.notional is not None and o.notional <= D(5000) for o in buys)
+    assert plan.strategy == strategy
     assert len(rec.alerts) == 1 and rec.alerts[0].title == f"BIG PAPER: Picks {SESSION}"
     assert "auto-approved" in rec.alerts[0].message and not rec.alerts[0].actions  # no tap buttons
 
@@ -279,14 +294,16 @@ def test_picks_without_the_news_brain_still_sell_and_say_why(tmp_path: Path) -> 
     assert bigpaper.picks(rt).status == "picked"
     plan = StateStore(tmp_path / "big").load().pending_plan
     assert plan is not None and [(o.symbol, o.side) for o in plan.orders] == [("AAPL", Side.SELL)]
-    assert "could not run" in rec.alerts[0].message
+    msg = rec.alerts[0].message
+    assert "No buys today; the account stays in SPY" in msg and "not scored yet" in msg
+    assert rec.alerts[0].priority == alerts.HIGH and rec.alerts[0].title.startswith("BIG PAPER")
 
 
 def plan_for(orders: list[PlannedOrder]) -> Plan:
-    pid = plan_id_for("trial13", "paper", clock.previous_session(SESSION))
+    pid = plan_id_for("trial12", "paper", clock.previous_session(SESSION))
     return Plan(
         plan_id=pid,
-        strategy="trial13",
+        strategy="trial12",
         mode="paper",
         decided_session=clock.previous_session(SESSION),
         execute_session=SESSION,
@@ -369,9 +386,25 @@ def test_the_kill_switch_sells_every_position_in_the_account(tmp_path: Path) -> 
     )
 
 
-def test_summary_records_the_day_against_spy_and_sets_the_brake(tmp_path: Path) -> None:
+def test_summary_records_the_day_against_spy(tmp_path: Path) -> None:
     fb = FakeBroker(D(1000), {"SPY": D(400)}, held={"SPY": D(200)})  # $81,000
     rt, rec = runtime(tmp_path, fb, now=lambda: at(SESSION, "17:16"), bars=bars_for)
+    store = StateStore(tmp_path / "big")
+    st = store.load()
+    st.high_water_mark = D(100000)
+    store.save(st)
+    assert bigpaper.summary(rt).status == "summarized"
+    curve = bigpaper.read_curve(tmp_path / "big")
+    assert curve[-1]["session"] == SESSION.isoformat() and curve[-1]["equity"] == 81000.0
+    assert not (tmp_path / "big" / "overlay.json").exists()  # trial 12 has no brake
+    assert rec.alerts[-1].title == f"BIG PAPER: Day summary {SESSION}"
+    assert "Drawdown 19.0% from the high." in rec.alerts[-1].message
+    assert "Brake" not in rec.alerts[-1].message
+
+
+def test_summary_sets_trial_13s_brake_when_set_to_trial_13(tmp_path: Path) -> None:
+    fb = FakeBroker(D(1000), {"SPY": D(400)}, held={"SPY": D(200)})  # $81,000
+    rt, rec = runtime(tmp_path, fb, "trial13", now=lambda: at(SESSION, "17:16"), bars=bars_for)
     store = StateStore(tmp_path / "big")
     st = store.load()
     st.high_water_mark = D(100000)
@@ -391,7 +424,23 @@ def test_the_workflow_reads_only_the_big_keys() -> None:
     assert "secrets.ALPACA_BIG_PAPER_KEY_ID" in text and "secrets.ALPACA_BIG_PAPER_SECRET" in text
     assert "secrets.ALPACA_PAPER_KEY_ID" not in text and "ALPACA_LIVE" not in text
     daily = (ROOT / ".github" / "workflows" / "daily.yml").read_text(encoding="utf-8")
-    assert "BIG_PAPER" not in daily
+    assert "BIG_PAPER" not in daily and "HF_TOKEN" not in daily
+
+
+def test_the_feed_state_lives_only_in_the_private_dataset() -> None:
+    import yaml
+
+    text = (ROOT / ".github" / "workflows" / "bigpaper.yml").read_text(encoding="utf-8")
+    wf = yaml.safe_load(text)
+    job = wf["jobs"]["run"]
+    assert "HF_TOKEN" not in job["env"]  # only the step that runs Stoa gets it
+    with_token = [s["name"] for s in job["steps"] if "HF_TOKEN" in (s.get("env") or {})]
+    assert with_token == ["Run"]
+    run = next(s for s in job["steps"] if s["name"] == "Run")
+    assert "runner.temp" in run["env"]["STOA__BIG_PAPER__FEED_DIR"]  # not under state-branch
+    assert "login" not in text and "upload-artifact" not in text
+    assert make_settings().big_paper.feed_repo == "ASmith91/stoa-feed"
+    assert "feed" in str(wf[True]["workflow_dispatch"]["inputs"]["job"]["options"])
 
 
 # ---- the public dashboard ------------------------------------------------------------------------
@@ -409,7 +458,8 @@ def test_the_dashboard_shows_the_big_account_from_day_one(tmp_path: Path) -> Non
     page = dashboard.build(dash_settings(tmp_path), tmp_path / "site", ROOT).read_text(
         encoding="utf-8"
     )
-    assert "Big paper account (trial 13)" in page and "Not trading yet" in page
+    assert "Big paper account (trial 12)" in page and "Not trading yet" in page
+    assert "trial 13" not in page.lower()
 
 
 def test_the_dashboard_draws_the_big_equity_curve_and_trade_log(tmp_path: Path) -> None:

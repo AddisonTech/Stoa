@@ -316,7 +316,7 @@ def trade_log(
 
 
 def big_paper(settings: Settings) -> dict[str, Any]:
-    """The big paper account (trial 13): its equity against SPY and its trade log."""
+    """The big paper account (its trial, trial 12 by default): equity against SPY, trade log."""
     root = settings.big_paper.state_dir
     curve_path = root / "curve.json"
     rows: list[dict[str, Any]] = (
@@ -340,6 +340,7 @@ def big_paper(settings: Settings) -> dict[str, Any]:
     ]
     return {
         "enabled": settings.big_paper.enabled,
+        "strategy": settings.big_paper.strategy,
         "tag": settings.big_paper.tag,
         "equity": float(rows[-1]["equity"]) if rows else None,
         "curve": {"dates": dates, "series": series},
@@ -819,15 +820,29 @@ def render_trades(data: dict[str, Any], note: str | None = None) -> str:
     )
 
 
+INTRO_TRIAL12 = (
+    '<p class="muted small">Trial 12 on its own $100,000 Alpaca paper account, exactly as '
+    "registered: the news brain's picks, up to 5 at a time at 20% of the account each, every "
+    "other dollar in SPY, sold after one session. Picks are auto-approved. Paper money; kept "
+    "apart from the $100 account above.</p>"
+)
+INTRO_TRIAL13 = (
+    '<p class="muted small">Trial 13 on its own $100,000 Alpaca paper account: the news '
+    "brain's picks from trial 12, sized by the risk overlay (1% risk a position, 5% cap, "
+    "half size and less SPY 10% off the high, no new positions 15% off). Picks are "
+    "auto-approved. Paper money; kept apart from the $100 account above.</p>"
+)
+
+
+def big_paper_title(data: dict[str, Any]) -> str:
+    strategy = str((data.get("big_paper") or {}).get("strategy") or "trial12")
+    return f"Big paper account (trial {strategy.removeprefix('trial')})"
+
+
 def render_big_paper(data: dict[str, Any]) -> str:
     b = data.get("big_paper") or {}
     c = b.get("curve") or {"dates": [], "series": {}}
-    intro = (
-        '<p class="muted small">Trial 13 on its own $100,000 Alpaca paper account: the news '
-        "brain's picks from trial 12, sized by the risk overlay (1% risk a position, 5% cap, "
-        "half size and less SPY 10% off the high, no new positions 15% off). Picks are "
-        "auto-approved. Paper money; kept apart from the $100 account above.</p>"
-    )
+    intro = INTRO_TRIAL13 if b.get("strategy") == "trial13" else INTRO_TRIAL12
     if not c["dates"]:
         return intro + _empty(
             "Not trading yet. It starts once its own Alpaca paper keys are added and it is "
@@ -1176,7 +1191,7 @@ def render(data: dict[str, Any]) -> str:
         f'<section class="card"><h2>Runs and checks</h2>{render_health(data)}</section>'
         "</div>"
         f'<section class="card"><h2>Trade log</h2>{render_trades(data)}</section>'
-        f'<section class="card"><h2>Big paper account (trial 13)</h2>'
+        f'<section class="card"><h2>{_e(big_paper_title(data))}</h2>'
         f"{render_big_paper(data)}</section>"
         f'<section class="card"><h2>Last {DECISIONS_SHOWN} decisions</h2>'
         f"{render_decisions(data)}</section>"

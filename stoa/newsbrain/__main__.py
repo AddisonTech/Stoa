@@ -2,8 +2,13 @@
 
 Jobs: news, minute, sec, score, panel, trial9, trial10, preregister11, trial11,
 news_timing, harness, preregister12, trial12, preregister12h,
-holdout12, preregister13, trial13, coverage. Each logs to data/newsbrain/logs/
-and can be stopped and restarted at any time.
+holdout12, preregister13, trial13, coverage, feedseed <session>. Each logs to
+data/newsbrain/logs/ and can be stopped and restarted at any time.
+
+``feedseed`` is the big paper feed's one seed build on the Dell: the rolling state as of a
+session's 9:00 am cutoff, from the full history, into ``big_paper.feed_dir``. ``feedpush``
+uploads that folder once to ``big_paper.feed_repo`` (HF_TOKEN in the environment only;
+``scripts/push-feed-seed.ps1`` asks for it without saving it).
 """
 
 from __future__ import annotations
@@ -235,6 +240,35 @@ def main(argv: list[str]) -> int:
         from stoa.newsbrain.coverage import report
 
         print(report())
+    elif job == "feedseed":
+        from datetime import datetime
+        from pathlib import Path
+
+        from stoa.config import load_settings
+        from stoa.newsbrain import feed
+
+        settings = load_settings(Path("config/default.yaml"))
+        session = date.fromisoformat(argv[1])
+        first = json.loads((ROOT / "logs" / "sec.jsonl").read_text(encoding="utf-8").split("\n")[0])
+        sec_pulled = datetime.fromisoformat(first["at"])  # the last SEC pull's first line
+        st = feed.seed_from_dell(feed.Feed(settings.big_paper.feed_dir), session, sec_pulled)
+        print(json.dumps({"seeded": st.session.isoformat(), "dir": str(st.root)}))
+    elif job == "feedpush":
+        import os
+        from pathlib import Path
+
+        from stoa.config import load_settings
+        from stoa.newsbrain import feed
+
+        settings = load_settings(Path("config/default.yaml"))
+        token = os.environ.get("HF_TOKEN", "")
+        if not token:
+            print("HF_TOKEN is not set in this process; nothing sent")
+            return 2
+        fd = feed.Feed(settings.big_paper.feed_dir)
+        seeded = fd.record().get("seeded")
+        feed.push_state(fd, settings.big_paper.feed_repo, token, f"seed {seeded}")
+        print(json.dumps({"pushed": str(fd.root), "to": settings.big_paper.feed_repo}))
     else:
         print(__doc__)
         return 2

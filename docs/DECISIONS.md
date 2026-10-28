@@ -536,3 +536,12 @@ Trial 12 beat SPY but failed its holdout on one check, drawdown. Its worst walk-
 - **Which piece aims at which drop:** c and d at the walk-forward drop (SPY falling with the market); a and b at the holdout drop (several big positions falling together). The numbers were not changed for either.
 - **Run:** once, on trial 12's windows (2023-01-01 to 2026-06-30), with trial 12's checks (trial 9's pass bar). One configuration, logged as one trial. Fewer than 30 trades is STARVED.
 - **In-sample.** Trial 12 already ran on this window and its drawdown was seen before the overlay was set, so this run is in-sample for the overlay: a lead, not proof. The holdout was spent by trial 12 and is never read again. The real grade is the live big paper account.
+
+## The big paper account runs trial 12
+
+Decided 2026-10-28 by the owner.
+
+- **What.** The big paper account (about $100,000, `stoa/bigpaper.py`) runs trial 12 exactly as registered (spec e75fa8775469de92): its sizing (up to 5 picks at 20% each), its rails, its SPY core, no overlay and no broker-side stops, as its backtest ran. Trial 13's code and registry entry stay as they are; `big_paper.strategy: trial13` would bring its overlay back.
+- **Why not trial 13.** It failed its own checks (deflated Sharpe, Sharpe against MTUM) and did not fix the drawdown: 15.8% against trial 12's 14.9%.
+- **No new trial.** Nothing is re-tested or re-scored; the account is live paper trading of a registered trial.
+- **The news brain's data off the Dell.** The morning picks read a rolling state (`stoa/newsbrain/rolling.py`) that a GitHub feed (`stoa/newsbrain/feed.py`) keeps up to date, instead of rebuilding from 2015 on the Dell. It must give trial 9's full rebuild bit for bit; see the RUNBOOK, section 13b, for the checks.
