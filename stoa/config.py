@@ -413,9 +413,10 @@ class DataSourcesConfig(_Frozen):
 
 class ApprovalConfig(_Frozen):
     mode: Literal["auto", "always", "never"] = "auto"
-    # Buys need a tap on the morning pick alert in paper and live, whatever ``mode``
-    # says. Sells (rule exits) follow ``mode``; the kill switch never waits.
-    buys: Literal["always", "mode"] = "always"
+    # ``buys: mode``: buys follow ``mode`` like sells, so on paper nothing waits for a tap
+    # (the owner's decision of 2026-10-28; docs/DECISIONS.md). ``always`` puts the Approve
+    # and Skip buttons back on every buy in paper and live. The kill switch never waits.
+    buys: Literal["always", "mode"] = "mode"
     live_days: int = Field(default=30, ge=0)
     wait_minutes: float = Field(default=5.0, ge=0, le=20)
     poll_interval_seconds: float = Field(default=30.0, gt=0)

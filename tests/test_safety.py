@@ -479,6 +479,37 @@ def test_execute_skip_wrong_nonce_and_silence_send_nothing(tmp_path: Path, bars:
         assert broker.fills == []
 
 
+def test_on_paper_the_picks_go_through_without_a_tap(tmp_path: Path, bars: Bars) -> None:
+    # The owner's decision of 2026-10-28: no Approve or Skip on paper. One FYI at 9:00 am,
+    # no buttons, and the buys go in at 9:45 am under the same caps.
+    assert make_settings().approval.buys == "mode"
+    s, broker = setup(tmp_path, bars, crosscheck__enabled="false")
+    env = {**PAPER, "STOA_NTFY_APPROVAL_TOPIC": "approval-topic-xyz"}
+    rt, _ = rt_for(s, bars, broker, DECIDE_AT, env)
+    jobs.decide(rt)
+    rt_s, rec_s = rt_for(s, bars, broker, SWEEP_AT, env, news_client=NoNews())
+    assert jobs.sweep_job(rt_s).status == "swept"
+    state = StateStore(s.state.dir).load()
+    plan = state.pending_plan
+    assert plan is not None and plan.orders and state.approval_nonce is None
+    assert not any(a.actions for a in rec_s.alerts)
+    picks = [a for a in rec_s.alerts if a.title.startswith("Picks ")]
+    assert len(picks) == 1 and "nothing to tap" in picks[0].message
+    assert all(f"BUY {o.symbol}" in picks[0].message for o in plan.orders if o.side is Side.BUY)
+    assert not [a for a in rec_s.alerts if a.title.startswith("BUY ")]
+
+    class Silent:
+        def poll(self, since: datetime) -> list[dict[str, Any]]:
+            raise AssertionError("nothing should wait for a tap")
+
+    broker.begin_session(EXEC_AT.date(), prices(bars, EXEC_AT.date(), "open"))
+    rt2, rec2 = rt_for(s, bars, broker, EXEC_AT, env, approvals=Silent())
+    jobs.execute(rt2)
+    bought = {o.symbol for o in plan.orders if o.side is Side.BUY}
+    assert bought and bought <= {f.symbol for f in broker.fills}
+    assert not [a for a in rec2.alerts if a.title.startswith("Skipped buy")]
+
+
 def test_execute_price_check_skips_disagreeing_buys(tmp_path: Path, bars: Bars) -> None:
     s, broker = setup(tmp_path, bars)
     rt, _ = rt_for(s, bars, broker, DECIDE_AT, PAPER)

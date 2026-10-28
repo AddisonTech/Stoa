@@ -6,6 +6,7 @@ picks must equal those from trial 9's full rebuild of the same world, bit for bi
 
 from __future__ import annotations
 
+import json
 import pickle
 import shutil
 from datetime import UTC, date, datetime, timedelta
@@ -234,10 +235,12 @@ class FakeHub:
 
     def upload_folder(self, **kw: object) -> None:
         self.calls.append(("upload", kw["repo_id"], kw["ignore_patterns"]))
+        self.calls.append(("upload_only", kw.get("allow_patterns")))
         shutil.copytree(Path(str(kw["folder_path"])), self.store, dirs_exist_ok=True)
 
     def snapshot_download(self, **kw: object) -> None:
         self.calls.append(("download", kw["repo_id"], kw["token"]))
+        self.calls.append(("download_only", kw.get("allow_patterns")))
         shutil.copytree(self.store, Path(str(kw["local_dir"])), dirs_exist_ok=True)
 
 
@@ -267,6 +270,43 @@ def test_the_state_goes_to_the_private_dataset_and_back(
     for f in [*(root / "hub").rglob("*"), *(root / "runner").rglob("*")]:
         if f.is_file():
             assert b"tok-123" not in f.read_bytes(), f  # the token is never written
+
+
+def test_a_dry_run_keeps_its_pulls_and_rows_for_the_dell(
+    dell: tuple[Path, Dell], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, fake = dell
+    fd = seeded(root)
+    src = fake.sources()
+    day = SEED
+    for k in range(3):
+        day = clock.next_session(day)
+        for hhmm, tag in (("08:15", f"t{k}a-feed"), ("09:00", f"t{k}b-picks")):
+            fd.raw_tag = tag
+            feed.run(fd, src, at(day, hhmm, 30))
+    rows, sigs = feed.scored(fd, day)
+    feed.save_check(fd, day, rows, sigs)
+    assert [(s.symbol, s.score) for s in sigs] == [
+        (s.symbol, s.score) for s in feed.signals(fd, day)
+    ]
+    raw = root / "feed" / "raw"
+    assert (raw / "t0a-feed" / "bars.parquet").exists()
+    kept = pd.concat([pd.read_parquet(p) for p in raw.glob("*/news.parquet")])
+    pending = fd.read("news")
+    later = set() if pending is None else set(pending["id"])
+    assert len(kept) and set(kept["id"]) <= set(fd.state().archive()["id"]) | later
+    check = root / "feed" / "checks" / "t2b-picks"
+    body = json.loads((check / "picks.json").read_text(encoding="utf-8"))
+    assert body["session"] == day.isoformat() and body["rows"] == len(rows)
+    assert body["picks"] == [{"symbol": s.symbol, "p": s.score} for s in sigs]
+    got = pd.read_parquet(check / "rows.parquet")
+    assert list(got["symbol"]) == list(rows["symbol"]) and "p" in got.columns
+    # A real run downloads the state only, never the dry runs' pulls and checks.
+    hubbed = hub(monkeypatch, True, root / "hub")
+    feed.push_state(fd, "ASmith91/stoa-feed", "tok", "dry", only=["raw/t0a-feed/**"])
+    feed.pull_state(feed.Feed(root / "runner"), "ASmith91/stoa-feed", "tok")
+    assert ("upload_only", ["raw/t0a-feed/**"]) in hubbed.calls
+    assert ("download_only", feed.STATE_FILES) in hubbed.calls
 
 
 def test_a_public_dataset_is_refused(

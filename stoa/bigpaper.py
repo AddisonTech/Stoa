@@ -16,6 +16,13 @@ It is kept apart from the $100 account in every way:
 It trades only when ``big_paper.enabled`` is true and both keys are set. Otherwise every
 job logs why and stops, sending nothing.
 
+A dry run (``--dry``, feed and picks only) needs the keys but not ``enabled``: it reads the
+account, never sends an order, saves nothing to the account's state and logs its alerts
+instead of sending them. The feed still pulls, advances and uploads the news brain's state,
+which places no order. ``--at`` replays a past morning; each dry run also keeps what it
+pulled and the rows it scored in the feed's dataset (raw/ and checks/), so the Dell can
+rebuild the same sessions from scratch and compare.
+
 The day, on the $100 account's clock:
 
 - 9:00 am PICKS: the news brain's picks for the session, read from the rolling state
@@ -38,7 +45,7 @@ import logging
 import traceback
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -116,6 +123,7 @@ class BigRuntime:
     feed_sources: Any = None  # newsbrain.feed.Sources; Alpaca, EDGAR and FinBERT when None
     calendar: Callable[[Bars, list[str], date], EarningsCalendar] | None = None
     sectors: Mapping[str, str] | None = None
+    dry: bool = False  # no orders, no saved state, alerts logged instead of sent
 
     def __post_init__(self) -> None:
         self.notifier = Tagged(self.notifier, self.base.big_paper.tag)
@@ -159,9 +167,9 @@ class BigRuntime:
 # ---- the separation ------------------------------------------------------------------------
 
 
-def off_reason(settings: Settings, secrets: Secrets) -> str | None:
-    """Why the big account must not trade now, or None."""
-    if not settings.big_paper.enabled:
+def off_reason(settings: Settings, secrets: Secrets, dry: bool = False) -> str | None:
+    """Why the big account must not run now, or None. A dry run needs only the keys."""
+    if not settings.big_paper.enabled and not dry:
         return "big_paper.enabled is false in the config"
     if not secrets.has_big_paper_keys():
         return "ALPACA_BIG_PAPER_KEY_ID and ALPACA_BIG_PAPER_SECRET are not both set"
@@ -217,6 +225,9 @@ def fetch_bars(rt: BigRuntime, symbols: list[str], through: date) -> Bars:
 
 
 def send(rt: BigRuntime, result: Result, alert: alerts.Alert) -> None:
+    if rt.dry:
+        log.info("dry run, not sent: %s\n%s", alert.title, alert.message)
+        return
     if alerts.safe_send(rt.notifier, alert):
         result.sent.append(alert.title)
 
@@ -343,7 +354,7 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
     since, bring it to the session's 9:00 am cutoff, and read the picks. Stale data raises."""
     from stoa.newsbrain import feed
 
-    fd = feed.Feed(rt.base.big_paper.feed_dir)
+    fd = feed.Feed(rt.base.big_paper.feed_dir, raw_tag(rt, "picks", now))
     token = hf_token(rt)
     if token is not None:
         feed.pull_state(fd, rt.base.big_paper.feed_repo, token)
@@ -351,7 +362,24 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
     stale = feed.problems(fd, session, now)
     if stale:
         raise feed.FeedError("; ".join(stale))
-    return feed.signals(fd, session)
+    rows, sigs = feed.scored(fd, session)
+    if rt.dry:
+        feed.save_check(fd, session, rows, sigs)
+        log.info("dry picks for %s: %s", session, [(x.symbol, round(x.score, 4)) for x in sigs])
+        if token is not None:
+            feed.push_state(
+                fd,
+                rt.base.big_paper.feed_repo,
+                token,
+                f"dry picks {fd.raw_tag}",
+                only=[f"raw/{fd.raw_tag}/**", f"checks/{fd.raw_tag}/**"],
+            )
+    return sigs
+
+
+def raw_tag(rt: BigRuntime, job: str, now: datetime) -> str | None:
+    """Where a dry run keeps its pulls and checks in the feed's dataset; None for real runs."""
+    return f"{now.astimezone(UTC):%Y%m%dT%H%MZ}-{job}" if rt.dry else None
 
 
 def calendar(rt: BigRuntime, bars: Bars, symbols: list[str], session: date) -> EarningsCalendar:
@@ -382,7 +410,7 @@ def _guarded(rt: BigRuntime, job: str, body: Callable[[], Result]) -> Result:
 
 
 def _off(rt: BigRuntime, job: str) -> Result | None:
-    why = off_reason(rt.base, rt.secrets)
+    why = off_reason(rt.base, rt.secrets, rt.dry)
     if why is None:
         return None
     log.info("big paper %s: off (%s); nothing done, nothing sent", job, why)
@@ -410,6 +438,7 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
     s = rt.settings
     now = rt.now()
     session = picks_session(now, s)
+    force = force or rt.dry  # a dry run saves nothing, so it may run at any hour, again
     if session is None:
         if not force:
             return Result(EXIT_OK, "outside_window")
@@ -507,22 +536,30 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
         created_at=now,
         equity=equity,
     )
-    state.pending_plan = plan
-    state.swept_sessions = [*state.swept_sessions, session][-60:]
-    store.archive_plan(plan)
-    if ov is not None:
-        save_overlay(rt, ov)
-    store.save(state)
-    rt.journal.write(
-        now,
-        "picks",
-        session,
-        "plan",
-        plan=plan.model_dump(mode="json"),
-        signals=[{"symbol": x.symbol, "p": x.score, "detail": x.detail} for x in sigs],
-        rejections=[r.model_dump(mode="json") for r in decision.rejections],
-        notes=notes,
-    )
+    if rt.dry:
+        result.status = "dry"
+        log.info(
+            "dry plan for %s: %s",
+            session,
+            [(o.side.value, o.symbol, str(o.notional or o.qty)) for o in plan.orders],
+        )
+    else:
+        state.pending_plan = plan
+        state.swept_sessions = [*state.swept_sessions, session][-60:]
+        store.archive_plan(plan)
+        if ov is not None:
+            save_overlay(rt, ov)
+        store.save(state)
+        rt.journal.write(
+            now,
+            "picks",
+            session,
+            "plan",
+            plan=plan.model_dump(mode="json"),
+            signals=[{"symbol": x.symbol, "p": x.score, "detail": x.detail} for x in sigs],
+            rejections=[r.model_dump(mode="json") for r in decision.rejections],
+            notes=notes,
+        )
     current = ov.current if ov is not None else None
     send(rt, result, picks_alert(plan.orders, sigs, current, notes, session))
     return result
@@ -576,9 +613,9 @@ def _feed(rt: BigRuntime, force: bool) -> Result:
 
     now = rt.now()
     day = clock.to_ny(now).date()
-    if not clock.is_session(day) and not force:
+    if not clock.is_session(day) and not (force or rt.dry):
         return Result(EXIT_OK, "not_a_session")
-    fd = nf.Feed(rt.base.big_paper.feed_dir)
+    fd = nf.Feed(rt.base.big_paper.feed_dir, raw_tag(rt, "feed", now))
     token = hf_token(rt)
     if token is not None:
         nf.pull_state(fd, rt.base.big_paper.feed_repo, token)
@@ -586,7 +623,7 @@ def _feed(rt: BigRuntime, force: bool) -> Result:
     log.info("big paper feed: %s", out)
     if token is not None:
         nf.push_state(fd, rt.base.big_paper.feed_repo, token, f"feed {now.isoformat()}")
-    return Result(EXIT_OK, "fed", day)
+    return Result(EXIT_OK, "dry" if rt.dry else "fed", day)
 
 
 # ---- 9:45 am: EXECUTE --------------------------------------------------------------------------

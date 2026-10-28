@@ -8,7 +8,10 @@ data/newsbrain/logs/ and can be stopped and restarted at any time.
 ``feedseed`` is the big paper feed's one seed build on the Dell: the rolling state as of a
 session's 9:00 am cutoff, from the full history, into ``big_paper.feed_dir``. ``feedpush``
 uploads that folder once to ``big_paper.feed_repo`` (HF_TOKEN in the environment only;
-``scripts/push-feed-seed.ps1`` asks for it without saving it).
+``scripts/push-feed-seed.ps1`` asks for it without saving it). ``feedpull`` downloads the
+whole dataset, the dry runs' pulls and checks included, into
+``data/newsbrain/feedcheck/hf`` for the Dell's rebuild to compare
+(``scripts/pull-feed.ps1``, a read token, never saved).
 """
 
 from __future__ import annotations
@@ -269,6 +272,21 @@ def main(argv: list[str]) -> int:
         seeded = fd.record().get("seeded")
         feed.push_state(fd, settings.big_paper.feed_repo, token, f"seed {seeded}")
         print(json.dumps({"pushed": str(fd.root), "to": settings.big_paper.feed_repo}))
+    elif job == "feedpull":
+        import os
+        from pathlib import Path
+
+        from stoa.config import load_settings
+        from stoa.newsbrain import feed
+
+        settings = load_settings(Path("config/default.yaml"))
+        token = os.environ.get("HF_TOKEN", "")
+        if not token:
+            print("HF_TOKEN is not set in this process; nothing read")
+            return 2
+        out = feed.Feed(ROOT / "feedcheck" / "hf")
+        feed.pull_state(out, settings.big_paper.feed_repo, token, only=["*", "**"])
+        print(json.dumps({"pulled": settings.big_paper.feed_repo, "to": str(out.root)}))
     else:
         print(__doc__)
         return 2

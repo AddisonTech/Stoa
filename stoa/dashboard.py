@@ -5,7 +5,7 @@ branch (plus HOLDOUT.lock from the repo) and writes a static site: one
 index.html with inline SVG charts and inline CSS, plus data.json with the
 same numbers. It makes no network calls, never builds a broker, and never
 reads a secret. The page has no buttons, forms or links that could trade or
-approve anything: approvals stay on ntfy.
+approve anything.
 
 Files read, relative to the state directory (``state.dir``) and the shared
 directory (``state.shared_dir``, the same as the state directory when unset):
@@ -1196,7 +1196,7 @@ def render(data: dict[str, Any]) -> str:
         f'<section class="card"><h2>Last {DECISIONS_SHOWN} decisions</h2>'
         f"{render_decisions(data)}</section>"
         f'<section class="card"><h2>Model calibration</h2>{render_calibration(data)}</section>'
-        f"<footer>Read only. Approvals happen on the phone, never here. Built "
+        f"<footer>Read only: nothing is traded from this page. Built "
         f"{_when(data['generated_at'])} by Stoa {_e(data['version'])} from committed state. "
         '<a href="https://github.com/AddisonTech/Stoa">Source</a></footer>'
         "</main></body></html>"

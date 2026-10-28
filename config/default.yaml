@@ -103,7 +103,7 @@ job_windows:
   execute_window_minutes: 120
   sweep_start: "08:50"             # the morning sweep may start from here (New York time)
   news_cutoff: "09:00"             # news published up to here counts for today's picks
-  approval_deadline: "09:40"       # taps after this are ignored
+  approval_deadline: "09:40"       # taps after this are ignored (only when a tap is needed)
   late_replies_until: "10:15"      # "Too late" replies to taps after the deadline, until this time
 
 backtest:
@@ -254,7 +254,7 @@ sources:
 
 approval:
   mode: auto                       # sells: auto (live, first 30 days), always, never
-  buys: always                     # every buy needs a tap on the 9:00 am pick alert
+  buys: mode                       # buys follow mode: on paper they go through with no tap (2026-10-28)
   live_days: 30
   wait_minutes: 5                  # EXECUTE keeps polling this long for missing answers
   poll_interval_seconds: 30

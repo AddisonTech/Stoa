@@ -5,7 +5,7 @@
 2. Backtest the model, the v1 rule pipeline, SPY, the 50/200 rule and MTUM on
    every window and grade on risk, with the deflated Sharpe.
 3. Run DECIDE, the 9:00 am sweep, then EXECUTE against the simulated broker,
-   and print every alert (the morning picks carry Approve and Skip buttons).
+   and print every alert (the morning picks are one FYI; on paper nothing waits for a tap).
 
     python scripts/demo.py [output-dir]
 """
@@ -14,10 +14,9 @@ from __future__ import annotations
 
 import sys
 import tempfile
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
 
@@ -64,25 +63,6 @@ def print_alerts(title: str, rec: alerts.RecordingNotifier) -> None:
             print(f"    [button] {act['label']}")
 
 
-class ApproveFirst:
-    """Stands in for the phone: approves the first order, ignores the rest."""
-
-    def __init__(self, store_dir: Path) -> None:
-        self.store_dir = store_dir
-
-    def poll(self, since: datetime) -> list[dict[str, Any]]:
-        from stoa.state import StateStore
-
-        st = StateStore(self.store_dir).load()
-        plan = st.pending_plan
-        if plan is None or not plan.orders:
-            return []
-        first = plan.orders[0].symbol
-        at = int((SWEEP_AT + timedelta(minutes=5)).timestamp())
-        body = f"approve {plan.plan_id} {first} {st.approval_nonce}"
-        return [{"event": "message", "time": at, "message": body}]
-
-
 class QuietNight:
     """No news overnight, so the sweep leaves the rules' picks as they are."""
 
@@ -122,7 +102,7 @@ def main(out: Path) -> int:
         print(scoreboard.render_markdown(report))
         print(f"(written to {path})")
 
-        print("\n## 3. A day of operation: summary, morning picks, approved orders\n")
+        print("\n## 3. A day of operation: summary, morning picks, orders at the open\n")
         s = load_settings(
             Path("config/default.yaml"),
             env={
@@ -137,13 +117,7 @@ def main(out: Path) -> int:
         universe = Universe.assume_all_fractionable(s.watchlist, s.benchmark)
         broker = SimBroker(Portfolio(cash=Decimal(100)), s.costs, universe)
         broker.begin_session(DECIDE_AT.date(), prices(bars, DECIDE_AT.date(), "close"))
-        keys = Secrets.from_env(
-            {
-                "ALPACA_PAPER_KEY_ID": "demo",
-                "ALPACA_PAPER_SECRET": "demo",
-                "STOA_NTFY_APPROVAL_TOPIC": "demo-approval-topic",
-            }
-        )
+        keys = Secrets.from_env({"ALPACA_PAPER_KEY_ID": "demo", "ALPACA_PAPER_SECRET": "demo"})
 
         rec = alerts.RecordingNotifier()
         rt = jobs.Runtime(
@@ -185,14 +159,9 @@ def main(out: Path) -> int:
             broker=broker,
             use_external=False,
             sleep=lambda _s: None,
-            approvals=ApproveFirst(s.state.dir),
-        )  # type: ignore[arg-type]
-        executed = jobs.execute(rt2)
-        print_alerts(
-            f"EXECUTE {EXECUTE_AT:%Y-%m-%d %H:%M} UTC (first order approved, rest unanswered)"
-            f" -> {executed.status}",
-            rec2,
         )
+        executed = jobs.execute(rt2)
+        print_alerts(f"EXECUTE {EXECUTE_AT:%Y-%m-%d %H:%M} UTC -> {executed.status}", rec2)
 
         print(f"\nSim broker cash {broker.portfolio.cash:.2f}, positions:")
         for sym, lot in sorted(broker.portfolio.positions.items()):

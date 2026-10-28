@@ -1734,7 +1734,22 @@ def _sweep(rt: Runtime, force: bool) -> JobResult:
     )
     topic = rt.secrets.ntfy_approval_topic
     late = rt.now() > deadline
-    for order in plan.orders:
+    if plan.orders and not tapped:
+        # Nothing waits for a tap (buys follow the approval mode, off on paper): one FYI
+        # listing what goes in at the open, with no buttons.
+        overnight = {
+            o.symbol: t.line()
+            for o in plan.orders
+            if o.side is Side.BUY and (t := tones.get(o.symbol)) is not None
+        }
+        send(
+            rt,
+            result,
+            alerts.picks_fyi_alert(
+                session, list(plan.orders), plan.equity_at_decide, s.mode, when, overnight
+            ),
+        )
+    for order in plan.orders if tapped else ():
         alert = alerts.signal_alert(order, plan.equity_at_decide, s.mode, when=when)
         seen = tones.get(order.symbol)
         lines = [seen.line()] if seen is not None and order.side is Side.BUY else []

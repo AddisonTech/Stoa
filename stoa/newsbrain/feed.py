@@ -79,6 +79,9 @@ class Sources:
 @dataclass
 class Feed:
     root: Path
+    # Dry runs keep every pull as it came in, under raw/<raw_tag>/, so the Dell can rebuild
+    # the same sessions from scratch with exactly what the feed saw.
+    raw_tag: str | None = None
 
     @property
     def state_dir(self) -> Path:
@@ -103,6 +106,12 @@ class Feed:
 
     def write(self, name: str, df: pd.DataFrame) -> None:
         write_parquet(df.reset_index(drop=True), self.pending / f"{name}.parquet")
+
+    def keep(self, name: str, df: pd.DataFrame) -> None:
+        if self.raw_tag is not None and len(df):
+            write_parquet(
+                df.reset_index(drop=True), self.root / "raw" / self.raw_tag / f"{name}.parquet"
+            )
 
     def state(self) -> rolling.State:
         st = rolling.State.load(self.state_dir)
@@ -176,6 +185,7 @@ def pull_news(feed: Feed, src: Sources, until: datetime) -> int:
     if len(raw):
         counts: dict[str, int] = rec.get("news_rows", {})
         rows = news_rows(raw, score_news(raw, src.scorer), counts)
+        feed.keep("news", rows)
         rec["news_rows"] = counts
         merged = rows if old is None else pd.concat([old, rows], ignore_index=True)
         feed.write("news", merged)
@@ -247,11 +257,14 @@ def pull_filings(feed: Feed, src: Sources, static: rolling.Static, until: dateti
     rec["sec_seen"] = recent_only({**rec.get("sec_seen", {}), **taken}, until - SEC_SEEN)
     n = 0
     if len(earn):
-        rows = filing_rows(score_filings(earn, src.scorer))
+        scored = score_filings(earn, src.scorer)
+        feed.keep("earnings", scored)
+        rows = filing_rows(scored)
         old = feed.read("filings")
         feed.write("filings", rows if old is None else pd.concat([old, rows], ignore_index=True))
         n += len(rows)
     if len(tenk):
+        feed.keep("tenk", tenk)
         rows = tenk_rows(tenk, static)
         old = feed.read("tenks")
         feed.write("tenks", rows if old is None else pd.concat([old, rows], ignore_index=True))
@@ -288,6 +301,7 @@ def pull_bars(feed: Feed, src: Sources, symbols: list[str], through: date) -> in
         else pd.DataFrame(columns=["date", "close", "volume", "symbol"])
     )
     feed.write("bars", out)
+    feed.keep("bars", out)
     rec = feed.record()
     rec["bars_through"] = through.isoformat()
     feed.write_record(rec)
@@ -316,7 +330,9 @@ def adjusted(st: rolling.State, bars: pd.DataFrame, before: date) -> list[str]:
     return sorted(out)
 
 
-def rebuild_bars(st: rolling.State, src: Sources, symbols: list[str], through: date) -> None:
+def rebuild_bars(
+    st: rolling.State, src: Sources, symbols: list[str], through: date, feed: Feed | None = None
+) -> None:
     """Rebuild these stocks' running sums from their full history, read fresh."""
     days = clock.sessions_between(panel.PANEL_START, through)
     got = src.bars(symbols, days[0], through)
@@ -333,6 +349,18 @@ def rebuild_bars(st: rolling.State, src: Sources, symbols: list[str], through: d
         df = df.set_axis(idx.normalize())
         df = df[~df.index.duplicated()].reindex(cal)
         close[i], volume[i] = df["close"].to_numpy(float), df["volume"].to_numpy(float)
+    if feed is not None:
+        feed.keep(
+            f"rebuilt-{through.isoformat()}",
+            pd.DataFrame(
+                {
+                    "date": np.tile(cal, len(symbols)),
+                    "symbol": np.repeat(symbols, len(days)),
+                    "close": close.ravel(),
+                    "volume": volume.ravel(),
+                }
+            ).dropna(subset=["close"]),
+        )
     fresh = rolling.bars_from_history(symbols, close, volume)
     at = {s: i for i, s in enumerate(st.bars.symbols)}
     for j, sym in enumerate(symbols):
@@ -357,7 +385,7 @@ def advance(feed: Feed, src: Sources, session: date) -> rolling.State:
             moved = adjusted(st, bars, clock.previous_session(prev))
             if moved:
                 log.info("rebuilding %d stocks after splits or dividends", len(moved))
-                rebuild_bars(st, src, moved, clock.previous_session(prev))
+                rebuild_bars(st, src, moved, clock.previous_session(prev), feed)
         close, volume = bar_columns(bars, st.bars.symbols, prev)
 
         n_now, news = due(news, "known_at", cut)
@@ -422,16 +450,27 @@ def wall(session: date) -> AbstractContextManager[None]:
 # ---- where the state lives: a private Hugging Face dataset -------------------------------
 
 
-def pull_state(feed: Feed, repo: str, token: str) -> None:
+STATE_FILES = ["feed.json", "state/**", "pending/**"]  # what a run downloads; not raw/ or checks/
+
+
+def pull_state(feed: Feed, repo: str, token: str, only: list[str] | None = None) -> None:
     """Download the feed's folder from the private dataset. The token is used for this call
     only: it is not saved, and nothing is logged in."""
     from huggingface_hub import HfApi, snapshot_download
 
     private_or_refuse(HfApi(token=token), repo)
-    snapshot_download(repo_id=repo, repo_type="dataset", token=token, local_dir=feed.root)
+    snapshot_download(
+        repo_id=repo,
+        repo_type="dataset",
+        token=token,
+        local_dir=feed.root,
+        allow_patterns=STATE_FILES if only is None else only,
+    )
 
 
-def push_state(feed: Feed, repo: str, token: str, message: str) -> None:
+def push_state(
+    feed: Feed, repo: str, token: str, message: str, only: list[str] | None = None
+) -> None:
     """Upload the feed's folder to the private dataset (only changed files travel)."""
     from huggingface_hub import HfApi
 
@@ -443,6 +482,7 @@ def push_state(feed: Feed, repo: str, token: str, message: str) -> None:
         repo_type="dataset",
         folder_path=feed.root,
         commit_message=message,
+        allow_patterns=only,
         ignore_patterns=[".cache/**", "**/*.tmp", "**/*.tmp.npz"],
     )
 
@@ -497,16 +537,39 @@ def problems(feed: Feed, session: date, now: datetime) -> list[str]:
 
 def signals(feed: Feed, session: date) -> list[event_signals.Signal]:
     """Trial 12's picks for ``session`` from the rolling state: p >= 0.55, up to 10, best first."""
+    return scored(feed, session)[1]
+
+
+def scored(feed: Feed, session: date) -> tuple[pd.DataFrame, list[event_signals.Signal]]:
+    """The session's rows with the model's p, and the picks from them."""
     st = feed.state()
     if st.session != session:
         raise FeedError(f"the news brain state is at {st.session}, not {session}")
     with wall(session):
         rows = st.rows()
     if rows.empty:
-        return []
+        return rows, []
     model = pickle.loads((st.root / "static" / "model_h1.pkl").read_bytes())
     t9.register_kind(sc.GRADED)
-    return sc.signals(rows, model.predict(rows), sc.GRADED)
+    p = model.predict(rows)
+    return rows.assign(p=p), sc.signals(rows, p, sc.GRADED)
+
+
+def save_check(
+    feed: Feed, session: date, rows: pd.DataFrame, sigs: list[event_signals.Signal]
+) -> None:
+    """A dry run's rows and picks, under checks/<raw_tag>/, to set beside the Dell's rebuild."""
+    out = feed.root / "checks" / str(feed.raw_tag)
+    keep = ("symbol", "sidx", *panel.FEATURES, "liquid", "adv", "prev_close", "p")
+    write_parquet(
+        rows[[c for c in keep if c in rows.columns]].reset_index(drop=True), out / "rows.parquet"
+    )
+    body = {
+        "session": session.isoformat(),
+        "rows": len(rows),
+        "picks": [{"symbol": x.symbol, "p": x.score} for x in sigs],
+    }
+    (out / "picks.json").write_text(json.dumps(body, indent=1) + "\n", encoding="utf-8")
 
 
 def seed_from_dell(feed: Feed, session: date, sec_pulled: datetime) -> rolling.State:

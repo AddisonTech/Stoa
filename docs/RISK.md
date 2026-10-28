@@ -27,7 +27,7 @@ Risk is checked twice. Once after the close when the plan is made, and again aft
 | Fractionable only | from the broker's asset flags | plan and execution | `not_fractionable` |
 | Price sanity | skip a buy if the price moved more than 8% from the plan | execution | `price_sanity` |
 | Price cross-check | skip a buy if a second source differs by more than 1%, or cannot be reached | execution | `price_check` |
-| Hand approval | skip any order not approved with the plan's nonce before the window closes | execution | `not_approved` |
+| Hand approval | when a tap is required (live mode's first 30 days, or `approval.buys: always`), skip any order not approved with the plan's nonce before the window closes; off on paper since 2026-10-28 | execution | `not_approved` |
 | Shorting, options, leverage | never | always | not possible in code |
 
 Sells always run first and are never blocked by the daily loss limit, the regime filter, price sanity or the price cross-check. Skipping a stop after a gap down would keep the account in the position it is trying to leave. During the hand-approval month, sells need a tap too (they are trades); the one exception is the kill switch flatten, which never waits.

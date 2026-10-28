@@ -163,7 +163,9 @@ def test_the_two_accounts_never_share_keys_or_state(tmp_path: Path) -> None:
     t13, _ = runtime(tmp_path, FakeBroker(D(100), {"SPY": D(400)}), strategy="trial13")
     assert t13.settings.risk.max_position_pct == D("0.05")  # trial 13's cap, only by setting
     assert make_settings().risk.max_position_pct == D("0.20")  # the $100 account's, unchanged
-    assert make_settings().approval.buys == "always"  # the $100 account still needs a tap
+    assert (
+        make_settings().approval.buys == "mode"
+    )  # no tap on paper for either account (2026-10-28)
 
 
 def test_a_disabled_account_does_nothing_and_sends_nothing(tmp_path: Path) -> None:
@@ -276,6 +278,32 @@ def test_picks_are_sized_by_the_trial_auto_approved_and_tagged(
     assert plan.strategy == strategy
     assert len(rec.alerts) == 1 and rec.alerts[0].title == f"BIG PAPER: Picks {SESSION}"
     assert "auto-approved" in rec.alerts[0].message and not rec.alerts[0].actions  # no tap buttons
+
+
+def test_a_dry_run_needs_no_switch_and_saves_and_sends_nothing(tmp_path: Path) -> None:
+    fb = FakeBroker(D(100000), {"SPY": D(400), "AAPL": D(100)}, last_equity=D(100000))
+    sigs = [Signal("AAPL", clock.previous_session(SESSION), t9.kind_for(1), 0.70, "p 0.70")]
+    rec = alerts.RecordingNotifier()
+    off = settings(tmp_path, enabled=False)
+    keys = Secrets.from_env({**SMALL, **BIG})
+    assert bigpaper.off_reason(off, keys) and bigpaper.off_reason(off, keys, dry=True) is None
+    assert bigpaper.off_reason(off, Secrets.from_env(SMALL), dry=True)  # still needs its keys
+    rt = bigpaper.BigRuntime(
+        base=off,
+        secrets=keys,
+        notifier=rec,
+        broker=fb,  # type: ignore[arg-type]
+        now=lambda: at(SESSION, "16:30"),  # after hours: a dry run still runs
+        bars=bars_for,
+        signals=lambda d: sigs,
+        calendar=no_earnings,
+        sectors={},
+        dry=True,
+    )
+    r = bigpaper.picks(rt)
+    assert r.status == "dry" and r.session == SESSION and r.sent == []
+    assert rec.alerts == [] and fb.orders == {}
+    assert not (tmp_path / "big").exists()  # no plan, no journal, no state
 
 
 def test_picks_without_the_news_brain_still_sell_and_say_why(tmp_path: Path) -> None:

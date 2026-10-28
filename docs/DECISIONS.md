@@ -545,3 +545,11 @@ Decided 2026-10-28 by the owner.
 - **Why not trial 13.** It failed its own checks (deflated Sharpe, Sharpe against MTUM) and did not fix the drawdown: 15.8% against trial 12's 14.9%.
 - **No new trial.** Nothing is re-tested or re-scored; the account is live paper trading of a registered trial.
 - **The news brain's data off the Dell.** The morning picks read a rolling state (`stoa/newsbrain/rolling.py`) that a GitHub feed (`stoa/newsbrain/feed.py`) keeps up to date, instead of rebuilding from 2015 on the Dell. It must give trial 9's full rebuild bit for bit; see the RUNBOOK, section 13b, for the checks.
+
+## The $100 account's picks go through without a tap
+
+Decided 2026-10-28 by the owner: he does not want to approve trades he cannot judge.
+
+- **What.** On paper, the $100 account's buys no longer wait for Approve. At about 9:00 am one FYI alert lists what will be bought and sold at 9:45 am, with no buttons, the same way the big account's picks work. The setting is `approval.buys: mode`: buys follow `approval.mode`, which asks for no tap on paper.
+- **Unchanged.** The v1 rules, the sizing, the keys, every risk cap, the price sanity and cross-checks, the broker-side stops and the kill switch.
+- **Still in the code.** The Approve and Skip machinery. `approval.mode: auto` still asks for a tap on every trade in the first 30 days of live trading; whether to keep that is a separate decision before going live. `approval.buys: always` puts the buttons back on paper.

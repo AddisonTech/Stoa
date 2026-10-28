@@ -33,8 +33,8 @@ The design goal is a system that is boring in the right places. The model estima
    model_strategy.py  exits (stops, earnings, horizon) -> ranked ideas -> quant gates
                       -> earnings and event rules -> sizing.py -> risk.py caps
           |
-          v   plan, alerts with Approve / Skip
-   EXECUTE  approvals.py (tap required) -> crosscheck.py (second price) -> trader.py
+          v   plan, one FYI alert (Approve / Skip only when a tap is required)
+   EXECUTE  approvals.py (tap if required) -> crosscheck.py (second price) -> trader.py
           |
           v
    tracking.py  cost-adjusted daily record -> drift fallback, quit rule, paper exam

@@ -40,6 +40,14 @@ on:
         description: "What started this run: cron-job.org, dell, or blank for by hand"
         type: string
         default: ""
+      dry:
+        description: "Dry run of feed or picks: no orders, nothing saved, alerts only logged"
+        type: boolean
+        default: false
+      replay:
+        description: "Dry replay of past mornings, e.g. picks@2026-10-26T09:00 feed@2026-10-27T08:15"
+        type: string
+        default: ""
 
 concurrency:
   group: stoa-big-paper
@@ -65,12 +73,16 @@ jobs:
       HF_HUB_DISABLE_TELEMETRY: "1"
       JOB_INPUT: ${{ inputs.job }}
       FORCE_INPUT: ${{ inputs.force }}
+      DRY_INPUT: ${{ inputs.dry }}
+      REPLAY_INPUT: ${{ inputs.replay }}
       SCHEDULE: ${{ github.event.schedule }}
     steps:
       - name: Pick the job
         id: pick
         run: |
-          if [ -n "$JOB_INPUT" ]; then
+          if [ -n "$REPLAY_INPUT" ]; then
+            job="replay"
+          elif [ -n "$JOB_INPUT" ]; then
             job="$JOB_INPUT"
           elif [ "$SCHEDULE" = "22 12 * * 1-5" ] || [ "$SCHEDULE" = "22 13 * * 1-5" ]; then
             job="feed"
@@ -117,7 +129,7 @@ jobs:
         # The feed and the picks run the news brain: the exact versions the rolling state was
         # built and checked with (the state refuses another pandas), CPU-only torch.
         run: |
-          if [ "$JOB" = "feed" ] || [ "$JOB" = "picks" ]; then
+          if [ "$JOB" = "feed" ] || [ "$JOB" = "picks" ] || [ "$JOB" = "replay" ]; then
             pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
             pip install ".[yahoo,reader]" pandas==3.1.0 numpy==2.5.4 scikit-learn==1.9.1 \
               transformers==5.20.2 huggingface_hub==2.3.0
@@ -126,7 +138,7 @@ jobs:
           fi
 
       - name: Cache FinBERT
-        if: steps.secrets.outputs.ready == 'true' && (steps.pick.outputs.job == 'feed' || steps.pick.outputs.job == 'picks')
+        if: steps.secrets.outputs.ready == 'true' && contains(fromJSON('["feed","picks","replay"]'), steps.pick.outputs.job)
         uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface/hub
@@ -138,11 +150,24 @@ jobs:
           JOB: ${{ steps.pick.outputs.job }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           STOA__BIG_PAPER__FEED_DIR: ${{ runner.temp }}/stoa-feed
+        # A replay runs each step from an empty feed folder, as a fresh runner would.
         run: |
-          force=()
-          if [ "$FORCE_INPUT" = "true" ]; then force=(--force); fi
-          stoa bigpaper "$JOB" "${force[@]}"
+          if [ "$JOB" = "replay" ]; then
+            for step in $REPLAY_INPUT; do
+              rm -rf "$STOA__BIG_PAPER__FEED_DIR"
+              start=$SECONDS
+              stoa bigpaper "${step%%@*}" --dry --at "${step#*@}"
+              echo "TIMING ${step}: $((SECONDS - start)) s"
+            done
+            exit 0
+          fi
+          flags=()
+          if [ "$FORCE_INPUT" = "true" ]; then flags+=(--force); fi
+          if [ "$DRY_INPUT" = "true" ]; then flags+=(--dry); fi
+          start=$SECONDS
+          stoa bigpaper "$JOB" "${flags[@]}"
+          echo "TIMING ${JOB}: $((SECONDS - start)) s"
 
       - name: Save state
-        if: always() && steps.secrets.outputs.ready == 'true'
+        if: always() && steps.secrets.outputs.ready == 'true' && inputs.dry != true && inputs.replay == ''
         run: bash scripts/state-branch.sh commit state-branch "big paper ${{ steps.pick.outputs.job }} run ${{ github.run_id }}"

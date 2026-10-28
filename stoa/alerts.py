@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
+from datetime import date
 from decimal import Decimal
 from typing import Protocol
 
@@ -236,6 +237,33 @@ def signal_alert(
         message=msg,
         priority=HIGH,
         tags=("chart_with_downwards_trend",),
+    )
+
+
+def picks_fyi_alert(
+    session: date,
+    orders: Sequence[PlannedOrder],
+    equity: Decimal,
+    mode: str,
+    when: str,
+    tone: Mapping[str, str],
+) -> Alert:
+    """The morning picks as one FYI with no buttons: they go in on their own."""
+    head = (
+        f"Picks for {session}. You place them yourself."
+        if mode == "signal"
+        else f"Picks for {session}. They go in on their own {when}; nothing to tap."
+    )
+    lines = [head]
+    for o in orders:
+        lines.append(signal_alert(o, equity, mode, when).message)
+        if o.symbol in tone:
+            lines.append(tone[o.symbol])
+    return Alert(
+        title=f"Picks {session}",
+        message="\n".join(lines),
+        priority=DEFAULT,
+        tags=("clipboard",),
     )
 
 
