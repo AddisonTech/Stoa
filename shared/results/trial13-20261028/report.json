@@ -1,0 +1,267 @@
+{
+ "trial": 13,
+ "label": "IN-SAMPLE for the overlay: trial 12 already ran on this window",
+ "passed": false,
+ "verdict": "FAIL",
+ "checks": [
+  {
+   "name": "drawdown_vs_spy",
+   "passed": true,
+   "detail": "15.79% vs SPY 18.75% (validation)"
+  },
+  {
+   "name": "sharpe_vs_spy",
+   "passed": true,
+   "detail": "1.14 vs SPY 1.04 (validation)"
+  },
+  {
+   "name": "sortino_vs_spy",
+   "passed": true,
+   "detail": "1.61 vs SPY 1.57 (validation)"
+  },
+  {
+   "name": "tune_c_sharpe_vs_spy",
+   "passed": true,
+   "detail": "1.91 vs SPY 1.82 (2023 to 2024)"
+  },
+  {
+   "name": "drawdown_cap",
+   "passed": true,
+   "detail": "worst 15.79% (cap 25%)"
+  },
+  {
+   "name": "trade_count",
+   "passed": true,
+   "detail": "224 closed trades (need 30)"
+  },
+  {
+   "name": "api_cost",
+   "passed": true,
+   "detail": "$0.00 in every month (no paid calls)"
+  },
+  {
+   "name": "deflated_sharpe",
+   "passed": false,
+   "detail": "DSR 0.158 (need 0.95)"
+  },
+  {
+   "name": "sharpe_vs_mtum",
+   "passed": false,
+   "detail": "1.14 vs MTUM 1.50 (validation)"
+  }
+ ],
+ "deflated": {
+  "sharpe_daily": 0.07205239873289017,
+  "sharpe_annual": 1.1437963704773568,
+  "period": 1.0,
+  "observations": 373.0,
+  "trials": 27.0,
+  "trial_sharpe_variance": 0.0038007646221625705,
+  "sr0_daily": 0.12512557281840722,
+  "dsr": 0.15777154401018445,
+  "psr": 0.9134912962772057,
+  "pbo": NaN
+ },
+ "runs": {
+  "tune_c": {
+   "return": 0.5986732671278474,
+   "max_drawdown": 0.09804062364357913,
+   "sharpe": 1.9074365483662388,
+   "sortino": 2.88429588194689,
+   "trades": 61
+  },
+  "validation": {
+   "return": 0.2727191448388169,
+   "max_drawdown": 0.15785072810914247,
+   "sharpe": 1.1437963704773568,
+   "sortino": 1.6057034832193475,
+   "trades": 163
+  },
+  "test": {
+   "return": 1.039311211671595,
+   "max_drawdown": 0.15785029313272358,
+   "sharpe": 1.5479655990194785,
+   "sortino": 2.2489532198862694,
+   "trades": 224
+  }
+ },
+ "hit_rate": 0.5580357142857143,
+ "overlay": {
+  "tune_c": {
+   "decisions": 502,
+   "share_braked": 0.0,
+   "share_held": 0.0,
+   "share_capped": 0.0,
+   "stop_outs": 0,
+   "kill_switch_trips": 0,
+   "avg_pick_size": 0.03865424007360542,
+   "max_pick_size": 0.050400856590822586,
+   "max_invested": 0.9999999294980119
+  },
+  "validation": {
+   "decisions": 373,
+   "share_braked": 0.06970509383378017,
+   "share_held": 0.05093833780160858,
+   "share_capped": 0.06970509383378017,
+   "stop_outs": 0,
+   "kill_switch_trips": 0,
+   "avg_pick_size": 0.04143329315599588,
+   "max_pick_size": 0.05100148670019396,
+   "max_invested": 0.9999999188764824
+  },
+  "test": {
+   "decisions": 875,
+   "share_braked": 0.029714285714285714,
+   "share_held": 0.021714285714285714,
+   "share_capped": 0.029714285714285714,
+   "stop_outs": 0,
+   "kill_switch_trips": 0,
+   "avg_pick_size": 0.040683206921350884,
+   "max_pick_size": 0.05100151132979252,
+   "max_invested": 0.9999999484878829
+  }
+ },
+ "worst_drop": {
+  "tune_c": {
+   "depth": 0.09804062364357913,
+   "peak": "2023-07-31",
+   "trough": "2023-10-27",
+   "recovered": "2023-12-08"
+  },
+  "validation": {
+   "depth": 0.15785072810914247,
+   "peak": "2025-02-19",
+   "trough": "2025-04-08",
+   "recovered": "2025-08-13"
+  },
+  "test": {
+   "depth": 0.15785029313272358,
+   "peak": "2025-02-19",
+   "trough": "2025-04-08",
+   "recovered": "2025-08-13"
+  }
+ },
+ "spy_core": {
+  "swaps": 370,
+  "bought": 1119532.0778951086,
+  "sold": 1019711.4934264371,
+  "cost": 1101.0870979139302,
+  "cost_pct_of_start": 0.011010870979139302,
+  "sessions": 875,
+  "share_fully_in_spy": 0.8457142857142858
+ },
+ "trial12": {
+  "verdict": "FAIL",
+  "runs": {
+   "tune_c": {
+    "return": 0.7545277836961677,
+    "sharpe": 1.9884724740481985,
+    "sortino": 3.112356970113405,
+    "max_drawdown": 0.10030953872936854,
+    "trades": 60,
+    "hit_rate": null
+   },
+   "validation": {
+    "return": 0.5194222201252481,
+    "sharpe": 1.3921255554910534,
+    "sortino": 2.125077520329643,
+    "max_drawdown": 0.1492225374132582,
+    "trades": 133,
+    "hit_rate": null
+   },
+   "test": {
+    "return": 1.6941243132710313,
+    "sharpe": 1.6591388057489922,
+    "sortino": 2.557868470938843,
+    "max_drawdown": 0.1490800753040169,
+    "trades": 193,
+    "hit_rate": 0.5440414507772021
+   }
+  },
+  "deflated_sharpe": 0.23736039564889777,
+  "checks": {
+   "drawdown_vs_spy": true,
+   "sharpe_vs_spy": true,
+   "sortino_vs_spy": true,
+   "tune_c_sharpe_vs_spy": true,
+   "drawdown_cap": true,
+   "trade_count": true,
+   "api_cost": true,
+   "deflated_sharpe": false,
+   "sharpe_vs_mtum": false
+  }
+ },
+ "baselines": {
+  "spy:tune_c": {
+   "return": 0.5670288151060185,
+   "max_drawdown": 0.09974540825591671,
+   "sharpe": 1.8224635578509227,
+   "sortino": 2.726531920355289,
+   "trades": null
+  },
+  "mtum:tune_c": {
+   "return": 0.45349484146397523,
+   "max_drawdown": 0.12957717985024797,
+   "sharpe": 1.2192118289126415,
+   "sortino": 1.8062334139279121,
+   "trades": null
+  },
+  "spy:validation": {
+   "return": 0.28812256904897926,
+   "max_drawdown": 0.18754263088621292,
+   "sharpe": 1.0437406734682766,
+   "sortino": 1.570826745525625,
+   "trades": null
+  },
+  "mtum:validation": {
+   "return": 0.6651361712617032,
+   "max_drawdown": 0.20989617848431585,
+   "sharpe": 1.4973927102553133,
+   "sortino": 2.2033419386969064,
+   "trades": null
+  },
+  "spy:test": {
+   "return": 1.0309539720031138,
+   "max_drawdown": 0.18754263088704293,
+   "sharpe": 1.419378735342785,
+   "sortino": 2.130695243613111,
+   "trades": null
+  },
+  "mtum:test": {
+   "return": 1.4365444637845006,
+   "max_drawdown": 0.20989617848458364,
+   "sharpe": 1.3471497711790885,
+   "sortino": 1.9867160322935862,
+   "trades": null
+  }
+ },
+ "by_cap": [
+  {
+   "bucket": "small",
+   "trades": 6,
+   "hit_rate": 0.3333333333333333,
+   "avg_excess": -0.003819729175514498,
+   "pnl": -531.0893509609535
+  },
+  {
+   "bucket": "mid",
+   "trades": 13,
+   "hit_rate": 0.46153846153846156,
+   "avg_excess": -0.005417186061895221,
+   "pnl": -244.7144148151965
+  },
+  {
+   "bucket": "large",
+   "trades": 205,
+   "hit_rate": 0.5707317073170731,
+   "avg_excess": 0.012102712871106872,
+   "pnl": 17567.111305692444
+  }
+ ],
+ "spec_hash": "c74642fefb0fac6b",
+ "price_sources": {
+  "cache": 1293,
+  "minute bars": 49,
+  "none": 0
+ }
+}
