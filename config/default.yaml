@@ -263,6 +263,13 @@ approval:
 dashboard:
   live_url: https://stoa-live.vercel.app/api/positions   # the live positions function on Vercel (live/); blank hides the panel
 
+big_paper:                         # trial 13 on its own ~$100,000 Alpaca paper account (stoa/bigpaper.py)
+  enabled: false                   # trades only when true AND ALPACA_BIG_PAPER_KEY_ID and ALPACA_BIG_PAPER_SECRET are set
+  state_dir: state/big-paper       # its own state, never the $100 account's
+  tag: BIG PAPER                   # every alert from this account starts with this
+  starting_equity: "100000"
+  auto_approve: true               # paper and hundreds of trades: picks go through without a tap
+
 sweep:
   enabled: true
   model: ProsusAI/finbert          # read on CPU in GitHub Actions; no paid API

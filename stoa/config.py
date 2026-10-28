@@ -436,6 +436,28 @@ class DashboardConfig(_Frozen):
         return v
 
 
+class BigPaperConfig(_Frozen):
+    """The big paper account: trial 13 on its own ~$100,000 Alpaca paper account.
+
+    Kept apart from the $100 account: its own keys (ALPACA_BIG_PAPER_KEY_ID and
+    ALPACA_BIG_PAPER_SECRET), its own state folder and its own alerts, tagged with
+    ``tag``. It trades only when ``enabled`` is true and both keys are set.
+    """
+
+    enabled: bool = False
+    state_dir: Path = Path("state/big-paper")
+    tag: str = "BIG PAPER"
+    starting_equity: Decimal = Decimal("100000")
+    auto_approve: bool = True  # paper: picks go through without a tap
+
+    @field_validator("tag")
+    @classmethod
+    def _tag(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("big_paper.tag must not be blank: it tells the two accounts apart")
+        return v.strip()
+
+
 class SweepConfig(_Frozen):
     """The 9:00 am overnight news sweep, read by FinBERT on CPU."""
 
@@ -518,6 +540,7 @@ class Settings(_Frozen):
     approval: ApprovalConfig = ApprovalConfig()
     sweep: SweepConfig = SweepConfig()
     dashboard: DashboardConfig = DashboardConfig()
+    big_paper: BigPaperConfig = BigPaperConfig()
     crosscheck: CrossCheckConfig = CrossCheckConfig()
     healthcheck: HealthcheckConfig = HealthcheckConfig()
     fallback: FallbackConfig = FallbackConfig()
@@ -623,6 +646,9 @@ SECRET_ENV: dict[str, str] = {
     "ntfy_approval_topic": "STOA_NTFY_APPROVAL_TOPIC",
     "healthcheck_url": "STOA_HEALTHCHECK_URL",
     "finnhub_key": "FINNHUB_API_KEY",
+    # The big paper account's own keys. Only stoa.bigpaper reads them; the $100 account never does.
+    "alpaca_big_paper_key_id": "ALPACA_BIG_PAPER_KEY_ID",
+    "alpaca_big_paper_secret": "ALPACA_BIG_PAPER_SECRET",
 }
 
 
@@ -642,6 +668,8 @@ class Secrets(BaseModel):
     ntfy_approval_topic: SecretStr | None = None
     healthcheck_url: SecretStr | None = None
     finnhub_key: SecretStr | None = None
+    alpaca_big_paper_key_id: SecretStr | None = None
+    alpaca_big_paper_secret: SecretStr | None = None
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Secrets:
@@ -666,6 +694,9 @@ class Secrets(BaseModel):
 
     def has_paper_keys(self) -> bool:
         return self.alpaca_paper_key_id is not None and self.alpaca_paper_secret is not None
+
+    def has_big_paper_keys(self) -> bool:
+        return self.alpaca_big_paper_key_id is not None and self.alpaca_big_paper_secret is not None
 
     def has_live_keys(self) -> bool:
         return self.alpaca_live_key_id is not None and self.alpaca_live_secret is not None

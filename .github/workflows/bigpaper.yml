@@ -1,0 +1,120 @@
+name: bigpaper
+
+# The big paper account: trial 13 on its own ~$100,000 Alpaca paper account
+# (stoa/bigpaper.py). Kept apart from the $100 account: only the big account's keys are
+# passed here, its state lives in big-paper/ on the stoa-state branch, its alerts start
+# with BIG PAPER, and it shares no concurrency group with the daily workflow.
+# It does nothing until both ALPACA_BIG_PAPER_KEY_ID and ALPACA_BIG_PAPER_SECRET are set
+# AND big_paper.enabled is true in config/default.yaml.
+# The day: PICKS at 9:00 am (auto-approved), EXECUTE at 9:45 am, SUMMARY at 5:15 pm.
+# The GitHub crons below are the backup, a few minutes late, in both the EDT and EST slot.
+run-name: >-
+  ${{ github.event_name == 'schedule' && format('schedule {0}', github.event.schedule)
+  || format('{0} via {1}', inputs.job, inputs.source || 'manual') }}
+on:
+  schedule:
+    - cron: "22 21 * * 1-5" # SUMMARY backup, EDT slot (5:22 pm EDT)
+    - cron: "22 22 * * 1-5" # SUMMARY backup, EST slot (5:22 pm EST)
+    - cron: "7 13 * * 1-5" # PICKS backup, EDT slot (9:07 am EDT)
+    - cron: "7 14 * * 1-5" # PICKS backup, EST slot (9:07 am EST)
+    - cron: "52 13 * * 1-5" # EXECUTE backup, EDT slot (9:52 am EDT)
+    - cron: "52 14 * * 1-5" # EXECUTE backup, EST slot (9:52 am EST)
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Which job to run"
+        type: choice
+        options: [picks, execute, summary, status, kill-switch-reset]
+        default: status
+      force:
+        description: "Run even outside the window or again for the same session"
+        type: boolean
+        default: false
+      source:
+        description: "What started this run: cron-job.org, dell, or blank for by hand"
+        type: string
+        default: ""
+
+concurrency:
+  group: stoa-big-paper
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ALPACA_BIG_PAPER_KEY_ID: ${{ secrets.ALPACA_BIG_PAPER_KEY_ID }}
+      ALPACA_BIG_PAPER_SECRET: ${{ secrets.ALPACA_BIG_PAPER_SECRET }}
+      STOA_NTFY_TOPIC: ${{ secrets.STOA_NTFY_TOPIC }}
+      STOA_NTFY_TOKEN: ${{ secrets.STOA_NTFY_TOKEN }}
+      FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+      NTFY_SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      STOA__ALERTS__SERVER: ${{ vars.STOA_NTFY_SERVER || 'https://ntfy.sh' }}
+      STOA__BIG_PAPER__STATE_DIR: state-branch/big-paper
+      STOA__STATE__SHARED_DIR: state-branch/shared
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      JOB_INPUT: ${{ inputs.job }}
+      FORCE_INPUT: ${{ inputs.force }}
+      SCHEDULE: ${{ github.event.schedule }}
+    steps:
+      - name: Pick the job
+        id: pick
+        run: |
+          if [ -n "$JOB_INPUT" ]; then
+            job="$JOB_INPUT"
+          elif [ "$SCHEDULE" = "22 21 * * 1-5" ] || [ "$SCHEDULE" = "22 22 * * 1-5" ]; then
+            job="summary"
+          elif [ "$SCHEDULE" = "7 13 * * 1-5" ] || [ "$SCHEDULE" = "7 14 * * 1-5" ]; then
+            job="picks"
+          else
+            job="execute"
+          fi
+          echo "job=$job" >> "$GITHUB_OUTPUT"
+          echo "Running $job"
+
+      - name: Check the big account's keys
+        id: secrets
+        run: |
+          if [ -z "$ALPACA_BIG_PAPER_KEY_ID" ] || [ -z "$ALPACA_BIG_PAPER_SECRET" ]; then
+            echo "The big paper account is off: ALPACA_BIG_PAPER_KEY_ID and ALPACA_BIG_PAPER_SECRET"
+            echo "are not both set as repository secrets. See docs/RUNBOOK.md. Nothing done."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out code
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/checkout@v5
+
+      - name: Check out state branch
+        if: steps.secrets.outputs.ready == 'true'
+        run: bash scripts/state-branch.sh checkout state-branch
+
+      - name: Set up Python
+        if: steps.secrets.outputs.ready == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        if: steps.secrets.outputs.ready == 'true'
+        run: pip install ".[yahoo]"
+
+      - name: Run
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          force=()
+          if [ "$FORCE_INPUT" = "true" ]; then force=(--force); fi
+          stoa bigpaper "$JOB" "${force[@]}"
+
+      - name: Save state
+        if: always() && steps.secrets.outputs.ready == 'true'
+        run: bash scripts/state-branch.sh commit state-branch "big paper ${{ steps.pick.outputs.job }} run ${{ github.run_id }}"

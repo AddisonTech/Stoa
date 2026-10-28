@@ -403,6 +403,32 @@ def execute(ctx: Ctx, force: bool) -> None:
     sys.exit(run_execute(runtime(ctx), force=force).code)
 
 
+@main.command("bigpaper")
+@click.argument(
+    "job", type=click.Choice(["picks", "execute", "summary", "status", "kill-switch-reset"])
+)
+@click.option("--force", is_flag=True, help="Run outside the window or again for the same session.")
+@pass_ctx
+def bigpaper_cmd(ctx: Ctx, job: str, force: bool) -> None:
+    """The big paper account (trial 13): 9:00 am picks, 9:45 am execute, 5:15 pm summary."""
+    from stoa import bigpaper
+
+    s, sec = ctx.settings, ctx.secrets
+    if job == "status":
+        why = bigpaper.off_reason(s, sec)
+        click.echo(f"big paper account: {'on' if why is None else 'off, ' + why}")
+        return
+    rt = bigpaper.BigRuntime(base=s, secrets=sec, notifier=make_notifier(s, sec))
+    if job == "kill-switch-reset":
+        reset = bigpaper.reset_kill_switch(rt)
+        click.echo(f"big paper kill switch: {reset.status}")
+        sys.exit(reset.code)
+    run = {"picks": bigpaper.picks, "execute": bigpaper.execute, "summary": bigpaper.summary}[job]
+    result = run(rt, force)
+    click.echo(f"big paper {job}: {result.status}")
+    sys.exit(result.code)
+
+
 @main.command()
 @pass_ctx
 def close(ctx: Ctx) -> None:

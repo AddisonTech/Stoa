@@ -298,6 +298,32 @@ Do not use `vercel deploy --cwd live`: with the Root Directory set it fails with
 
 **Rotating the paper keys means updating them in Vercel too**, or the card goes blank. Environment variables only reach new builds, so redeploy afterwards. In the dashboard: stoa-live, Settings, Environment Variables, edit `ALPACA_PAPER_KEY_ID` and `ALPACA_PAPER_SECRET` (Production), then Deployments, the top production deployment, Redeploy. Or from the command line: `npx vercel@65.2.0 env rm ALPACA_PAPER_KEY_ID production --cwd live`, then `npx vercel@65.2.0 env add ALPACA_PAPER_KEY_ID production --cwd live` (it asks for the value), the same for the secret, then the redeploy command above. Never add the live keys there.
 
+## 13b. The big paper account (trial 13)
+
+A second, separate Alpaca paper account of about $100,000 runs trial 13: the news brain's picks from trial 12, sized by trial 13's risk overlay (`stoa/overlay.py`, registered in the experiment registry as `trial13:preregistration`). The $100 account above keeps the v1 rules, its keys, its state and its Approve and Skip taps, and nothing here changes it.
+
+**Kept apart.** Its own keys, `ALPACA_BIG_PAPER_KEY_ID` and `ALPACA_BIG_PAPER_SECRET`, are read only by `stoa/bigpaper.py` and passed only to `.github/workflows/bigpaper.yml`; the daily workflow never sees them, and the big account refuses to run if they are the $100 account's keys. Its state is `big-paper/` on the stoa-state branch, its workflow has its own concurrency group, and every alert it sends starts with **BIG PAPER**.
+
+**The day,** on the same clock as the $100 account:
+
+- **9:00 am picks.** Up to 10 news brain picks at p of at least 0.55, through trial 12's rails (5 positions, regime filter, daily loss stop, sector and correlation limits, earnings rule) and the overlay: each new position risks 1% of the account at its 2.5 ATR stop, at most 5% of the account; 10% off the high, half size; 15% off, no new positions until back within 10%. Paper with hundreds of trades to come, so picks are auto-approved: the alert lists what will be bought and sold, with no buttons.
+- **9:45 am execute.** Yesterday's picks are sold, today's bought, and idle money goes into SPY (the SPY core). While the account is 10% or more off its high, picks plus SPY stay under 50% of the account and the rest sits in cash. Broker-side ATR stops go on anything held from a prior session. The alert lists the fills.
+- **5:15 pm summary.** Equity, the day against SPY, the drawdown and the brake for tomorrow, and the kill switch.
+
+**Kill switch.** At 25% off the high, the next 9:45 am run cancels every working order and sells every position in the account: the picks, SPY, and anything bought by hand. It stays on until reset by hand: Actions, bigpaper, Run workflow, job `kill-switch-reset`.
+
+**Turning it on.** It does nothing until all of these are done:
+
+1. In the Alpaca dashboard, create a new paper account with about $100,000 and generate its API keys. It must be a different paper account from the $100 one.
+2. Add two repository secrets (Settings, Secrets and variables, Actions): `ALPACA_BIG_PAPER_KEY_ID` and `ALPACA_BIG_PAPER_SECRET`.
+3. Set `big_paper.enabled: true` in `config/default.yaml` and push.
+4. Add three cron-job.org jobs that start `bigpaper.yml` with `job` picks at 9:00 am, execute at 9:45 am and summary at 5:15 pm, weekdays, New York time, `source` cron-job.org (section 13 shows the request). The GitHub crons in the workflow are only the late backup.
+5. Give the morning picks current news brain data (below).
+
+**The news brain's data.** The picks are built by the same code that built trial 9's panel (`stoa/newsbrain/live.py`), over the 400 sessions before the day, so the features match what the model was trained on. That needs, by 9:00 am, the month's news with FinBERT scores, the SEC filings, and the daily bars through the last close, as on the Dell in `data/newsbrain/` and `data/bars/wide/`. A GitHub runner does not have them, so until a daily feed is set up the 9:00 am run says "No new picks today: the news brain could not run" and the account holds SPY. `stoa.newsbrain.live.freshness` names what is missing. For the live read, the holdout wall has a `live` mode for sessions after 2026-10-23: it reads the spent holdout's months as history for the baselines and grades nothing.
+
+**Dashboard.** The public page has a "Big paper account (trial 13)" card with its equity against SPY and its trade log, rebuilt after every bigpaper run.
+
 ## 14. Changing settings
 
 Every limit is in `config/default.yaml`. Change it in a commit, or override one value with a repository variable passed as an environment variable named `STOA__SECTION__KEY` (for example `STOA__RISK__MAX_POSITIONS=4`). Changing settings after the holdout is sealed makes `stoa holdout score` refuse, on purpose.

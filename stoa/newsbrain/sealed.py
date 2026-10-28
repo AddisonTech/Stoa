@@ -11,6 +11,11 @@ The owner opened the holdout once, for trial 12 as pre-registered (docs/DECISION
 "Trial 12 on the holdout"). ``opened`` lifts the wall for that one run only, up to the
 holdout's last day, and refuses for any other key and for any second run. After that the
 holdout is spent and the wall stays shut.
+
+``live`` is for the big paper account's morning picks, never for a trial: for one session
+after the holdout's last day, it lets the news brain read everything up to that session,
+the holdout's months included, as history for the features (the news baselines look
+back 60 news days, the supplier links 15 months). Nothing is labelled or graded there.
 """
 
 from __future__ import annotations
@@ -32,6 +37,7 @@ END_CUTOFF = pd.Timestamp("2026-10-24", tz="America/New_York").tz_convert("UTC")
 HOLDOUT_KEY = "trial12:holdout:e75fa8775469de92"  # the one run allowed to open it
 SPENT = Path("data/newsbrain/holdout_spent.json")
 _STATE: dict[str, str | None] = {"open_for": None}  # set only inside ``opened``
+_LIVE: dict[str, date | None] = {"session": None}  # set only inside ``live``
 
 
 class HoldoutBreach(RuntimeError):
@@ -42,7 +48,16 @@ def is_open() -> bool:
     return _STATE["open_for"] is not None
 
 
+def live_session() -> date | None:
+    return _LIVE["session"]
+
+
 def check(day: date, what: str) -> None:
+    live = live_session()
+    if live is not None:
+        if day > live:
+            raise HoldoutBreach(f"{what} for {day} is after the live session {live}")
+        return
     if day >= HOLDOUT_START and not (is_open() and day <= HOLDOUT_END):
         raise HoldoutBreach(
             f"{what} for {day} is inside the holdout ({HOLDOUT_START} to {HOLDOUT_END}) "
@@ -52,7 +67,10 @@ def check(day: date, what: str) -> None:
 
 def month_allowed(stem: str) -> bool:
     """Whether a monthly file named YYYY-MM may be read: wholly before the holdout, or
-    up to its last month while the wall is open."""
+    up to its last month while the wall is open, or up to the live session's month."""
+    live = live_session()
+    if live is not None:
+        return stem[:7] <= f"{live.year:04d}-{live.month:02d}"
     if is_open():
         return stem <= f"{HOLDOUT_END.year:04d}-{HOLDOUT_END.month:02d}"
     return stem < f"{HOLDOUT_START.year:04d}-{HOLDOUT_START.month:02d}"
@@ -60,8 +78,12 @@ def month_allowed(stem: str) -> bool:
 
 def before_holdout(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Rows whose timestamp is before the holdout's first day, New York time (before the
-    day after its last day while the wall is open)."""
+    day after its last day while the wall is open, before the day after a live session)."""
     ts = pd.to_datetime(df[column], utc=True)
+    live = live_session()
+    if live is not None:
+        nxt = pd.Timestamp(live.isoformat(), tz="America/New_York") + pd.Timedelta(days=1)
+        return df[ts < nxt.tz_convert("UTC")]
     return df[ts < (END_CUTOFF if is_open() else CUTOFF)]
 
 
@@ -87,6 +109,22 @@ def opened(key: str, spent: Path = SPENT, *, owner_rerun: bool = False) -> Itera
         yield
     finally:
         _STATE["open_for"] = None
+
+
+@contextmanager
+def live(session: date) -> Iterator[None]:
+    """Read up to ``session`` for the big paper account's picks. Only after the holdout."""
+    if session <= HOLDOUT_END:
+        raise HoldoutBreach(
+            f"{session} is not after the holdout; live reads start after {HOLDOUT_END}"
+        )
+    if is_open():
+        raise HoldoutBreach("the wall is open for a trial run; no live read inside it")
+    _LIVE["session"] = session
+    try:
+        yield
+    finally:
+        _LIVE["session"] = None
 
 
 def mark_spent(summary: dict[str, object], spent: Path = SPENT) -> None:

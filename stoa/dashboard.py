@@ -315,6 +315,39 @@ def trade_log(
     return rows[:limit]
 
 
+def big_paper(settings: Settings) -> dict[str, Any]:
+    """The big paper account (trial 13): its equity against SPY and its trade log."""
+    root = settings.big_paper.state_dir
+    curve_path = root / "curve.json"
+    rows: list[dict[str, Any]] = (
+        json.loads(curve_path.read_text(encoding="utf-8")) if curve_path.exists() else []
+    )
+    dates = [str(r["session"]) for r in rows]
+    series: dict[str, list[float | None]] = {}
+    if rows:
+        e0 = float(rows[0]["equity"])
+        series["Big paper"] = [float(r["equity"]) / e0 * 100 if e0 else None for r in rows]
+        s0 = _num(rows[0].get("spy_close"))
+        series["SPY"] = [
+            float(r["spy_close"]) / s0 * 100 if s0 and _num(r.get("spy_close")) else None
+            for r in rows
+        ]
+    state = StateStore(root).load()
+    # The 9:00 am picks are journaled as "picks"; the trade log reads them as the morning picks.
+    records = [
+        {**r, "job": "sweep", "step": "sweep"} if r.get("job") == "picks" else r
+        for r in read_journal(root / "journal")
+    ]
+    return {
+        "enabled": settings.big_paper.enabled,
+        "tag": settings.big_paper.tag,
+        "equity": float(rows[-1]["equity"]) if rows else None,
+        "curve": {"dates": dates, "series": series},
+        "trades": trade_log(records, state),
+        "kill_switch": state.kill_switch.active,
+    }
+
+
 def last_run(records: list[dict[str, Any]]) -> dict[str, Any] | None:
     stamped = [r for r in records if r.get("ts")]
     if not stamped:
@@ -446,6 +479,7 @@ def collect(
             ),
         },
         "fallback": {"active": track.fallback_active, "reason": track.fallback_reason},
+        "big_paper": big_paper(settings),
         "analyst": analyst_spend(shadow.merged_view(state, ledger), settings, built),
         "shadow": {
             k: v
@@ -756,7 +790,7 @@ def render_decisions(data: dict[str, Any]) -> str:
     return "".join(out)
 
 
-def render_trades(data: dict[str, Any]) -> str:
+def render_trades(data: dict[str, Any], note: str | None = None) -> str:
     rows = data.get("trades") or []
     if not rows:
         return _empty(
@@ -776,11 +810,53 @@ def render_trades(data: dict[str, Any]) -> str:
             + "</tr>"
         )
     head = "".join(f"<th>{_e(k)}</th>" for k in labels)
+    return f'<table class="stack"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>' + (
+        f'<p class="muted small">{note}</p>'
+        if note
+        else '<p class="muted small">Picks are the 9:00 am picks; buys need a tap to be '
+        "placed. P&amp;L is realized on closed trades and at the last close on positions "
+        "still held. Paper money.</p>"
+    )
+
+
+def render_big_paper(data: dict[str, Any]) -> str:
+    b = data.get("big_paper") or {}
+    c = b.get("curve") or {"dates": [], "series": {}}
+    intro = (
+        '<p class="muted small">Trial 13 on its own $100,000 Alpaca paper account: the news '
+        "brain's picks from trial 12, sized by the risk overlay (1% risk a position, 5% cap, "
+        "half size and less SPY 10% off the high, no new positions 15% off). Picks are "
+        "auto-approved. Paper money; kept apart from the $100 account above.</p>"
+    )
+    if not c["dates"]:
+        return intro + _empty(
+            "Not trading yet. It starts once its own Alpaca paper keys are added and it is "
+            "switched on; its first day summary starts this chart."
+        )
+    lines = [
+        _Line(name, "s-stoa" if name == "Big paper" else "s-spy", vals)
+        for name, vals in c["series"].items()
+    ]
+    legend = "".join(
+        f'<li><span class="key {ln.css}"></span>{_e(ln.name)} '
+        f"{_pct((ln.values[-1] or 100) / 100 - 1) if ln.values and ln.values[-1] else ''}</li>"
+        for ln in lines
+    )
+    status = " Kill switch ON." if b.get("kill_switch") else ""
+    head = (
+        f"<p>Equity {_e(_money(b.get('equity')))}.{_e(status)}</p>"
+        f'<ul class="legend">{legend}</ul>{line_chart(c["dates"], lines)}'
+        f'<p class="muted small">Growth of 100 from {_e(c["dates"][0])}.</p>'
+    )
     return (
-        f'<table class="stack"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>'
-        '<p class="muted small">Picks are the 9:00 am picks; buys need a tap to be placed. '
-        "P&amp;L is realized on closed trades and at the last close on positions still held. "
-        "Paper money.</p>"
+        intro
+        + head
+        + "<h3>Trade log</h3>"
+        + render_trades(
+            {"trades": b.get("trades") or []},
+            note="Picks are the 9:00 am picks, auto-approved. P&amp;L is realized on closed trades "
+            "and at the last close on positions still held. Paper money.",
+        )
     )
 
 
@@ -1100,6 +1176,8 @@ def render(data: dict[str, Any]) -> str:
         f'<section class="card"><h2>Runs and checks</h2>{render_health(data)}</section>'
         "</div>"
         f'<section class="card"><h2>Trade log</h2>{render_trades(data)}</section>'
+        f'<section class="card"><h2>Big paper account (trial 13)</h2>'
+        f"{render_big_paper(data)}</section>"
         f'<section class="card"><h2>Last {DECISIONS_SHOWN} decisions</h2>'
         f"{render_decisions(data)}</section>"
         f'<section class="card"><h2>Model calibration</h2>{render_calibration(data)}</section>'

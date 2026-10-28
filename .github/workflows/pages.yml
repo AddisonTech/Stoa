@@ -5,7 +5,7 @@ name: pages
 # secrets are passed to this workflow, and the build makes no network calls.
 on:
   workflow_run:
-    workflows: [daily, analyst]
+    workflows: [daily, analyst, bigpaper]
     types: [completed]
   workflow_dispatch:
 
@@ -27,6 +27,7 @@ jobs:
       STOA_STATE_DIR: ${{ vars.STOA_MODE == 'live' && 'state-branch/live-state' || 'state-branch/state' }}
       STOA__EXAM__PAPER_STATE_DIR: state-branch/state
       STOA__STATE__SHARED_DIR: state-branch/shared
+      STOA__BIG_PAPER__STATE_DIR: state-branch/big-paper
     steps:
       - name: Check out code
         uses: actions/checkout@v5

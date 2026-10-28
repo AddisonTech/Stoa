@@ -31,6 +31,7 @@ def settings_for(tmp: Path, live_url: str = "") -> Settings:
         mode="paper",
         state__dir=str(tmp / "state"),
         dashboard__live_url=live_url,
+        big_paper__state_dir=str(tmp / "big-paper"),
     )
 
 

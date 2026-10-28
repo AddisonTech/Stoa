@@ -2,6 +2,7 @@
 # Keeps Stoa's durable state on a dedicated branch named stoa-state.
 #   state-branch.sh checkout <dir>          check the branch out into <dir>, creating it if needed
 #   state-branch.sh commit <dir> <message>  commit and push changes under <dir>/state,
+#                                           <dir>/big-paper,
 #                                           <dir>/live-state and <dir>/shared
 set -euo pipefail
 
@@ -34,7 +35,7 @@ case "$cmd" in
   commit)
     msg="${3:-update state}"
     identity "$dir"
-    for sub in state live-state shared; do
+    for sub in state live-state shared big-paper; do
       if [ -e "$dir/$sub" ]; then git -C "$dir" add -A "$sub"; fi
     done
     if git -C "$dir" diff --cached --quiet; then
