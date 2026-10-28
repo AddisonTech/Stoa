@@ -1,0 +1,177 @@
+{
+ "line": 0.55,
+ "buckets": [
+  "under 0.50",
+  "0.50-0.55",
+  "0.55-0.60",
+  "0.60-0.65",
+  "0.65+"
+ ],
+ "locked": {
+  "scored": 0,
+  "graded": 0,
+  "above": 0,
+  "above_graded": 0,
+  "above_hits": 0,
+  "above_vs_spy_sum": 0,
+  "top_n": 0,
+  "top_vs_spy_sum": 0,
+  "hits": 0,
+  "days": 0,
+  "first": null,
+  "last": null,
+  "buckets": [
+   {
+    "bucket": "under 0.50",
+    "n": 0,
+    "p_sum": 0.0,
+    "hits": 0
+   },
+   {
+    "bucket": "0.50-0.55",
+    "n": 0,
+    "p_sum": 0.0,
+    "hits": 0
+   },
+   {
+    "bucket": "0.55-0.60",
+    "n": 0,
+    "p_sum": 0.0,
+    "hits": 0
+   },
+   {
+    "bucket": "0.60-0.65",
+    "n": 0,
+    "p_sum": 0.0,
+    "hits": 0
+   },
+   {
+    "bucket": "0.65+",
+    "n": 0,
+    "p_sum": 0.0,
+    "hits": 0
+   }
+  ],
+  "hit_rate": null,
+  "all_hit_rate": null,
+  "above_avg_vs_spy": null,
+  "top_avg_vs_spy": null,
+  "calibration": [
+   {
+    "bucket": "under 0.50",
+    "n": 0,
+    "mean_p": null,
+    "hit_rate": null
+   },
+   {
+    "bucket": "0.50-0.55",
+    "n": 0,
+    "mean_p": null,
+    "hit_rate": null
+   },
+   {
+    "bucket": "0.55-0.60",
+    "n": 0,
+    "mean_p": null,
+    "hit_rate": null
+   },
+   {
+    "bucket": "0.60-0.65",
+    "n": 0,
+    "mean_p": null,
+    "hit_rate": null
+   },
+   {
+    "bucket": "0.65+",
+    "n": 0,
+    "mean_p": null,
+    "hit_rate": null
+   }
+  ]
+ },
+ "locked_days": [],
+ "backfill": {
+  "scored": 0,
+  "graded": 0,
+  "above": 0,
+  "above_graded": 0,
+  "above_hits": 0,
+  "above_vs_spy_sum": 0,
+  "top_n": 0,
+  "top_vs_spy_sum": 0,
+  "hits": 0,
+  "days": 0,
+  "first": null,
+  "last": null,
+  "buckets": [
+   {
+    "bucket": "under 0.50",
+    "n": 0,
+    "p_sum": 0.0,
+    "hits": 0
+   },
+   {
+    "bucket": "0.50-0.55",
+    "n": 0,
+    "p_sum": 0.0,
+    "hits": 0
+   },
+   {
+    "bucket": "0.55-0.60",
+    "n": 0,
+    "p_sum": 0.0,
+    "hits": 0
+   },
+   {
+    "bucket": "0.60-0.65",
+    "n": 0,
+    "p_sum": 0.0,
+    "hits": 0
+   },
+   {
+    "bucket": "0.65+",
+    "n": 0,
+    "p_sum": 0.0,
+    "hits": 0
+   }
+  ],
+  "hit_rate": null,
+  "all_hit_rate": null,
+  "above_avg_vs_spy": null,
+  "top_avg_vs_spy": null,
+  "calibration": [
+   {
+    "bucket": "under 0.50",
+    "n": 0,
+    "mean_p": null,
+    "hit_rate": null
+   },
+   {
+    "bucket": "0.50-0.55",
+    "n": 0,
+    "mean_p": null,
+    "hit_rate": null
+   },
+   {
+    "bucket": "0.55-0.60",
+    "n": 0,
+    "mean_p": null,
+    "hit_rate": null
+   },
+   {
+    "bucket": "0.60-0.65",
+    "n": 0,
+    "mean_p": null,
+    "hit_rate": null
+   },
+   {
+    "bucket": "0.65+",
+    "n": 0,
+    "mean_p": null,
+    "hit_rate": null
+   }
+  ]
+ },
+ "backfill_days": [],
+ "refused": []
+}
