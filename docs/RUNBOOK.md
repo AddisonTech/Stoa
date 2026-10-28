@@ -337,6 +337,15 @@ After the seed, nothing in the big account's day needs the Dell.
 
 **The seed, once, from the Dell.** `python -m stoa.newsbrain feedseed 2026-10-26` builds it into `state/big-paper-feed` (done 2026-10-28). Then `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\push-feed-seed.ps1` asks for a write token without showing it and uploads the folder; the token lives only in that one process. The first feed run after that catches up from where the Dell's data ends (news at 2026-10-25 17:44 UTC, SEC filings from 2026-10-24, bars after 2026-10-23), skipping anything the seed already holds.
 
+**Why the feed and the picks run on Windows.** Windows and Linux round `log` and `log1p` differently in the last of about 16 digits. Two features (`coverage`, `quiet_spike`) are logs of article counts, and many of the model's cut points sit exactly on the Dell's values, so on Linux a stock can land on the other side of a cut and its score moves by up to 0.015. A Linux dry run on 2026-10-28 showed it: same picks, but 5 to 23 stocks a session scored differently. So the feed and the picks (and replays) run on `windows-latest` with Python 3.12.10, like the Dell, and with numpy's AVX-512 paths switched off, because the Dell's processor has none. EXECUTE and SUMMARY do no feature maths and stay on Linux.
+
+**Dry runs and replays.** Actions, bigpaper, Run workflow:
+
+- job `feed` or `picks` with **dry** ticked: the real morning's pulls and picks, with no orders, nothing saved to the account and alerts only logged. A dry feed still moves the live state on, as a real feed would. Each dry run keeps what it pulled under `raw/<time>-<job>/` in the dataset, and a dry picks run its rows and picks under `checks/<time>-picks/`.
+- **replay** with steps such as `picks@2026-10-26T09:00 feed@2026-10-27T08:15 picks@2026-10-27T09:00` (New York times): each step runs dry on a fresh folder, as if at that time. The replay starts from the dataset as of **replay_from** (by default the seed's commit, `seed 2026-10-26`) and keeps its own copy between steps, so the live state never moves. Only the raw pulls and checks are uploaded.
+
+To check them on the Dell, `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\pull-feed.ps1` (a read token, never saved) downloads the dataset into `data\newsbrain\feedcheck\hf`, and the Dell rebuilds the same sessions from its own history plus exactly those pulls and compares every number.
+
 **Dashboard.** The public page has a "Big paper account (trial 12)" card with its equity against SPY and its trade log, rebuilt after every bigpaper run.
 
 ## 14. Changing settings

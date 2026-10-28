@@ -23,6 +23,7 @@ import json
 import logging
 import pickle
 import re
+import shutil
 from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
@@ -453,9 +454,15 @@ def wall(session: date) -> AbstractContextManager[None]:
 STATE_FILES = ["feed.json", "state/**", "pending/**"]  # what a run downloads; not raw/ or checks/
 
 
-def pull_state(feed: Feed, repo: str, token: str, only: list[str] | None = None) -> None:
-    """Download the feed's folder from the private dataset. The token is used for this call
-    only: it is not saved, and nothing is logged in."""
+def pull_state(
+    feed: Feed,
+    repo: str,
+    token: str,
+    only: list[str] | None = None,
+    revision: str | None = None,
+) -> None:
+    """Download the feed's folder from the private dataset (``revision``: a past commit, for
+    replays). The token is used for this call only: it is not saved, and nothing is logged in."""
     from huggingface_hub import HfApi, snapshot_download
 
     private_or_refuse(HfApi(token=token), repo)
@@ -465,7 +472,31 @@ def pull_state(feed: Feed, repo: str, token: str, only: list[str] | None = None)
         token=token,
         local_dir=feed.root,
         allow_patterns=STATE_FILES if only is None else only,
+        revision=revision,
     )
+
+
+def commit_of(repo: str, token: str, ref: str) -> str:
+    """A commit of the dataset: ``ref`` itself when it is a commit id, else the newest commit
+    whose message is ``ref`` (the seed's is "seed 2026-10-26")."""
+    from huggingface_hub import HfApi
+
+    if re.fullmatch(r"[0-9a-f]{40}", ref):
+        return ref
+    for c in HfApi(token=token).list_repo_commits(repo, repo_type="dataset"):
+        if c.title == ref:
+            return str(c.commit_id)
+    raise FeedError(f"no commit named {ref!r} in {repo}")
+
+
+def copy_state(src: Path, dst: Path) -> None:
+    """Copy the state files (``STATE_FILES``) from one feed folder over another. A replay
+    keeps its own copy of the dataset this way, so it never moves the live state."""
+    dst.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src / "feed.json", dst / "feed.json")
+    for sub in ("state", "pending"):
+        if (src / sub).exists():
+            shutil.copytree(src / sub, dst / sub, dirs_exist_ok=True)
 
 
 def push_state(

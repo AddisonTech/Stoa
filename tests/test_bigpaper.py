@@ -469,6 +469,10 @@ def test_the_feed_state_lives_only_in_the_private_dataset() -> None:
     assert "login" not in text and "upload-artifact" not in text
     assert make_settings().big_paper.feed_repo == "ASmith91/stoa-feed"
     assert "feed" in str(wf[True]["workflow_dispatch"]["inputs"]["job"]["options"])
+    # The feed and the picks compute on Windows without AVX-512, the way the Dell did.
+    assert "windows-latest" in job["runs-on"] and '["feed","picks"]' in job["runs-on"]
+    assert "X86_V4" in run["env"]["NPY_DISABLE_CPU_FEATURES"]
+    assert "--replay-from" in run["run"]
 
 
 # ---- the public dashboard ------------------------------------------------------------------------

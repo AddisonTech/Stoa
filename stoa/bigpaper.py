@@ -124,6 +124,9 @@ class BigRuntime:
     calendar: Callable[[Bars, list[str], date], EarningsCalendar] | None = None
     sectors: Mapping[str, str] | None = None
     dry: bool = False  # no orders, no saved state, alerts logged instead of sent
+    # A dry replay of past mornings: the dataset's state as of this commit (id or message),
+    # carried between the replay's steps in a local copy; the live state is never touched.
+    replay_from: str | None = None
 
     def __post_init__(self) -> None:
         self.notifier = Tagged(self.notifier, self.base.big_paper.tag)
@@ -356,8 +359,7 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
 
     fd = feed.Feed(rt.base.big_paper.feed_dir, raw_tag(rt, "picks", now))
     token = hf_token(rt)
-    if token is not None:
-        feed.pull_state(fd, rt.base.big_paper.feed_repo, token)
+    load_feed(rt, fd, token)
     feed.run(fd, feed_sources(rt, fd.state().static), now)
     stale = feed.problems(fd, session, now)
     if stale:
@@ -375,6 +377,44 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
                 only=[f"raw/{fd.raw_tag}/**", f"checks/{fd.raw_tag}/**"],
             )
     return sigs
+
+
+def replay_store(rt: BigRuntime) -> Path:
+    """The replay's own copy of the dataset, beside the feed folder."""
+    return Path(f"{rt.base.big_paper.feed_dir}-replay")
+
+
+def load_feed(rt: BigRuntime, fd: Any, token: str | None) -> None:
+    """Download the state, or in a replay copy it from the replay's own copy of the dataset
+    (filled once from the ``replay_from`` commit)."""
+    from stoa.newsbrain import feed
+
+    if token is None:
+        return
+    repo = rt.base.big_paper.feed_repo
+    if rt.replay_from is None:
+        feed.pull_state(fd, repo, token)
+        return
+    store = replay_store(rt)
+    if not (store / "feed.json").exists():
+        rev = feed.commit_of(repo, token, rt.replay_from)
+        log.info("replay from %s (%s)", rt.replay_from, rev)
+        feed.pull_state(feed.Feed(store), repo, token, revision=rev)
+    feed.copy_state(store, fd.root)
+
+
+def save_feed(rt: BigRuntime, fd: Any, token: str | None, message: str) -> None:
+    """Upload the state; a replay moves only its own copy on and uploads only its pulls."""
+    from stoa.newsbrain import feed
+
+    if token is None:
+        return
+    repo = rt.base.big_paper.feed_repo
+    if rt.replay_from is None:
+        feed.push_state(fd, repo, token, message)
+        return
+    feed.copy_state(fd.root, replay_store(rt))
+    feed.push_state(fd, repo, token, f"replay {fd.raw_tag}", only=[f"raw/{fd.raw_tag}/**"])
 
 
 def raw_tag(rt: BigRuntime, job: str, now: datetime) -> str | None:
@@ -617,12 +657,10 @@ def _feed(rt: BigRuntime, force: bool) -> Result:
         return Result(EXIT_OK, "not_a_session")
     fd = nf.Feed(rt.base.big_paper.feed_dir, raw_tag(rt, "feed", now))
     token = hf_token(rt)
-    if token is not None:
-        nf.pull_state(fd, rt.base.big_paper.feed_repo, token)
+    load_feed(rt, fd, token)
     out = nf.run(fd, feed_sources(rt, fd.state().static), now)
     log.info("big paper feed: %s", out)
-    if token is not None:
-        nf.push_state(fd, rt.base.big_paper.feed_repo, token, f"feed {now.isoformat()}")
+    save_feed(rt, fd, token, f"feed {now.isoformat()}")
     return Result(EXIT_OK, "dry" if rt.dry else "fed", day)
 
 

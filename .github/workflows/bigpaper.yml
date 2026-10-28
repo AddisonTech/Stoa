@@ -11,6 +11,10 @@ name: bigpaper
 # Hugging Face dataset big_paper.feed_repo, never on stoa-state or in this repository: FEED
 # downloads it, updates it and uploads it; PICKS downloads it. HF_TOKEN reaches only the
 # step that runs Stoa, which passes it to each call and never saves it.
+# FEED and PICKS (and replays) run on Windows, like the Dell that built trial 12's panel:
+# Windows and Linux round log and log1p differently in the last digit, and the model's cut
+# points sit exactly on the Dell's values, so only Windows gives the Dell's numbers. numpy's
+# AVX-512 paths are switched off because the Dell has none. EXECUTE and SUMMARY stay on Linux.
 # The GitHub crons below are the backup, a few minutes late, in both the EDT and EST slot.
 run-name: >-
   ${{ github.event_name == 'schedule' && format('schedule {0}', github.event.schedule)
@@ -48,6 +52,10 @@ on:
         description: "Dry replay of past mornings, e.g. picks@2026-10-26T09:00 feed@2026-10-27T08:15"
         type: string
         default: ""
+      replay_from:
+        description: "Replays start from this commit of the feed's dataset (id or message)"
+        type: string
+        default: "seed 2026-10-26"
 
 concurrency:
   group: stoa-big-paper
@@ -58,8 +66,14 @@ permissions:
 
 jobs:
   run:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    runs-on: >-
+      ${{ (contains(fromJSON('["feed","picks"]'), inputs.job) || inputs.replay != ''
+      || contains(fromJSON('["22 12 * * 1-5","22 13 * * 1-5","7 13 * * 1-5","7 14 * * 1-5"]'),
+      github.event.schedule)) && 'windows-latest' || 'ubuntu-latest' }}
+    timeout-minutes: ${{ inputs.replay != '' && 120 || 45 }}
+    defaults:
+      run:
+        shell: bash
     env:
       ALPACA_BIG_PAPER_KEY_ID: ${{ secrets.ALPACA_BIG_PAPER_KEY_ID }}
       ALPACA_BIG_PAPER_SECRET: ${{ secrets.ALPACA_BIG_PAPER_SECRET }}
@@ -71,10 +85,12 @@ jobs:
       STOA__BIG_PAPER__STATE_DIR: state-branch/big-paper
       STOA__STATE__SHARED_DIR: state-branch/shared
       HF_HUB_DISABLE_TELEMETRY: "1"
+      PYTHONUTF8: "1"
       JOB_INPUT: ${{ inputs.job }}
       FORCE_INPUT: ${{ inputs.force }}
       DRY_INPUT: ${{ inputs.dry }}
       REPLAY_INPUT: ${{ inputs.replay }}
+      REPLAY_FROM: ${{ inputs.replay_from }}
       SCHEDULE: ${{ github.event.schedule }}
     steps:
       - name: Pick the job
@@ -107,6 +123,10 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Keep line endings as committed
+        if: steps.secrets.outputs.ready == 'true' && runner.os == 'Windows'
+        run: git config --global core.autocrlf false
+
       - name: Check out code
         if: steps.secrets.outputs.ready == 'true'
         uses: actions/checkout@v5
@@ -119,13 +139,14 @@ jobs:
         if: steps.secrets.outputs.ready == 'true'
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.12.10"
           cache: pip
 
       - name: Install
         if: steps.secrets.outputs.ready == 'true'
         env:
           JOB: ${{ steps.pick.outputs.job }}
+          NPY_DISABLE_CPU_FEATURES: "${{ runner.os == 'Windows' && 'X86_V4 AVX512F AVX512CD AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL AVX512_SPR' || '' }}"
         # The feed and the picks run the news brain: the exact versions the rolling state was
         # built and checked with (the state refuses another pandas), CPU-only torch.
         run: |
@@ -136,13 +157,15 @@ jobs:
           else
             pip install ".[yahoo]"
           fi
+          python -c "import numpy as np, platform; from numpy._core._multiarray_umath import __cpu_features__ as f; print(platform.platform(), np.__version__, [k for k, v in f.items() if v and ('512' in k or k == 'X86_V4')] or 'no AVX-512')"
+          python -c "import numpy as np; np.show_runtime()"
 
       - name: Cache FinBERT
         if: steps.secrets.outputs.ready == 'true' && contains(fromJSON('["feed","picks","replay"]'), steps.pick.outputs.job)
         uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface/hub
-          key: finbert-0bc2ac10dda6929bcb1f77ccc43c7ec5c424f031
+          key: finbert-${{ runner.os }}-0bc2ac10dda6929bcb1f77ccc43c7ec5c424f031
 
       - name: Run
         if: steps.secrets.outputs.ready == 'true'
@@ -150,13 +173,17 @@ jobs:
           JOB: ${{ steps.pick.outputs.job }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           STOA__BIG_PAPER__FEED_DIR: ${{ runner.temp }}/stoa-feed
-        # A replay runs each step from an empty feed folder, as a fresh runner would.
+          NPY_DISABLE_CPU_FEATURES: "${{ runner.os == 'Windows' && 'X86_V4 AVX512F AVX512CD AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL AVX512_SPR' || '' }}"
+        # A replay runs each step from an empty feed folder, as a fresh runner would, with its
+        # own copy of the dataset started from REPLAY_FROM: the live state never moves.
         run: |
           if [ "$JOB" = "replay" ]; then
+            clear() { python -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$1"; }
+            clear "${STOA__BIG_PAPER__FEED_DIR}-replay"
             for step in $REPLAY_INPUT; do
-              rm -rf "$STOA__BIG_PAPER__FEED_DIR"
+              clear "$STOA__BIG_PAPER__FEED_DIR"
               start=$SECONDS
-              stoa bigpaper "${step%%@*}" --dry --at "${step#*@}"
+              stoa bigpaper "${step%%@*}" --dry --at "${step#*@}" --replay-from "$REPLAY_FROM"
               echo "TIMING ${step}: $((SECONDS - start)) s"
             done
             exit 0

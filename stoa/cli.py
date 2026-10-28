@@ -411,8 +411,13 @@ def execute(ctx: Ctx, force: bool) -> None:
 @click.option("--force", is_flag=True, help="Run outside the window or again for the same session.")
 @click.option("--dry", is_flag=True, help="Feed or picks with no orders and nothing saved.")
 @click.option("--at", "at", default="", help="Dry runs only: replay this New York time.")
+@click.option(
+    "--replay-from",
+    default="",
+    help="Dry runs only: start from this commit of the feed's dataset; the live state stays.",
+)
 @pass_ctx
-def bigpaper_cmd(ctx: Ctx, job: str, force: bool, dry: bool, at: str) -> None:
+def bigpaper_cmd(ctx: Ctx, job: str, force: bool, dry: bool, at: str, replay_from: str) -> None:
     """The big paper account: 8:15 am feed, 9:00 am picks, 9:45 am execute, 5:15 pm summary."""
     from stoa import bigpaper
 
@@ -423,9 +428,15 @@ def bigpaper_cmd(ctx: Ctx, job: str, force: bool, dry: bool, at: str) -> None:
         return
     if dry and job not in ("feed", "picks"):
         raise click.UsageError("--dry runs only the feed and the picks")
-    if at and not dry:
-        raise click.UsageError("--at needs --dry")
-    rt = bigpaper.BigRuntime(base=s, secrets=sec, notifier=make_notifier(s, sec), dry=dry)
+    if (at or replay_from) and not dry:
+        raise click.UsageError("--at and --replay-from need --dry")
+    rt = bigpaper.BigRuntime(
+        base=s,
+        secrets=sec,
+        notifier=make_notifier(s, sec),
+        dry=dry,
+        replay_from=replay_from or None,
+    )
     if at:
         when = datetime.fromisoformat(at)
         if when.tzinfo is None:
