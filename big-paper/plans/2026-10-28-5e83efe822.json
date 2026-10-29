@@ -1,0 +1,12 @@
+{
+  "plan_id": "5e83efe822",
+  "strategy": "trial12",
+  "mode": "paper",
+  "decided_session": "2026-10-28",
+  "execute_session": "2026-10-29",
+  "created_at": "2026-10-29T13:02:50.611192Z",
+  "orders": [],
+  "equity_at_decide": "100000",
+  "kill_switch": false,
+  "reserves": []
+}
