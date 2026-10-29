@@ -1,0 +1,318 @@
+{
+ "trial": 14,
+ "label": "IN-SAMPLE: trial 12 already ran on this window, these signals in cash included",
+ "passed": false,
+ "verdict": "FAIL",
+ "checks": [
+  {
+   "name": "drawdown_vs_spy",
+   "passed": true,
+   "detail": "9.26% vs SPY 18.75% (validation)"
+  },
+  {
+   "name": "sharpe_vs_spy",
+   "passed": true,
+   "detail": "1.29 vs SPY 1.04 (validation)"
+  },
+  {
+   "name": "sortino_vs_spy",
+   "passed": true,
+   "detail": "2.08 vs SPY 1.57 (validation)"
+  },
+  {
+   "name": "tune_c_sharpe_vs_spy",
+   "passed": false,
+   "detail": "1.37 vs SPY 1.82 (2023 to 2024)"
+  },
+  {
+   "name": "drawdown_cap",
+   "passed": true,
+   "detail": "worst 9.26% (cap 25%)"
+  },
+  {
+   "name": "trade_count",
+   "passed": true,
+   "detail": "197 closed trades (need 30)"
+  },
+  {
+   "name": "api_cost",
+   "passed": true,
+   "detail": "$0.00 in every month (no paid calls)"
+  },
+  {
+   "name": "deflated_sharpe",
+   "passed": false,
+   "detail": "DSR 0.183 (need 0.95)"
+  },
+  {
+   "name": "sharpe_vs_mtum",
+   "passed": false,
+   "detail": "1.29 vs MTUM 1.50 (validation)"
+  }
+ ],
+ "deflated": {
+  "sharpe_daily": 0.08135110221257633,
+  "sharpe_annual": 1.2914087120128401,
+  "period": 1.0,
+  "observations": 373.0,
+  "trials": 29.0,
+  "trial_sharpe_variance": 0.0038365854629207495,
+  "sr0_daily": 0.12755834477117484,
+  "dsr": 0.182804683948117,
+  "psr": 0.9444017043349383,
+  "pbo": NaN
+ },
+ "runs": {
+  "tune_c": {
+   "return": 0.2048139423590325,
+   "max_drawdown": 0.03879767782245358,
+   "sharpe": 1.3683202369214882,
+   "sortino": 2.3168642415353,
+   "trades": 60,
+   "cash_share": 0.9760385032493188
+  },
+  "validation": {
+   "return": 0.27787967765613164,
+   "max_drawdown": 0.0925905065155832,
+   "sharpe": 1.2914087120128401,
+   "sortino": 2.0784149748615275,
+   "trades": 137,
+   "cash_share": 0.9269389608340335
+  },
+  "test": {
+   "return": 0.5396082836888707,
+   "max_drawdown": 0.09259044888963941,
+   "sharpe": 1.2571588958103057,
+   "sortino": 2.048923577493835,
+   "trades": 197,
+   "cash_share": 0.9550485583201666
+  }
+ },
+ "hit_rate": 0.5431472081218274,
+ "reference_spycore_100k": {
+  "runs": {
+   "tune_c": {
+    "return": 0.767089422699798,
+    "max_drawdown": 0.10002161760987305,
+    "sharpe": 2.011635150589919,
+    "sortino": 3.155045003632764,
+    "trades": 60,
+    "cash_share": 0.019726780398536814
+   },
+   "validation": {
+    "return": 0.5462900054129392,
+    "max_drawdown": 0.14891623020679845,
+    "sharpe": 1.4453080139493057,
+    "sortino": 2.2150388838369284,
+    "trades": 134,
+    "cash_share": 0.018797128178317912
+   },
+   "test": {
+    "return": 1.7386783787891251,
+    "max_drawdown": 0.14891612244179564,
+    "sharpe": 1.6845016765247882,
+    "sortino": 2.602359625237927,
+    "trades": 194,
+    "cash_share": 0.01821059576122419
+   }
+  },
+  "checks": [
+   {
+    "name": "drawdown_vs_spy",
+    "passed": true,
+    "detail": "14.89% vs SPY 18.75% (validation)"
+   },
+   {
+    "name": "sharpe_vs_spy",
+    "passed": true,
+    "detail": "1.45 vs SPY 1.04 (validation)"
+   },
+   {
+    "name": "sortino_vs_spy",
+    "passed": true,
+    "detail": "2.22 vs SPY 1.57 (validation)"
+   },
+   {
+    "name": "tune_c_sharpe_vs_spy",
+    "passed": true,
+    "detail": "2.01 vs SPY 1.82 (2023 to 2024)"
+   },
+   {
+    "name": "drawdown_cap",
+    "passed": true,
+    "detail": "worst 14.89% (cap 25%)"
+   },
+   {
+    "name": "trade_count",
+    "passed": true,
+    "detail": "194 closed trades (need 30)"
+   },
+   {
+    "name": "api_cost",
+    "passed": true,
+    "detail": "$0.00 in every month (no paid calls)"
+   },
+   {
+    "name": "sharpe_vs_mtum",
+    "passed": false,
+    "detail": "1.45 vs MTUM 1.50 (validation)"
+   }
+  ],
+  "spy_core": {
+   "swaps": 335,
+   "bought": 5453923.566266775,
+   "sold": 5390318.3214435205,
+   "cost": 5584.626398070542,
+   "cost_pct_of_start": 0.05584626398070542,
+   "sessions": 875,
+   "share_fully_in_spy": 0.8502857142857143
+  }
+ },
+ "trial12": {
+  "verdict": "FAIL",
+  "runs": {
+   "tune_c": {
+    "return": 0.7545277836961677,
+    "sharpe": 1.9884724740481985,
+    "sortino": 3.112356970113405,
+    "max_drawdown": 0.10030953872936854,
+    "trades": 60,
+    "hit_rate": null
+   },
+   "validation": {
+    "return": 0.5194222201252481,
+    "sharpe": 1.3921255554910534,
+    "sortino": 2.125077520329643,
+    "max_drawdown": 0.1492225374132582,
+    "trades": 133,
+    "hit_rate": null
+   },
+   "test": {
+    "return": 1.6941243132710313,
+    "sharpe": 1.6591388057489922,
+    "sortino": 2.557868470938843,
+    "max_drawdown": 0.1490800753040169,
+    "trades": 193,
+    "hit_rate": 0.5440414507772021
+   }
+  },
+  "cash_runs": {
+   "tune_c": {
+    "return": 0.19877129399767068,
+    "sharpe": 1.333726370750074,
+    "sortino": 2.247482122840769,
+    "max_drawdown": 0.03914825079378237,
+    "trades": 60,
+    "hit_rate": null
+   },
+   "validation": {
+    "return": 0.2634147492674064,
+    "sharpe": 1.2363803129959892,
+    "sortino": 1.9766382087254923,
+    "max_drawdown": 0.09456049640407793,
+    "trades": 136,
+    "hit_rate": null
+   },
+   "test": {
+    "return": 0.517691667800217,
+    "sharpe": 1.2185607041851352,
+    "sortino": 1.9755676945481222,
+    "max_drawdown": 0.09420410390582046,
+    "trades": 196,
+    "hit_rate": 0.5459183673469388
+   }
+  },
+  "deflated_sharpe": 0.23736039564889777,
+  "checks": {
+   "drawdown_vs_spy": true,
+   "sharpe_vs_spy": true,
+   "sortino_vs_spy": true,
+   "tune_c_sharpe_vs_spy": true,
+   "drawdown_cap": true,
+   "trade_count": true,
+   "api_cost": true,
+   "deflated_sharpe": false,
+   "sharpe_vs_mtum": false
+  },
+  "share_fully_in_spy": 0.8514285714285714
+ },
+ "baselines": {
+  "spy:tune_c": {
+   "return": 0.5670288151060185,
+   "max_drawdown": 0.09974540825591671,
+   "sharpe": 1.8224635578509227,
+   "sortino": 2.726531920355289,
+   "trades": null,
+   "cash_share": null
+  },
+  "mtum:tune_c": {
+   "return": 0.45349484146397523,
+   "max_drawdown": 0.12957717985024797,
+   "sharpe": 1.2192118289126415,
+   "sortino": 1.8062334139279121,
+   "trades": null,
+   "cash_share": null
+  },
+  "spy:validation": {
+   "return": 0.28812256904897926,
+   "max_drawdown": 0.18754263088621292,
+   "sharpe": 1.0437406734682766,
+   "sortino": 1.570826745525625,
+   "trades": null,
+   "cash_share": null
+  },
+  "mtum:validation": {
+   "return": 0.6651361712617032,
+   "max_drawdown": 0.20989617848431585,
+   "sharpe": 1.4973927102553133,
+   "sortino": 2.2033419386969064,
+   "trades": null,
+   "cash_share": null
+  },
+  "spy:test": {
+   "return": 1.0309539720031138,
+   "max_drawdown": 0.18754263088704293,
+   "sharpe": 1.419378735342785,
+   "sortino": 2.130695243613111,
+   "trades": null,
+   "cash_share": null
+  },
+  "mtum:test": {
+   "return": 1.4365444637845006,
+   "max_drawdown": 0.20989617848458364,
+   "sharpe": 1.3471497711790885,
+   "sortino": 1.9867160322935862,
+   "trades": null,
+   "cash_share": null
+  }
+ },
+ "by_cap": [
+  {
+   "bucket": "small",
+   "trades": 5,
+   "hit_rate": 0.2,
+   "avg_excess": -0.046581922330659345,
+   "pnl": -5903.55103504741
+  },
+  {
+   "bucket": "mid",
+   "trades": 13,
+   "hit_rate": 0.46153846153846156,
+   "avg_excess": -0.005416362115370358,
+   "pnl": -1411.1047046856083
+  },
+  {
+   "bucket": "large",
+   "trades": 179,
+   "hit_rate": 0.5586592178770949,
+   "avg_excess": 0.011973084640330955,
+   "pnl": 58570.87299873873
+  }
+ ],
+ "spec_hash": "f385bc9d5040ef7b",
+ "price_sources": {
+  "cache": 1292,
+  "minute bars": 3,
+  "none": 0
+ }
+}
