@@ -277,6 +277,7 @@ big_paper:                         # a news brain trial on its own ~$100,000 Alp
   model_sha256: ""                 # the pinned version's sha256 (its meta.json); blank model rolls back
   shadow_models:                   # scored and locked beside the picks every morning, graded on the shadow scoreboard, never traded
     t12-all-20261027: e66617a3a2433b90a284111665c5de0407be9cd35c23b35996fb7f465830594a
+  reader: true                     # trial 15: the 8:15 am feed and 9:00 am picks run the local event reader on new news, time-boxed; never stops the picks
 
 sweep:
   enabled: true

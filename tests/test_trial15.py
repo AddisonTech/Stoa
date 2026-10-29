@@ -247,3 +247,79 @@ def test_the_summary_grades_yesterdays_picks_and_keeps_the_running_hit_rate(
     # Graded once: the next evening does not count the same picks again.
     bigpaper.summary15_lines(rt, nxt)
     assert len(bigpaper.graded15(rt)) == 1
+
+
+# ---- the local event reader in the feed --------------------------------------------------------
+
+
+def articles(ids: list[int], hour: int = 12) -> pd.DataFrame:
+    t = pd.Timestamp(f"2026-10-29 {hour:02d}:00", tz="UTC")
+    return pd.DataFrame(
+        {
+            "id": ids,
+            "symbols": [["AAPL"] for _ in ids],
+            "headline": [f"news {i}" for i in ids],
+            "summary": ["" for _ in ids],
+            "created_at": [t for _ in ids],
+            "updated_at": [t for _ in ids],
+        }
+    )
+
+
+def test_the_feed_labels_new_articles_and_keeps_a_backlog(tmp_path: Path) -> None:
+    from stoa.newsbrain import feed as nf
+
+    def reader(arts: pd.DataFrame, seconds: float) -> tuple[pd.DataFrame, pd.DataFrame]:
+        assert seconds == 60.0
+        done = arts.head(2)  # the budget runs out after two articles
+        labels = pd.DataFrame(
+            {
+                "id": done["id"],
+                "symbol": "AAPL",
+                "event": "earnings_beat",
+                "p_event": 0.9,
+                "direction": 0.8,
+                "size": 2.0,
+            }
+        )
+        return labels, arts.iloc[2:]
+
+    src = nf.Sources(
+        news=None,
+        filings=None,
+        bars=None,
+        scorer=None,  # type: ignore[arg-type]
+        reader=reader,
+        read_seconds=60.0,
+    )
+    fd = nf.Feed(tmp_path)
+    assert nf.read_events(fd, src, articles([1, 2, 3])) == 2
+    labels = pd.read_parquet(tmp_path / "events" / "labels.parquet")
+    back = pd.read_parquet(tmp_path / "events" / "backlog.parquet")
+    assert sorted(labels["id"]) == [1, 2] and list(back["id"]) == [3]
+    assert labels["known_at"].notna().all()
+    # The next run reads the backlog first, then what is new.
+    assert nf.read_events(fd, src, articles([4], hour=13)) == 2
+    labels = pd.read_parquet(tmp_path / "events" / "labels.parquet")
+    assert sorted(labels["id"]) == [1, 2, 3, 4]
+    assert pd.read_parquet(tmp_path / "events" / "backlog.parquet").empty
+    assert "events/**" in nf.STATE_FILES
+
+
+def test_a_reader_failure_never_stops_the_feed(tmp_path: Path) -> None:
+    from stoa.newsbrain import feed as nf
+
+    def broken(arts: pd.DataFrame, seconds: float) -> tuple[pd.DataFrame, pd.DataFrame]:
+        raise RuntimeError("out of memory")
+
+    src = nf.Sources(
+        news=None,
+        filings=None,
+        bars=None,
+        scorer=None,  # type: ignore[arg-type]
+        reader=broken,
+        read_seconds=60.0,
+    )
+    fd = nf.Feed(tmp_path)
+    assert nf.read_events(fd, src, articles([1, 2])) == 0
+    assert sorted(pd.read_parquet(tmp_path / "events" / "backlog.parquet")["id"]) == [1, 2]

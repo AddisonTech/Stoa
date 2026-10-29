@@ -361,14 +361,16 @@ def sectors(rt: BigRuntime) -> Mapping[str, str]:
     return {k: sector_of_sic(v) for k, v in raw.items()}
 
 
-def feed_sources(rt: BigRuntime, static: Any) -> Any:
-    """Alpaca on the big account's own keys, EDGAR, FinBERT on the CPU."""
+def feed_sources(rt: BigRuntime, static: Any, read_seconds: float = 0.0) -> Any:
+    """Alpaca on the big account's own keys, EDGAR, FinBERT on the CPU, and under trial 15
+    the local event reader with ``read_seconds`` to spend (``big_paper.reader``)."""
     from stoa.newsbrain import feed
 
     if rt.feed_sources is not None:
         return rt.feed_sources
     sec = rt.secrets
     assert sec.alpaca_big_paper_key_id and sec.alpaca_big_paper_secret
+    reads = rt.top5 and rt.base.big_paper.reader and read_seconds > 0
     return feed.Sources(
         news=feed.alpaca_news(
             sec.alpaca_big_paper_key_id.get_secret_value(),
@@ -378,6 +380,8 @@ def feed_sources(rt: BigRuntime, static: Any) -> Any:
         filings=feed.edgar_filings({int(c) for c in static.ciks["cik"]}),
         bars=feed.alpaca_bars(make_provider(rt.settings, data_secrets(sec))),
         scorer=feed.finbert(),
+        reader=feed.local_reader(set(static.ciks["symbol"].astype(str))) if reads else None,
+        read_seconds=read_seconds,
     )
 
 
@@ -401,7 +405,7 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
     fd = feed.Feed(rt.base.big_paper.feed_dir, raw_tag(rt, "picks", now))
     token = hf_token(rt)
     load_feed(rt, fd, token)
-    feed.run(fd, feed_sources(rt, fd.state().static), now)
+    feed.run(fd, feed_sources(rt, fd.state().static, READ_AT_PICKS), now)
     stale = feed.problems(fd, session, now)
     if stale:
         raise feed.FeedError("; ".join(stale))
@@ -435,6 +439,8 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
 
 
 FROZEN_VERSION = "t9-frozen"  # trial 9's frozen model, in the feed state's static/
+READ_AT_FEED = 20 * 60.0  # the local event reader's budget at 8:15 am, in seconds
+READ_AT_PICKS = 4 * 60.0  # and at 9:00 am, so the plan is made well before 9:30
 
 
 def model_choice(rt: BigRuntime) -> tuple[str | None, str | None]:
@@ -1067,7 +1073,7 @@ def _feed(rt: BigRuntime, force: bool) -> Result:
     fd = nf.Feed(rt.base.big_paper.feed_dir, raw_tag(rt, "feed", now))
     token = hf_token(rt)
     load_feed(rt, fd, token)
-    out = nf.run(fd, feed_sources(rt, fd.state().static), now)
+    out = nf.run(fd, feed_sources(rt, fd.state().static, READ_AT_FEED), now)
     log.info("big paper feed: %s", out)
     save_feed(rt, fd, token, f"feed {now.isoformat()}")
     return Result(EXIT_OK, "dry" if rt.dry else "fed", day)

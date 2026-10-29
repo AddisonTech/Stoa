@@ -53,6 +53,11 @@ NewsSource = Callable[[datetime, datetime], pd.DataFrame]
 FilingSource = Callable[[datetime, datetime], tuple[pd.DataFrame, pd.DataFrame]]
 BarSource = Callable[[list[str], date, date], dict[str, pd.DataFrame]]
 Scorer = Callable[[list[str], int], np.ndarray]
+# The local event reader (trial 15): articles and a time budget in seconds, to the labels it
+# finished and the articles it did not reach.
+EventReader = Callable[[pd.DataFrame, float], tuple[pd.DataFrame, pd.DataFrame]]
+EVENTS = "events"  # labels.parquet and backlog.parquet, beside the state, never inside it
+EVENT_KEEP = timedelta(days=120)  # labels older than this are dropped from the feed's copy
 
 
 class FeedError(RuntimeError):
@@ -67,12 +72,16 @@ class Sources:
     summary). ``filings``: earnings 8-K documents and 10-K customer paragraphs accepted in
     a window, in ``sec_pull``'s columns. ``bars``: daily bars by symbol for a date range.
     ``scorer``: FinBERT probabilities (positive, negative, neutral) at a token limit.
+    ``reader``: trial 15's local event reader, or None to skip it; ``read_seconds`` is its
+    time budget for one run.
     """
 
     news: NewsSource
     filings: FilingSource
     bars: BarSource
     scorer: Scorer
+    reader: EventReader | None = None
+    read_seconds: float = 0.0
 
 
 # ---- the feed's own record ----------------------------------------------------------------
@@ -193,7 +202,80 @@ def pull_news(feed: Feed, src: Sources, until: datetime) -> int:
         feed.write("news", merged)
     rec["news_to"] = until.isoformat()
     feed.write_record(rec)
+    if src.reader is not None:
+        read_events(feed, src, raw)
     return len(raw)
+
+
+# ---- the local event reader (trial 15) -------------------------------------------------------
+
+ARTICLE_COLS = ["id", "symbols", "headline", "summary", "known_at"]
+
+
+def read_events(feed: Feed, src: Sources, raw: pd.DataFrame) -> int:
+    """Label the new articles and any backlog with the local reader, inside its time budget.
+    What it does not reach waits in the backlog for the next run. A reader failure is logged
+    and never stops the feed: the labels are an input still being proven."""
+    assert src.reader is not None
+    folder = feed.root / EVENTS
+    back_path, lab_path = folder / "backlog.parquet", folder / "labels.parquet"
+    todo = pd.DataFrame(columns=ARTICLE_COLS)
+    if back_path.exists():
+        todo = pd.read_parquet(back_path)
+    if len(raw):
+        new = raw.assign(
+            known_at=pd.to_datetime(raw[["created_at", "updated_at"]].max(axis=1), utc=True)
+        )
+        todo = pd.concat([todo, new[ARTICLE_COLS]], ignore_index=True)
+    if todo.empty:
+        return 0
+    todo = todo.drop_duplicates("id", keep="last").sort_values("known_at", ascending=False)
+    try:
+        labels, left = src.reader(todo.reset_index(drop=True), src.read_seconds)
+    except Exception as exc:
+        log.warning("the event reader failed, articles kept for the next run: %s", exc)
+        labels, left = pd.DataFrame(), todo
+    fresh = len(labels)
+    if fresh:
+        known = dict(zip(todo["id"].astype(int), todo["known_at"], strict=True))
+        labels = labels.assign(known_at=labels["id"].astype(int).map(known))
+        if lab_path.exists():
+            labels = pd.concat([pd.read_parquet(lab_path), labels], ignore_index=True)
+        labels = labels.drop_duplicates(["id", "symbol"], keep="last")
+        newest = pd.to_datetime(labels["known_at"], utc=True).max()
+        labels = labels[pd.to_datetime(labels["known_at"], utc=True) >= newest - EVENT_KEEP]
+        write_parquet(labels.reset_index(drop=True), lab_path)
+    write_parquet(left[ARTICLE_COLS].reset_index(drop=True), back_path)
+    log.info("event reader: %d new labels, %d articles left for the next run", fresh, len(left))
+    return fresh
+
+
+def local_reader(companies: set[str]) -> EventReader:
+    """The event reader on the CPU (stoa/newsbrain/eventread.py), loaded on first use."""
+    holder: dict[str, Any] = {}
+
+    def read(articles: pd.DataFrame, seconds: float) -> tuple[pd.DataFrame, pd.DataFrame]:
+        import time
+
+        from stoa.newsbrain import eventread
+
+        start = time.monotonic()
+        if "reader" not in holder:
+            holder["reader"] = eventread.Reader(device="cpu", batch=16)
+        reader = holder["reader"]
+        done: list[pd.DataFrame] = []
+        reached = 0
+        chunk = 32  # articles at a time, newest first
+        for i in range(0, len(articles), chunk):
+            if time.monotonic() - start > seconds:
+                break
+            part = articles.iloc[i : i + chunk]
+            done.append(eventread.read(reader, part, frozenset(companies)))
+            reached = i + len(part)
+        labels = pd.concat(done, ignore_index=True) if done else pd.DataFrame()
+        return labels, articles.iloc[reached:]
+
+    return read
 
 
 # ---- filings ---------------------------------------------------------------------------------
@@ -452,7 +534,7 @@ def wall(session: date) -> AbstractContextManager[None]:
 # ---- where the state lives: a private Hugging Face dataset -------------------------------
 
 
-STATE_FILES = ["feed.json", "state/**", "pending/**"]  # what a run downloads; not raw/ or checks/
+STATE_FILES = ["feed.json", "state/**", "pending/**", f"{EVENTS}/**"]  # not raw/ or checks/
 
 
 def pull_state(

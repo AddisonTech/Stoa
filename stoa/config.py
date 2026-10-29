@@ -468,6 +468,9 @@ class BigPaperConfig(_Frozen):
     # Shadow models, version: sha256. Each scores the picks' rows every morning and is locked
     # and graded on the shadow scoreboard beside the picks' model; none of them ever trades.
     shadow_models: dict[str, str] = Field(default_factory=dict)
+    # Trial 15: the 8:15 am feed and the 9:00 am picks run the local event reader on every new
+    # article, time-boxed, into the feed's dataset (events/). It never stops the picks.
+    reader: bool = False
 
     @field_validator("tag")
     @classmethod
