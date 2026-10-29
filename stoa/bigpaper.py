@@ -72,9 +72,9 @@ from stoa.features import build_features, cell, slice_features
 from stoa.journal import Journal
 from stoa.live import live_calendar
 from stoa.models import ClosedTrade, Holding, PlannedOrder, PositionMeta, Side, dec
+from stoa.newsbrain import learn15, review15, trial13, trial15
 from stoa.newsbrain import spycore as sc
 from stoa.newsbrain import trial as t9
-from stoa.newsbrain import trial13, trial15
 from stoa.overlay import Overlay, OverlayState, account_settings
 from stoa.planner import Decision, DecisionInput, make_plan
 from stoa.portfolio import Lot, Portfolio
@@ -418,9 +418,15 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
     if rt.top5:
         sic_path = fd.state().root / "static" / "sic.json"
         sic = json.loads(sic_path.read_text(encoding="utf-8"))
-        chosen = trial15.choose(rows, sic)
+        rules = active_rules15(rt)
+        if rules:
+            log.info("trial 15 rules in use: %s", rules)
+        chosen = trial15.choose(review15.apply_rules(rows, rules), sic)
         rt.chosen = trial15.records(chosen)
         sigs = trial15.signals(chosen, session)
+        if not rt.dry:
+            keep_rows15(rt, fd, token, session, rows)
+            shadow15(rt, fd, token, session, rows, rules, sic, now)
     log.info("picks model: %s", version or FROZEN_VERSION)
     if not rt.dry and not rt.base.stop.shadow:
         lock_scoreboard(rt, session, rows, version or FROZEN_VERSION, now)
@@ -449,6 +455,10 @@ def model_choice(rt: BigRuntime) -> tuple[str | None, str | None]:
     model in the feed state."""
     if rt.model_override:
         return rt.model_override, None
+    if rt.top5:
+        took = review15.load_json(dir15(rt) / "promoted.json")
+        if took.get("version") and took.get("sha256"):
+            return str(took["version"]), str(took["sha256"])
     bp = rt.base.big_paper
     if not bp.model:
         return None, None
@@ -1575,6 +1585,232 @@ def grade15(rt: BigRuntime, session: date) -> dict[str, Any] | None:
     return day
 
 
+def keep_rows15(rt: BigRuntime, fd: Any, token: str | None, session: date, rows: Any) -> None:
+    """The morning's scored rows, kept in the feed's dataset for the nightly refit
+    (learn/rows/<session>.parquet). Never stops the picks."""
+    try:
+        from stoa.newsbrain import feed as nf
+        from stoa.newsbrain import panel as pn
+
+        cols = ["symbol", "sidx", *pn.FEATURES, "adv"]
+        path = fd.root / learn15.ROWS / f"{session.isoformat()}.parquet"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        rows[[c for c in cols if c in rows.columns]].to_parquet(path, index=False)
+        if token is not None:
+            nf.push_state(
+                fd,
+                rt.base.big_paper.feed_repo,
+                token,
+                f"learn rows {session}",
+                only=[f"{learn15.ROWS}/{session.isoformat()}.parquet"],
+            )
+    except Exception as exc:
+        log.warning("the morning's rows were not kept for learning: %s", exc)
+
+
+def shadow15(
+    rt: BigRuntime,
+    fd: Any,
+    token: str | None,
+    session: date,
+    rows: Any,
+    rules: list[str],
+    sic: Mapping[str, Any],
+    now: datetime,
+) -> None:
+    """The nightly refit's top 5 for this morning, locked before 9:30 am beside the picks.
+    It never trades and never stops the picks."""
+    took = review15.load_json(dir15(rt) / "learner.json")
+    version, sha = took.get("version"), took.get("sha256")
+    if not version or not sha:
+        return
+    try:
+        import hashlib
+        import pickle
+
+        from stoa.newsbrain import feed as nf
+
+        if token is not None:
+            nf.pull_state(fd, rt.base.big_paper.feed_repo, token, only=[f"models/{version}/**"])
+        blob = (fd.root / "models" / str(version) / "model_h1.pkl").read_bytes()
+        if hashlib.sha256(blob).hexdigest() != sha:
+            raise ValueError(f"the learner {version} does not match its sha256")
+        brain = pickle.loads(blob)
+        scored = rows.assign(conviction=trial15.conviction(brain, rows))
+        picks = trial15.choose(review15.apply_rules(scored, rules), sic)
+        learn15.lock_shadow(dir15(rt), session, str(version), list(picks["symbol"]), now)
+    except Exception as exc:
+        log.warning("the learner's shadow picks were not locked: %s", exc)
+
+
+def learn(rt: BigRuntime) -> Result:
+    """The nightly refit: the decade's rows plus every morning kept since, labelled, fit with
+    recent rows weighted more, saved to the feed's dataset as the next shadow candidate."""
+    from stoa.newsbrain import feed as nf
+
+    if not rt.top5:
+        return Result(EXIT_OK, "not_trial15")
+    token = hf_token(rt)
+    if token is None:
+        return Result(EXIT_OK, "no_dataset")
+    fd = nf.Feed(rt.base.big_paper.feed_dir)
+    repo = rt.base.big_paper.feed_repo
+    nf.pull_state(fd, repo, token, only=[learn15.BASE, f"{learn15.ROWS}/**"])
+    base_path = fd.root / learn15.BASE
+    if not base_path.exists():
+        log.info("nightly learning waits for learn/base.parquet (scripts/push-learn-base.ps1)")
+        return Result(EXIT_OK, "waiting_for_base")
+    import pandas as pd
+
+    base = pd.read_parquet(base_path)
+    mornings = {
+        date.fromisoformat(p.stem): pd.read_parquet(p)
+        for p in sorted((fd.root / learn15.ROWS).glob("*.parquet"))
+    }
+
+    def opens(symbols: list[str], start: date, end: date) -> Any:
+        bars = fetch_bars(rt, symbols, end)
+        cols = {s: b["open"] for s, b in bars.items() if len(b)}
+        df = pd.DataFrame(cols)
+        df.index = pd.DatetimeIndex(df.index).tz_localize(None).normalize()
+        return df[(df.index >= pd.Timestamp(start)) & (df.index <= pd.Timestamp(end))]
+
+    train = learn15.training_set(base, mornings, opens)
+    meta = learn15.save(learn15.fit(train), train, fd.root / "models")
+    model = fd.root / "models" / meta["version"]
+    (model / "model.pkl").replace(model / "model_h1.pkl")
+    nf.push_state(
+        fd, repo, token, f"learner {meta['version']}", only=[f"models/{meta['version']}/**"]
+    )
+    d = dir15(rt)
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "learner.json").write_text(json.dumps(meta, indent=1) + "\n", encoding="utf-8")
+    log.info(
+        "nightly learner %s: %d rows through %s",
+        meta["version"],
+        meta["rows"],
+        meta["trained_through"],
+    )
+    return Result(EXIT_OK, "learned")
+
+
+def shadow15_lines(rt: BigRuntime, session: date) -> list[str]:
+    """Grade the learner's shadow top 5 of the session before, as the picks are graded, and
+    say whether it takes over (``learn15.takeover``)."""
+    before = clock.previous_session(session)
+    d = dir15(rt)
+    path = d / "shadow" / f"{before.isoformat()}.json"
+    days_path = d / "shadow_days.jsonl"
+    days = (
+        [json.loads(x) for x in days_path.read_text(encoding="utf-8").splitlines() if x.strip()]
+        if days_path.exists()
+        else []
+    )
+    if path.exists() and before.isoformat() not in {x["session"] for x in days}:
+        body = json.loads(path.read_text(encoding="utf-8"))
+        if not learn15.verify(body):
+            return [f"Learner's shadow picks of {before} fail their hash; not graded."]
+        syms = [str(s) for s in body["picks"]]
+        at = prices945(rt)
+        day = {
+            "session": before.isoformat(),
+            "version": body["version"],
+            "picks": trial15.grade(
+                syms, at(before, {*syms, "SPY"}), at(session, {*syms, "SPY"}), {}
+            ),
+        }
+        with days_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(day) + "\n")
+        days.append(day)
+    if not days:
+        return []
+    t = trial15.tally(days)
+    verdict = learn15.takeover(graded15(rt), days)
+    line = (
+        f"Nightly learner (shadow, never trades): {t['hits']} of {t['picks']} picks beat SPY"
+        + (f" ({t['hit_rate']:.0%})" if t["hit_rate"] is not None else "")
+        + f" over {t['days']} days."
+    )
+    if verdict["takes_over"]:
+        latest = review15.load_json(d / "learner.json")
+        (d / "promoted.json").write_text(
+            json.dumps(
+                {**latest, "promoted_on": session.isoformat(), "evidence": verdict}, indent=1
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        line += (
+            f" It graded better over the last {trial15.WINDOW} sessions and takes over tomorrow."
+        )
+    else:
+        line += (
+            f" Takes over only after {trial15.MIN_SHADOW} graded sessions that beat the live picks."
+        )
+    return [line]
+
+
+def active_rules15(rt: BigRuntime) -> list[str]:
+    """Rules from the lessons in use: due by their count and passed on the decade."""
+    d = dir15(rt)
+    return review15.active_rules(
+        review15.load_json(d / "lessons.json"), review15.load_json(d / "rule_checks.json")
+    )
+
+
+def later_news15(
+    rt: BigRuntime, symbols: list[str], start: datetime, end: datetime
+) -> dict[str, float]:
+    """The reader's mean direction for news about each symbol known between ``start`` and
+    ``end``, from the feed's labels; empty when they cannot be read."""
+    try:
+        token = hf_token(rt)
+        if token is None:
+            return {}
+        from huggingface_hub import hf_hub_download
+
+        from stoa.newsbrain import feed as nf
+
+        path = hf_hub_download(
+            rt.base.big_paper.feed_repo,
+            f"{nf.EVENTS}/labels.parquet",
+            repo_type="dataset",
+            token=token,
+        )
+        import pandas as pd
+
+        lab = pd.read_parquet(path)
+        known = pd.to_datetime(lab["known_at"], utc=True)
+        lab = lab[(known >= start) & (known < end) & lab["symbol"].isin(symbols)]
+        return {str(k): float(v) for k, v in lab.groupby("symbol")["direction"].mean().items()}
+    except Exception as exc:
+        log.warning("no reader labels for the review: %s", exc)
+        return {}
+
+
+def review15_lines(rt: BigRuntime, day: dict[str, Any]) -> list[str]:
+    """The nightly self-review of a graded day: each pick's inputs, result and, when it lost,
+    the likely reason; the lessons file keeps the count."""
+    before, sold = date.fromisoformat(day["session"]), date.fromisoformat(day["sold"])
+    picks = picks15(rt, before)
+    start = clock.at_ny(before, "09:45").astimezone(UTC)
+    end = clock.at_ny(sold, "09:45").astimezone(UTC)
+    news = later_news15(rt, [str(p["symbol"]) for p in picks], start, end)
+    reviews = review15.review_day(picks, day["picks"], news)
+    d = dir15(rt)
+    out = d / "reviews" / f"{day['session']}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(reviews, indent=1) + "\n", encoding="utf-8")
+    lessons = review15.update_lessons(
+        review15.load_json(d / "lessons.json"), day["session"], reviews
+    )
+    (d / "lessons.json").write_text(json.dumps(lessons, indent=1) + "\n", encoding="utf-8")
+    lost = [r for r in reviews if not r["hit"]]
+    if not lost:
+        return []
+    return ["Why they lost: " + "; ".join(f"{r['symbol']}, {r['why']}" for r in lost) + "."]
+
+
 def summary15_lines(rt: BigRuntime, session: date) -> list[str]:
     """The 5:15 pm summary's trial 15 lines: today's 5 picks so far against SPY, the picks
     of the session before graded 9:45 am to 9:45 am after costs, that day's hit rate and the
@@ -1620,6 +1856,8 @@ def summary15_lines(rt: BigRuntime, session: date) -> list[str]:
                 + "; ".join(words)
                 + f". Day hit rate {hits} of {len(graded)} ({share})."
             )
+            lines += review15_lines(rt, day)
+        lines += shadow15_lines(rt, session)
         t = trial15.tally(graded15(rt))
         if t["picks"]:
             lines.append(

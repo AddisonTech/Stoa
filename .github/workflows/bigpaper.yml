@@ -44,7 +44,7 @@ on:
       job:
         description: "Which job to run"
         type: choice
-        options: [feed, picks, execute, summary, status, kill-switch-reset, feed-reset, scoreboard, model-check]
+        options: [feed, picks, execute, summary, status, kill-switch-reset, feed-reset, scoreboard, model-check, learn]
         default: status
       force:
         description: "Run even outside the window or again for the same session"
@@ -201,6 +201,9 @@ jobs:
             stoa bigpaper model-check --model "$MODEL_INPUT"
             exit 0
           fi
+          if [ "$JOB" = "learn" ]; then
+            exit 0  # the Nightly learning step below runs it
+          fi
           if [ "$JOB" = "feed-reset" ]; then
             python -m stoa.newsbrain feedreset "$REPLAY_FROM"
             exit 0
@@ -241,6 +244,24 @@ jobs:
           start=$SECONDS
           stoa bigpaper shadow-lock "${flags[@]}"
           echo "TIMING shadow-lock: $((SECONDS - start)) s"
+
+      - name: Nightly learning
+        if: >-
+          steps.secrets.outputs.ready == 'true' && inputs.dry != true
+          && contains(fromJSON('["summary","learn"]'), steps.pick.outputs.job)
+        continue-on-error: true
+        timeout-minutes: 30
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          STOA__BIG_PAPER__FEED_DIR: ${{ runner.temp }}/stoa-learn
+        # Trial 15: refit the live brain's design on every labelled row through today, recent
+        # rows weighted more; the refit shadows the picks from tomorrow (stoa/newsbrain/learn15.py).
+        # The same pinned versions as the picks, so the model loads there. Never fails the run.
+        run: |
+          pip install pandas==3.1.0 numpy==2.5.4 scikit-learn==1.9.1 huggingface_hub==2.3.0
+          start=$SECONDS
+          stoa bigpaper learn
+          echo "TIMING learn: $((SECONDS - start)) s"
 
       - name: Save state
         if: always() && steps.secrets.outputs.ready == 'true' && inputs.dry != true && inputs.replay == ''

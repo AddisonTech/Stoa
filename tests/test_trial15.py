@@ -3,6 +3,7 @@ line, no regime filter; the kill switch and the price sanity check stay."""
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -244,6 +245,9 @@ def test_the_summary_grades_yesterdays_picks_and_keeps_the_running_hit_rate(
     assert f"Picks of {SESSION}" in text and "AAPL beat SPY by 2.9%" in text
     assert "MSFT lost to SPY by 1.1%" in text and "Day hit rate 1 of 2 (50%)" in text
     assert "Running: 1 of 2 picks beat SPY (50%) over 1 days, target 75%" in text
+    assert "Why they lost: MSFT, there was no news behind it that day." in text
+    lessons = json.loads((tmp_path / "big" / "trial15" / "lessons.json").read_text())
+    assert lessons["reasons"]["no_news"]["count"] == 1
     # Graded once: the next evening does not count the same picks again.
     bigpaper.summary15_lines(rt, nxt)
     assert len(bigpaper.graded15(rt)) == 1

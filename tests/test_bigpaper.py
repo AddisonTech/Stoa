@@ -541,7 +541,12 @@ def test_the_feed_state_lives_only_in_the_private_dataset() -> None:
     job = wf["jobs"]["run"]
     assert "HF_TOKEN" not in job["env"]  # only the step that runs Stoa gets it
     with_token = [s["name"] for s in job["steps"] if "HF_TOKEN" in (s.get("env") or {})]
-    assert with_token == ["Run", "Shadow models"]
+    assert with_token == ["Run", "Shadow models", "Nightly learning"]
+    learn = next(s for s in job["steps"] if s["name"] == "Nightly learning")
+    assert (
+        learn["continue-on-error"] is True
+        and "runner.temp" in learn["env"]["STOA__BIG_PAPER__FEED_DIR"]
+    )
     run = next(s for s in job["steps"] if s["name"] == "Run")
     assert "runner.temp" in run["env"]["STOA__BIG_PAPER__FEED_DIR"]  # not under state-branch
     assert "login" not in text and "upload-artifact" not in text

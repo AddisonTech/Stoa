@@ -417,6 +417,7 @@ def execute(ctx: Ctx, force: bool) -> None:
             "scoreboard",
             "model-check",
             "shadow-lock",
+            "learn",
         ]
     ),
 )
@@ -476,6 +477,10 @@ def bigpaper_cmd(
         graded = bigpaper.scoreboard(rt)
         click.echo(f"big paper scoreboard: {graded.status}")
         sys.exit(graded.code)
+    if job == "learn":
+        learned = bigpaper.learn(rt)
+        click.echo(f"big paper learn: {learned.status}")
+        sys.exit(learned.code)
     if job == "shadow-lock":
         shadowed = bigpaper.shadow_lock(rt)
         click.echo(f"big paper shadow-lock: {shadowed.status}")
