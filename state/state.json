@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "high_water_mark": "100.20365673172",
+  "high_water_mark": "100.51028387006",
   "kill_switch": {
     "active": false,
     "tripped_session": null,
@@ -13,14 +13,15 @@
     "equity": "100",
     "benchmark_close": "759.97"
   },
-  "last_close_session": "2026-10-28",
-  "last_close_equity": "99.61784259206",
-  "last_benchmark_close": "772.31",
+  "last_close_session": "2026-10-29",
+  "last_close_equity": "100.51028387006",
+  "last_benchmark_close": "769.36",
   "decided_sessions": [
     "2026-10-23",
     "2026-10-26",
     "2026-10-27",
-    "2026-10-28"
+    "2026-10-28",
+    "2026-10-29"
   ],
   "executed_sessions": [
     "2026-10-26",
@@ -37,47 +38,139 @@
   "override_sessions": [
     "2026-10-26"
   ],
-  "pending_plan": null,
+  "pending_plan": {
+    "plan_id": "b65deed954",
+    "strategy": "agents",
+    "mode": "paper",
+    "decided_session": "2026-10-29",
+    "execute_session": "2026-10-30",
+    "created_at": "2026-10-29T21:15:46.957139Z",
+    "orders": [],
+    "equity_at_decide": "100.51028387006",
+    "kill_switch": false,
+    "reserves": [
+      {
+        "symbol": "CVX",
+        "side": "buy",
+        "notional": "20.10",
+        "qty": null,
+        "ref_price": "231.46",
+        "entry_atr": "4.7107142857142845",
+        "stop_price": "219.6832",
+        "reason": "entry",
+        "conviction": 5,
+        "thesis": "Momentum score 0.270: 60 day +25.2%, 120 day +29.7%, above its 50 and 200 day averages.",
+        "client_order_id": "stoa-20261030-CVX-buy-b65deed954",
+        "probability": null,
+        "sector": null,
+        "max_weight": null
+      },
+      {
+        "symbol": "XOM",
+        "side": "buy",
+        "notional": "20.10",
+        "qty": null,
+        "ref_price": "183.29",
+        "entry_atr": "4.021878571428571",
+        "stop_price": "173.2353",
+        "reason": "entry",
+        "conviction": 4,
+        "thesis": "Momentum score 0.244: 60 day +21.7%, 120 day +28.5%, above its 50 and 200 day averages.",
+        "client_order_id": "stoa-20261030-XOM-buy-b65deed954",
+        "probability": null,
+        "sector": null,
+        "max_weight": null
+      },
+      {
+        "symbol": "AMD",
+        "side": "buy",
+        "notional": "20.10",
+        "qty": null,
+        "ref_price": "566.42",
+        "entry_atr": "28.432642857142856",
+        "stop_price": "495.3384",
+        "reason": "entry",
+        "conviction": 3,
+        "thesis": "Momentum score 0.203: 60 day +17.5%, 120 day +24.4%, above its 50 and 200 day averages.",
+        "client_order_id": "stoa-20261030-AMD-buy-b65deed954",
+        "probability": null,
+        "sector": null,
+        "max_weight": null
+      },
+      {
+        "symbol": "V",
+        "side": "buy",
+        "notional": "20.10",
+        "qty": null,
+        "ref_price": "410.54",
+        "entry_atr": "7.48282857142857",
+        "stop_price": "391.8329",
+        "reason": "entry",
+        "conviction": 2,
+        "thesis": "Momentum score 0.187: 60 day +11.6%, 120 day +29.3%, above its 50 and 200 day averages.",
+        "client_order_id": "stoa-20261030-V-buy-b65deed954",
+        "probability": null,
+        "sector": null,
+        "max_weight": null
+      },
+      {
+        "symbol": "MA",
+        "side": "buy",
+        "notional": "20.10",
+        "qty": null,
+        "ref_price": "635.7",
+        "entry_atr": "11.67816428571429",
+        "stop_price": "606.5046",
+        "reason": "entry",
+        "conviction": 1,
+        "thesis": "Momentum score 0.184: 60 day +11.6%, 120 day +28.7%, above its 50 and 200 day averages.",
+        "client_order_id": "stoa-20261030-MA-buy-b65deed954",
+        "probability": null,
+        "sector": null,
+        "max_weight": null
+      }
+    ]
+  },
   "positions_meta": {
     "CRM": {
       "entry_session": "2026-10-26",
       "entry_price": "247.904",
       "entry_atr": "8.716889012925364774445830147",
-      "ref_session": "2026-10-28",
-      "ref_close": "242.11",
+      "ref_session": "2026-10-29",
+      "ref_close": "230.9",
       "stop_price": "226.12"
     },
     "MSFT": {
       "entry_session": "2026-10-26",
       "entry_price": "526.388",
       "entry_atr": "11.08006618285911964164648911",
-      "ref_session": "2026-10-28",
-      "ref_close": "531.01",
-      "stop_price": "501.76"
+      "ref_session": "2026-10-29",
+      "ref_close": "530.14",
+      "stop_price": "508.05"
     },
     "KO": {
       "entry_session": "2026-10-26",
       "entry_price": "92.278",
       "entry_atr": "1.673565194693129510421745227",
-      "ref_session": "2026-10-28",
-      "ref_close": "91.73",
-      "stop_price": "88.10"
+      "ref_session": "2026-10-29",
+      "ref_close": "92.82",
+      "stop_price": "88.14"
     },
     "LLY": {
       "entry_session": "2026-10-26",
       "entry_price": "1286.042",
       "entry_atr": "41.74620280932042817333877781",
-      "ref_session": "2026-10-28",
-      "ref_close": "1288.3",
-      "stop_price": "1181.68"
+      "ref_session": "2026-10-29",
+      "ref_close": "1373.7",
+      "stop_price": "1283.15"
     },
     "AAPL": {
       "entry_session": "2026-10-26",
       "entry_price": "343.77",
       "entry_atr": "6.114998258681441153900352289",
-      "ref_session": "2026-10-28",
-      "ref_close": "343.83",
-      "stop_price": "329.44"
+      "ref_session": "2026-10-29",
+      "ref_close": "348.91",
+      "stop_price": "333.09"
     }
   },
   "realized_by_year": {},
@@ -147,6 +240,19 @@
         "reference_closes": {
           "MTUM": "303.5"
         }
+      },
+      {
+        "session": "2026-10-29",
+        "mode": "paper",
+        "broker_equity": "100.51028387006",
+        "adjusted_equity": "100.461308871005730",
+        "benchmark_close": "769.36",
+        "trades_closed": 0,
+        "flow": "0",
+        "strategy": "agents",
+        "reference_closes": {
+          "MTUM": "298.34"
+        }
       }
     ],
     "cost_drag": "0.048974999054270",
@@ -162,68 +268,32 @@
   },
   "approval_nonce": null,
   "approval_required": false,
-  "protective_stops": [
-    {
-      "symbol": "AAPL",
-      "client_order_id": "stoa-stop-20261029-AAPL-1",
-      "stop_price": "329.44",
-      "qty": "0.0523315",
-      "session": "2026-10-29"
-    },
-    {
-      "symbol": "CRM",
-      "client_order_id": "stoa-stop-20261029-CRM-1",
-      "stop_price": "226.12",
-      "qty": "0.080636052",
-      "session": "2026-10-29"
-    },
-    {
-      "symbol": "KO",
-      "client_order_id": "stoa-stop-20261029-KO-1",
-      "stop_price": "88.10",
-      "qty": "0.216628015",
-      "session": "2026-10-29"
-    },
-    {
-      "symbol": "LLY",
-      "client_order_id": "stoa-stop-20261029-LLY-1",
-      "stop_price": "1181.68",
-      "qty": "0.015543815",
-      "session": "2026-10-29"
-    },
-    {
-      "symbol": "MSFT",
-      "client_order_id": "stoa-stop-20261029-MSFT-1",
-      "stop_price": "501.76",
-      "qty": "0.037975789",
-      "session": "2026-10-29"
-    }
-  ],
+  "protective_stops": [],
   "stop_outs": [],
   "holdings_at_close": {
     "AAPL": {
       "qty": "0.0523315",
-      "close": "343.83"
+      "close": "348.91"
     },
     "CRM": {
       "qty": "0.080636052",
-      "close": "242.11"
+      "close": "230.9"
     },
     "KO": {
       "qty": "0.216628015",
-      "close": "91.73"
+      "close": "92.82"
     },
     "LLY": {
       "qty": "0.015543815",
-      "close": "1288.3"
+      "close": "1373.7"
     },
     "MSFT": {
       "qty": "0.037975789",
-      "close": "531.01"
+      "close": "530.14"
     }
   },
   "last_reference_closes": {
-    "MTUM": "303.5"
+    "MTUM": "298.34"
   },
   "cap_raises": [],
   "cap_asks": [],
