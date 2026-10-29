@@ -319,3 +319,156 @@ def walk_forward(
         out.loc[test.index] = brain.predict(test)
         log.info("walk-forward slice %s to %s: %d train rows", days[t0], days[t1], len(train))
     return out
+
+
+# ---- the pre-market hunter ---------------------------------------------------------------------
+
+THIN = 2  # at most this many articles in the 60 sessions before
+CATCHUP = Path("data/newsbrain/premarket/catchup.parquet")
+
+
+def prior_articles(rows: pd.DataFrame) -> pd.Series:
+    """Articles in the 60 sessions before, from trial 9's coverage (log1p of the mean daily
+    count over those sessions), as stoa/newsbrain/catchup.py counts them."""
+    return pd.Series(np.round(np.expm1(rows["coverage"].astype(float)) * 60), index=rows.index)
+
+
+def premarket_flag(rows: pd.DataFrame, first_pre: pd.Series) -> pd.Series:
+    """1 when news landed before the open (``first_pre`` is the first article known since the
+    close before, NaT when none) on a small, thinly covered company; else 0."""
+    small = thirds(rows) == 0
+    thin = prior_articles(rows) <= THIN
+    return (first_pre.notna() & small & thin).astype(float)
+
+
+def with_premarket(
+    rows: pd.DataFrame, first_pre: pd.Series, open_at: pd.Series, catchup: pd.DataFrame
+) -> pd.DataFrame:
+    """``rows`` (with ev_type and ev_sign) plus pm_flag, pm_hours (from the first pre-market
+    article to the 9:30 open) and pm_done: for past flagged events of the same type and sign,
+    the share of the move from the close before to the next 9:45 am already done by 9:45 am
+    (sessions at least two back), from the catch-up table."""
+    out = rows.copy()
+    out["pm_flag"] = premarket_flag(rows, first_pre)
+    hours = (open_at - first_pre).dt.total_seconds() / 3600.0
+    out["pm_hours"] = np.where(out["pm_flag"] > 0, hours, np.nan)
+    c = catchup.dropna(subset=["gap_945", "rest"]).merge(
+        rows[["symbol", "sidx", "ev_type", "ev_sign"]], on=["symbol", "sidx"], how="inner"
+    )
+    c = c[c["ev_type"].notna()]
+    s = np.sign(c["gap_945"].to_numpy(dtype=float))
+    hist = pd.DataFrame(
+        {
+            "k": memory_key(c.assign(ev_type=c["ev_type"].astype(int)), "type").to_numpy(),
+            "sidx": c["sidx"].to_numpy(),
+            "x": c["gap_945"].to_numpy(dtype=float) * s,
+            "hit": (c["gap_945"] + c["rest"]).to_numpy(dtype=float) * s,
+        }
+    )
+    flagged = out["pm_flag"] > 0
+    out["pm_done"] = np.nan
+    q = out[flagged & out["ev_type"].notna()]
+    if len(q) and len(hist):
+        key = memory_key(q.assign(ev_type=q["ev_type"].astype(int)), "type")
+        st = asof(hist, pd.DataFrame({"k": key.to_numpy(), "sidx": q["sidx"].to_numpy()}), "k")
+        allst = asof(hist.assign(k=0), pd.DataFrame({"k": 0, "sidx": q["sidx"].to_numpy()}), "k")
+        own = st["s"].to_numpy() / np.where(st["h"].to_numpy() != 0, st["h"].to_numpy(), np.nan)
+        top = allst["s"].to_numpy() / np.where(
+            allst["h"].to_numpy() != 0, allst["h"].to_numpy(), np.nan
+        )
+        out.loc[q.index, "pm_done"] = shrunk(st["n"].to_numpy(dtype=float), own, top)
+    return out
+
+
+def first_premarket(rows: pd.DataFrame, times: pd.DataFrame, days: list[Any]) -> pd.Series:
+    """For each row, the first article known between the close of the session before and the
+    9:00 am cutoff (NaT when none), and each row's 9:30 open time."""
+    from stoa import clock
+
+    closes = pd.Series(
+        [pd.Timestamp(clock.session(d).close) for d in days], dtype="datetime64[ns, UTC]"
+    )
+    t = times.copy()
+    t["after"] = closes.reindex(t["sidx"] - 1).to_numpy()
+    pre = t[t["known_at"] >= t["after"]]
+    first = pre.groupby(["symbol", "sidx"])["known_at"].min().rename("first_pre").reset_index()
+    m = rows[["symbol", "sidx"]].merge(first, on=["symbol", "sidx"], how="left")
+    return pd.Series(m["first_pre"].to_numpy(), index=rows.index)
+
+
+def open_times(rows: pd.DataFrame, days: list[Any]) -> pd.Series:
+    from stoa import clock
+
+    opens = pd.Series(
+        [pd.Timestamp(clock.session(d).open) for d in days], dtype="datetime64[ns, UTC]"
+    )
+    return pd.Series(opens.reindex(rows["sidx"]).to_numpy(), index=rows.index)
+
+
+# ---- ripples to partners -----------------------------------------------------------------------
+
+RELATIONS = ("customer", "supplier")
+
+
+def with_ripple(
+    rows: pd.DataFrame, events: pd.DataFrame, edges: pd.DataFrame, cut: np.ndarray
+) -> pd.DataFrame:
+    """``rows`` plus rip_cust and rip_supp (the news direction at the company's customers and
+    at its suppliers in the session before and this one) and rip_mem (for the strongest such
+    partner event, how companies in that position historically did the next session against
+    SPY after costs, sessions at least two back).
+
+    ``edges``: symbol, partner, relation (the partner seen from the symbol: "customer" means
+    the partner buys from it), accepted, valid_to (``ripplemap.symbol_edges``).
+    """
+    out = rows.copy()
+    for col in RIPPLE_FEATURES:
+        out[col] = np.nan
+    e = edges[edges["relation"].isin(RELATIONS)].copy()
+    if e.empty or events.empty:
+        return out
+    e["start"] = pn.to_session(e["accepted"], cut)
+    e["end"] = pn.to_session(e["valid_to"], cut)
+    e = e[["symbol", "partner", "relation", "start", "end"]].drop_duplicates()
+    ev = events[["symbol", "sidx", "ev_dir", "ev_type", "ev_sign", "ev_size"]].rename(
+        columns={"symbol": "partner", "sidx": "psidx"}
+    )
+    hits = []
+    for lag in (0, 1):  # the partner's news this session or the one before
+        m = e.merge(ev, on="partner", how="inner")
+        m["sidx"] = m["psidx"] + lag
+        m = m[(m["sidx"] >= m["start"]) & (m["sidx"] < m["end"])]
+        hits.append(m)
+    m = pd.concat(hits, ignore_index=True)
+    want = rows[["symbol", "sidx"]].drop_duplicates()
+    m = m.merge(want, on=["symbol", "sidx"], how="inner")
+    if m.empty:
+        return out
+    side = m.groupby(["symbol", "sidx", "relation"])["ev_dir"].mean().unstack("relation")
+    m["strength"] = m["ev_dir"].abs() * m["ev_size"].fillna(1.0)
+    top = m.sort_values("strength", ascending=False).drop_duplicates(["symbol", "sidx"])
+    top = top.merge(rows[["symbol", "sidx", "excess_1", "y_1"]], on=["symbol", "sidx"], how="left")
+    rel = (top["relation"] == "supplier").astype(int)
+    top["k"] = (top["ev_type"].astype(int) * 3 + (top["ev_sign"].astype(int) + 1)) * 2 + rel
+    lab = top[top["excess_1"].notna()]
+    hist = pd.DataFrame(
+        {"k": lab["k"], "sidx": lab["sidx"], "x": lab["excess_1"], "hit": lab["y_1"]}
+    )
+    st = asof(hist, top[["k", "sidx"]], "k")
+    allst = asof(hist.assign(k=0), top[["k", "sidx"]].assign(k=0), "k")
+    n = st["n"].to_numpy(dtype=float)
+    own = np.where(n > 0, st["s"].to_numpy() / np.maximum(n, 1), np.nan)
+    na = allst["n"].to_numpy(dtype=float)
+    parent = np.where(na > 0, allst["s"].to_numpy() / np.maximum(na, 1), 0.0)
+    top["rip_mem"] = shrunk(n, own, parent)
+    got = side.reset_index().merge(
+        top[["symbol", "sidx", "rip_mem"]], on=["symbol", "sidx"], how="outer"
+    )
+    got = got.rename(columns={"customer": "rip_cust", "supplier": "rip_supp"})
+    out = out.drop(columns=list(RIPPLE_FEATURES)).merge(
+        got.reindex(columns=["symbol", "sidx", *RIPPLE_FEATURES]),
+        on=["symbol", "sidx"],
+        how="left",
+    )
+    out.index = rows.index
+    return out

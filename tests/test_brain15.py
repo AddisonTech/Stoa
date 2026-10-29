@@ -94,3 +94,57 @@ def test_the_top_5_and_their_grade() -> None:
     assert g["picks"] == 7 and g["days"] == 2
     assert g["hit_rate"] == pytest.approx(4 / 7)
     assert g["day_hit_rate"] == pytest.approx(0.5)  # day 1 up, day 2 down
+
+
+def test_ripples_reach_a_company_from_its_customers_news() -> None:
+    cut = np.arange(10, dtype=np.int64) * 10
+    t = pd.Timestamp(0, unit="ns", tz="UTC")
+    edges = pd.DataFrame(
+        {
+            "symbol": ["SUP", "SUP"],
+            "partner": ["BIG", "OLD"],
+            "relation": ["customer", "customer"],
+            "accepted": [t, t],
+            "valid_to": [t + pd.Timedelta(55, unit="ns"), t + pd.Timedelta(15, unit="ns")],
+        }
+    )
+    beat = eventread.CODES.index("earnings_beat")
+    events = pd.DataFrame(
+        {
+            "symbol": ["BIG", "BIG", "OLD"],
+            "sidx": [2, 4, 4],
+            "ev_dir": [0.8, -0.6, 0.9],
+            "ev_type": [beat, beat, beat],
+            "ev_sign": [1, -1, 1],
+            "ev_size": [2.0, 2.0, 2.0],
+        }
+    )
+    rows = pd.DataFrame(
+        {
+            "symbol": ["SUP", "SUP", "SUP"],
+            "sidx": [3, 5, 8],
+            "excess_1": [0.01, -0.02, 0.0],
+            "y_1": [1.0, 0.0, 0.0],
+        }
+    )
+    got = b.with_ripple(rows, events, edges, cut).set_index("sidx")
+    # Session 3 sees BIG's news of session 2; session 5 sees BIG's of 4 (OLD's link ended).
+    assert got.loc[3, "rip_cust"] == pytest.approx(0.8)
+    assert got.loc[5, "rip_cust"] == pytest.approx(-0.6)
+    assert np.isnan(got.loc[8, "rip_cust"]) and np.isnan(got.loc[3, "rip_supp"])
+    assert got.loc[3, "rip_mem"] == pytest.approx(0.0)  # no history yet: the parent's 0
+
+
+def test_the_premarket_flag_needs_news_before_the_open_on_a_small_thin_company() -> None:
+    rows = pd.DataFrame(
+        {
+            "symbol": ["S", "M", "L", "T"],
+            "sidx": [7, 7, 7, 7],
+            "log_adv": [8.0, 15.0, 20.0, 9.0],
+            "coverage": [np.log1p(1 / 60), 0.0, 0.0, np.log1p(10 / 60)],
+        }
+    )
+    pre = pd.Series([pd.Timestamp("2024-03-01 12:00", tz="UTC")] * 4)
+    flag = b.premarket_flag(rows, pre)
+    assert list(flag) == [1.0, 0.0, 0.0, 0.0]  # M and L are not small, T is not thin
+    assert list(b.premarket_flag(rows, pd.Series([pd.NaT] * 4))) == [0.0] * 4
