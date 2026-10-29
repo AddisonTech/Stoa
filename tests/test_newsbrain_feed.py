@@ -438,3 +438,79 @@ def test_the_picks_model_can_be_swapped_and_rolled_back(dell: tuple[Path, Dell])
         feed.scored(fd, day, path, "0" * 64)
     back, _ = feed.scored(fd, day)  # rolled back: the same p as before the swap
     assert back["p"].tolist() == base["p"].tolist()
+
+
+def test_a_shadow_model_scores_the_picks_rows_and_locks_beside_them(
+    dell: tuple[Path, Dell], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import hashlib
+
+    from stoa import alerts, bigpaper, shadowboard
+    from stoa.config import Secrets
+    from tests.conftest import make_settings
+    from tests.test_shadowboard import FakeHub as ScoreHub
+
+    root, fake = dell
+    fd = seeded(root)
+    src = fake.sources()
+    day = SEED
+    for _ in range(2):
+        day = clock.next_session(day)
+        feed.run(fd, src, at(day, "09:00", 30))
+    rows, _ = feed.scored(fd, day)  # what the picks scored, with the frozen model
+    blob = pickle.dumps(Always(0.9))
+    (root / "hub" / "models" / "v2").mkdir(parents=True)
+    (root / "hub" / "models" / "v2" / "model_h1.pkl").write_bytes(blob)
+    hub(monkeypatch, True, root / "hub")
+
+    def runtime(name: str, pin: str) -> bigpaper.BigRuntime:
+        base = make_settings(
+            big_paper__enabled="true",
+            big_paper__feed_dir=str(fd.root),
+            big_paper__state_dir=str(root / name),
+        )
+        bp = base.big_paper.model_copy(update={"shadow_models": {"v2": pin}})
+        rt = bigpaper.BigRuntime(
+            base=base.model_copy(update={"big_paper": bp}),
+            secrets=Secrets.from_env(
+                {"ALPACA_BIG_PAPER_KEY_ID": "k", "ALPACA_BIG_PAPER_SECRET": "s", "HF_TOKEN": "t"}
+            ),
+            notifier=alerts.RecordingNotifier(),
+        )
+        rt.hub = ScoreHub(root / f"{name}-hub")
+        rt.now = lambda: at(day, "09:05")
+        return rt
+
+    pin = hashlib.sha256(blob).hexdigest()
+    rt = runtime("state", pin)
+    assert bigpaper.shadow_lock(rt).status == "no_picks_lock"  # the picks locked nothing
+    bigpaper.lock_scoreboard(rt, day, rows, bigpaper.FROZEN_VERSION, at(day, "09:03"))
+    assert bigpaper.shadow_lock(rt).status == "locked"
+    got = root / "state-hub" / shadowboard.folder("locked", day, "v2")
+    locked = pd.read_parquet(got / "predictions.parquet")
+    assert set(locked["symbol"]) == set(rows["symbol"]) and (locked["p"] == 0.9).all()
+    assert set(locked["model_version"]) == {"v2"} and locked["above"].all()
+    logged = shadowboard.logged_hashes(root / "state")
+    assert set(logged) == {
+        shadowboard.folder("locked", day),
+        shadowboard.folder("locked", day, "v2"),
+    }
+    assert bigpaper.shadow_lock(rt).status == "already_locked"
+    # The picks' own p must come back from the rows read again, to the last bit.
+    off = runtime("state-off", pin)
+    bigpaper.lock_scoreboard(
+        off, day, rows.assign(p=rows["p"] + 1e-12), "t9-frozen", at(day, "09:03")
+    )
+    with pytest.raises(feed.FeedError, match="picks' own p"):
+        bigpaper.shadow_lock(off)
+    assert not (root / "state-off-hub" / "scoreboard" / "shadow").exists()
+    # A model that is not the pinned one, or a lock after 9:30 am, is not locked.
+    wrong = runtime("state-pin", "0" * 64)
+    bigpaper.lock_scoreboard(wrong, day, rows, "t9-frozen", at(day, "09:03"))
+    assert bigpaper.shadow_lock(wrong).status == "failed"
+    late = runtime("state-late", pin)
+    bigpaper.lock_scoreboard(late, day, rows, "t9-frozen", at(day, "09:03"))
+    late.now = lambda: at(day, "09:30")
+    assert bigpaper.shadow_lock(late).status == "failed"
+    for name in ("state-pin", "state-late"):
+        assert not (root / f"{name}-hub" / "scoreboard" / "shadow").exists()

@@ -460,6 +460,9 @@ class BigPaperConfig(_Frozen):
     # Back to blank rolls back.
     model: str = ""
     model_sha256: str = ""
+    # Shadow models, version: sha256. Each scores the picks' rows every morning and is locked
+    # and graded on the shadow scoreboard beside the picks' model; none of them ever trades.
+    shadow_models: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("tag")
     @classmethod

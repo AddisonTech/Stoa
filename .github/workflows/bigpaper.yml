@@ -18,6 +18,9 @@ name: bigpaper
 # the Dell; NPY_DISABLE_CPU_FEATURES keeps any AVX-512 path off, since the Dell has none.
 # model-check runs on Windows too: it scores the Dell's backfilled rows with a model version
 # and requires the Dell's p to the last bit (docs/RUNBOOK.md 13b, the shadow scoreboard).
+# After the picks, a separate step scores the same rows with each shadow model
+# (big_paper.shadow_models) and locks their lists beside the picks' own; it never changes the
+# picks, and its failure leaves the run green.
 # EXECUTE, SUMMARY and scoreboard stay on Linux. feed-reset puts the dataset's live state back to the
 # replay_from commit (docs/RUNBOOK.md 13b).
 # The GitHub crons below are the backup, a few minutes late, in both the EDT and EST slot.
@@ -214,6 +217,24 @@ jobs:
           start=$SECONDS
           stoa bigpaper "$JOB" "${flags[@]}"
           echo "TIMING ${JOB}: $((SECONDS - start)) s"
+
+      - name: Shadow models
+        if: steps.secrets.outputs.ready == 'true' && steps.pick.outputs.job == 'picks'
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          STOA__BIG_PAPER__FEED_DIR: ${{ runner.temp }}/stoa-feed
+          NPY_DISABLE_CPU_FEATURES: "${{ runner.os == 'Windows' && 'X86_V4 AVX512F AVX512CD AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL AVX512_SPR' || '' }}"
+        # Reads the rows the picks step left in the feed folder, checks the picks' model gives
+        # them the picks' own p, and locks each shadow model's scores before 9:30 am.
+        run: |
+          flags=()
+          if [ "$DRY_INPUT" = "true" ]; then flags+=(--dry); fi
+          if [ -n "$MODEL_INPUT" ]; then flags+=(--model "$MODEL_INPUT"); fi
+          start=$SECONDS
+          stoa bigpaper shadow-lock "${flags[@]}"
+          echo "TIMING shadow-lock: $((SECONDS - start)) s"
 
       - name: Save state
         if: always() && steps.secrets.outputs.ready == 'true' && inputs.dry != true && inputs.replay == ''

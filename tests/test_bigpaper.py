@@ -464,7 +464,7 @@ def test_the_feed_state_lives_only_in_the_private_dataset() -> None:
     job = wf["jobs"]["run"]
     assert "HF_TOKEN" not in job["env"]  # only the step that runs Stoa gets it
     with_token = [s["name"] for s in job["steps"] if "HF_TOKEN" in (s.get("env") or {})]
-    assert with_token == ["Run"]
+    assert with_token == ["Run", "Shadow models"]
     run = next(s for s in job["steps"] if s["name"] == "Run")
     assert "runner.temp" in run["env"]["STOA__BIG_PAPER__FEED_DIR"]  # not under state-branch
     assert "login" not in text and "upload-artifact" not in text
@@ -474,6 +474,16 @@ def test_the_feed_state_lives_only_in_the_private_dataset() -> None:
     assert "windows-latest" in job["runs-on"] and '["feed","picks","model-check"]' in job["runs-on"]
     assert "X86_V4" in run["env"]["NPY_DISABLE_CPU_FEATURES"]
     assert "--replay-from" in run["run"]
+    # The shadow models run after the picks, in their own step that cannot fail the run, and
+    # before the state is saved, so their hashes reach the state branch.
+    names = [s["name"] for s in job["steps"]]
+    assert names.index("Run") < names.index("Shadow models") < names.index("Save state")
+    shadow = job["steps"][names.index("Shadow models")]
+    assert shadow["continue-on-error"] is True and shadow["timeout-minutes"] <= 15
+    assert "steps.pick.outputs.job == 'picks'" in shadow["if"]
+    assert "stoa bigpaper shadow-lock" in shadow["run"]
+    assert shadow["env"]["STOA__BIG_PAPER__FEED_DIR"] == run["env"]["STOA__BIG_PAPER__FEED_DIR"]
+    assert shadow["env"]["NPY_DISABLE_CPU_FEATURES"] == run["env"]["NPY_DISABLE_CPU_FEATURES"]
 
 
 # ---- the public dashboard ------------------------------------------------------------------------
@@ -565,6 +575,28 @@ def test_the_picks_model_is_pinned_by_version_and_hash_and_rolls_back() -> None:
     dry = rt()
     dry.model_override = "t12-all-y"
     assert bigpaper.model_choice(dry) == ("t12-all-y", None)  # its meta.json gives the hash
+
+
+def test_the_shadow_model_is_scored_beside_the_frozen_picks_model(tmp_path: Path) -> None:
+    s = make_settings()
+    assert s.big_paper.model == "" and s.big_paper.shadow_models == {
+        "t12-all-20261027": "e66617a3a2433b90a284111665c5de0407be9cd35c23b35996fb7f465830594a"
+    }
+    from tests.test_shadowboard import FakeHub
+
+    r = bigpaper.BigRuntime(
+        base=settings(tmp_path),
+        secrets=Secrets.from_env({**BIG, "HF_TOKEN": "tok"}),
+        notifier=alerts.RecordingNotifier(),
+    )
+    r.hub, r.prices_945 = FakeHub(tmp_path / "hub"), lambda day, symbols: {}
+    assert bigpaper.lineup(r) == [("t9-frozen", "picks"), ("t12-all-20261027", "shadow")]
+    assert bigpaper.shadow_summary_line(r, at(SESSION, "17:15")).splitlines() == [
+        "Shadow: no locked day graded yet.",
+        "Shadow t12-all-20261027: no locked day graded yet.",
+    ]
+    board = json.loads((tmp_path / "big" / "scoreboard" / "scoreboard.json").read_text("utf-8"))
+    assert [(m["version"], m["role"]) for m in board["models"]] == bigpaper.lineup(r)
 
 
 def test_a_scoreboard_failure_never_stops_the_picks(tmp_path: Path) -> None:

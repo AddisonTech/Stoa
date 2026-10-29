@@ -1,5 +1,6 @@
 """The shadow scoreboard (stoa/shadowboard.py): the lock, the hash, the buckets, the
-grader's trade rule, and the whole round trip against a fake dataset."""
+grader's trade rule, a shadow model beside the picks' model, and the whole round trip
+against a fake dataset."""
 
 from __future__ import annotations
 
@@ -97,7 +98,9 @@ def test_the_lock_refuses_a_late_file_and_a_second_lock(tmp_path: Path) -> None:
     assert not (tmp_path / "hub").exists() and not shadowboard.locks_path(state).exists()
     meta = shadowboard.lock(api, "r", state, work, SESSION, df, ny(SESSION, "09:04"))
     assert meta["rows"] == 4 and meta["above"] == 2 and meta["kind"] == "locked"
-    assert shadowboard.logged_hashes(state) == {SESSION.isoformat(): meta["sha256"]}
+    assert shadowboard.logged_hashes(state) == {
+        shadowboard.folder("locked", SESSION): meta["sha256"]
+    }
     with pytest.raises(shadowboard.LockRefused, match="already locked"):
         shadowboard.lock(api, "r", state, work, SESSION, df, ny(SESSION, "09:05"))
 
@@ -226,8 +229,10 @@ def test_lock_then_grade_the_next_morning(tmp_path: Path) -> None:
     assert [d["session"] for d in got] == [SESSION.isoformat()] and "refused" not in got[0]
     assert calls == [SESSION, EXIT]  # in at 9:45 am of the session, out at 9:45 am the next
     board = shadowboard.read_board(state)
-    assert board is not None and board["locked"]["days"] == 1 and board["backfill"]["days"] == 0
-    assert board["locked"]["scored"] == 4 and board["locked"]["above"] == 2
+    assert board is not None and [m["version"] for m in board["models"]] == ["v1"]
+    col = board["models"][0]
+    assert col["role"] == "picks" and col["locked"]["days"] == 1 and col["backfill"]["days"] == 0
+    assert col["locked"]["scored"] == 4 and col["locked"]["above"] == 2
     line = shadowboard.shadow_line(shadowboard.latest_locked(state))
     assert line.startswith("Shadow: 4 scored, 2 above line, above-line avg vs SPY ")
     assert line.endswith("% (2026-10-29)")
@@ -257,11 +262,69 @@ def test_a_tampered_or_late_lock_is_refused_and_backfill_kept_apart(tmp_path: Pa
     assert "refused" not in by[("backfill", prev.isoformat())]
     board = shadowboard.read_board(state)
     assert board is not None
-    assert board["locked"]["days"] == 0 and board["backfill"]["days"] == 1
+    col = board["models"][0]
+    assert col["locked"]["days"] == 0 and col["backfill"]["days"] == 1
     assert board["refused"][0]["session"] == SESSION.isoformat()
     assert shadowboard.latest_locked(state) is None
     assert shadowboard.shadow_line(None, "first locked day 2026-10-29 is graded later.") == (
         "Shadow: first locked day 2026-10-29 is graded later."
+    )
+
+
+# ---- a shadow model -------------------------------------------------------------------------
+
+
+def shadow_scored() -> pd.DataFrame:
+    return scored().assign(p=[0.60, 0.61, 0.30, 0.30])  # AAA and BBB above the line
+
+
+def test_a_shadow_model_is_locked_and_graded_in_its_own_column(tmp_path: Path) -> None:
+    api = FakeHub(tmp_path / "hub")
+    state, work = tmp_path / "state", tmp_path / "work"
+    picks = shadowboard.predictions(scored(), "v1")
+    shadow = shadowboard.predictions(shadow_scored(), "v2")
+    shadowboard.lock(api, "r", state, work, SESSION, picks, ny(SESSION, "09:03"))
+    meta = shadowboard.lock(api, "r", state, work, SESSION, shadow, ny(SESSION, "09:04"), "v2")
+    path = shadowboard.folder("locked", SESSION, "v2")
+    assert path == "scoreboard/shadow/v2/locked/2026-10-29"
+    assert shadowboard.logged_hashes(state)[path] == meta["sha256"] and meta["kind"] == "locked"
+    assert shadowboard.locked_sessions(state) == [SESSION]
+    assert shadowboard.locked_sessions(state, "v2") == [SESSION]
+    with pytest.raises(shadowboard.LockRefused, match="already locked"):
+        shadowboard.lock(api, "r", state, work, SESSION, shadow, ny(SESSION, "09:05"), "v2")
+    with pytest.raises(shadowboard.LockRefused, match="9:30"):
+        shadowboard.lock(api, "r", state, work, SESSION, shadow, ny(SESSION, "09:30"), "v3")
+    # A file in one model's folder that names another model is never counted for it.
+    shadowboard.lock(api, "r", state, work, SESSION, picks, ny(SESSION, "09:06"), "v4")
+    lineup = [("v1", "picks"), ("v2", "shadow"), ("v4", "shadow")]
+    got = shadowboard.grade_pending(
+        api, "r", state, work, prices_945(BOOK, []), ny(EXIT, "17:15"), lineup
+    )
+    assert sorted(d["path"] for d in got) == [
+        "scoreboard/locked/2026-10-29",
+        "scoreboard/shadow/v2/locked/2026-10-29",
+        "scoreboard/shadow/v4/locked/2026-10-29",
+    ]
+    board = shadowboard.read_board(state)
+    assert board is not None
+    cols = {m["version"]: m for m in board["models"]}
+    assert [m["version"] for m in board["models"]] == ["v1", "v2", "v4"]
+    assert cols["v1"]["role"] == "picks" and cols["v2"]["role"] == "shadow"
+    assert cols["v1"]["locked"]["above"] == 2 and cols["v1"]["locked"]["above_hits"] == 1
+    v2 = cols["v2"]["locked"]
+    assert v2["days"] == 1 and v2["scored"] == 4 and v2["above"] == 2 and v2["above_hits"] == 1
+    spy = 505 / 500 - 1
+    assert v2["above_avg_vs_spy"] == pytest.approx(((0.0 - spy) + (0.03 - spy)) / 2)
+    assert cols["v4"]["locked"]["days"] == 0
+    assert "its model is v1, not v4" in board["refused"][0]["why"]
+    assert shadowboard.latest_locked(state)["model_version"] == "v1"  # type: ignore[index]
+    line = shadowboard.shadow_line(shadowboard.latest_locked(state, "v2"), shadow="v2")
+    assert line.startswith("Shadow v2: 4 scored, 2 above line, above-line avg vs SPY +0.50%")
+    assert ", top 10 vs SPY " in line and line.endswith("(2026-10-29)")
+    # Graded once only, in each column.
+    assert (
+        shadowboard.grade_pending(api, "r", state, work, prices_945(BOOK, []), ny(EXIT, "18:00"))
+        == []
     )
 
 
@@ -273,10 +336,27 @@ def test_the_card_shows_the_running_numbers(tmp_path: Path) -> None:
     shadowboard.lock(
         api, "r", state, work, SESSION, shadowboard.predictions(scored(), "v1"), ny(SESSION, "9:03")
     )
-    shadowboard.grade_pending(api, "r", state, work, prices_945(BOOK, []), ny(EXIT, "17:15"))
+    shadowboard.lock(
+        api,
+        "r",
+        state,
+        work,
+        SESSION,
+        shadowboard.predictions(shadow_scored(), "v2"),
+        ny(SESSION, "9:04"),
+        "v2",
+    )
+    lineup = [("v1", "picks"), ("v2", "shadow"), ("v3", "shadow")]
+    shadowboard.grade_pending(
+        api, "r", state, work, prices_945(BOOK, []), ny(EXIT, "17:15"), lineup
+    )
     html = dashboard.render_shadow({"shadow_board": shadowboard.read_board(state)})
-    assert "Since 2026-10-29: 1 mornings, 4 stocks scored, 2 above the 0.55 line" in html
+    assert "v1 (picks model)" in html and "v2 (shadow, never trades)" in html
+    assert "2026-10-29 (1 mornings)" in html and "Above the 0.55 line" in html
+    assert "waiting" in html  # v3 has no graded morning yet
     assert "0.55-0.60" in html and "0.65+" in html and "Calibration" in html
     assert "No locked morning" in dashboard.render_shadow({"shadow_board": None})
+    old = {"line": 0.55, "locked": {"days": 0}, "backfill": {"days": 0}}  # before the columns
+    assert "No locked morning" in dashboard.render_shadow({"shadow_board": old})
     assert json.loads(json.dumps(shadowboard.read_board(state)))  # plain JSON for the page
     assert timedelta(0) <= ny(EXIT, "10:15") - clock.at_ny(EXIT, "10:15")

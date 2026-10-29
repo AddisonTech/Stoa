@@ -416,6 +416,7 @@ def execute(ctx: Ctx, force: bool) -> None:
             "kill-switch-reset",
             "scoreboard",
             "model-check",
+            "shadow-lock",
         ]
     ),
 )
@@ -446,8 +447,8 @@ def bigpaper_cmd(
         why = bigpaper.off_reason(s, sec)
         click.echo(f"big paper account: {'on' if why is None else 'off, ' + why}")
         return
-    if dry and job not in ("feed", "picks"):
-        raise click.UsageError("--dry runs only the feed and the picks")
+    if dry and job not in ("feed", "picks", "shadow-lock"):
+        raise click.UsageError("--dry runs only the feed, the picks and shadow-lock")
     if (at or replay_from) and not dry:
         raise click.UsageError("--at and --replay-from need --dry")
     if model and not (dry or job == "model-check"):
@@ -473,6 +474,10 @@ def bigpaper_cmd(
         graded = bigpaper.scoreboard(rt)
         click.echo(f"big paper scoreboard: {graded.status}")
         sys.exit(graded.code)
+    if job == "shadow-lock":
+        shadowed = bigpaper.shadow_lock(rt)
+        click.echo(f"big paper shadow-lock: {shadowed.status}")
+        sys.exit(shadowed.code)
     if job == "model-check":
         if not model:
             raise click.UsageError("model-check needs --model <version>")

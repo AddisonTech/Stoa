@@ -20,6 +20,12 @@ grades the morning before, and the first locked morning is graded a day later.
 Backfilled days (``scoreboard/backfill/``) are scored after the fact, so they carry no
 lock; they are graded the same way and kept in their own totals, never mixed with the
 locked days.
+
+Shadow models (``big_paper.shadow_models``) are scored beside the picks' model and never
+trade: right after the picks, the same run scores the same rows with each of them and locks
+the list under ``scoreboard/shadow/<version>/locked/<session>/``, with the same deadline, hash
+and log. They are graded the same way, and the board keeps one column per model version,
+each with its own totals.
 """
 
 from __future__ import annotations
@@ -45,6 +51,7 @@ LOCK_AT = "09:30"  # nothing written at or after the open counts
 PRICE_AT, PRICE_UNTIL = "09:45", "10:15"
 PREFIX = "scoreboard"
 KINDS = ("locked", "backfill")
+SHADOW = "shadow"  # scoreboard/shadow/<version>/: a model scored beside the picks', never traded
 # The calibration table: (label, low, high), p in [low, high).
 BUCKETS = (
     ("under 0.50", 0.0, 0.50),
@@ -100,13 +107,26 @@ def sha256(blob: bytes) -> str:
     return hashlib.sha256(blob).hexdigest()
 
 
-def folder(kind: str, session: date) -> str:
-    return f"{PREFIX}/{kind}/{session.isoformat()}"
+def lane(kind: str, shadow: str | None = None) -> str:
+    """The folder of one kind of day: the picks' model's, or a shadow model's."""
+    return f"{PREFIX}/{kind}" if shadow is None else f"{PREFIX}/{SHADOW}/{shadow}/{kind}"
 
 
-def write(root: Path, kind: str, session: date, df: pd.DataFrame, now: datetime) -> dict[str, Any]:
-    """The file and its meta.json under ``root/scoreboard/<kind>/<session>/``."""
-    out = root / folder(kind, session)
+def folder(kind: str, session: date, shadow: str | None = None) -> str:
+    return f"{lane(kind, shadow)}/{session.isoformat()}"
+
+
+def write(
+    root: Path,
+    kind: str,
+    session: date,
+    df: pd.DataFrame,
+    now: datetime,
+    shadow: str | None = None,
+) -> dict[str, Any]:
+    """The file and its meta.json under ``root/scoreboard/<kind>/<session>/`` (or a shadow
+    model's own folder)."""
+    out = root / folder(kind, session, shadow)
     out.mkdir(parents=True, exist_ok=True)
     blob = to_bytes(df)
     (out / "predictions.parquet").write_bytes(blob)
@@ -278,14 +298,19 @@ def pct(x: float | None) -> str:
     return "n/a" if x is None else f"{x * 100:+.2f}%"
 
 
-def shadow_line(day: Mapping[str, Any] | None, waiting: str | None = None) -> str:
-    """The 5:15 pm summary's line for the latest locked day graded."""
+def shadow_line(
+    day: Mapping[str, Any] | None, waiting: str | None = None, shadow: str | None = None
+) -> str:
+    """The 5:15 pm summary's line for the latest locked day graded; a shadow model's line
+    names it and adds its top 10 against SPY."""
+    head = "Shadow:" if shadow is None else f"Shadow {shadow}:"
     if day is None:
-        return "Shadow: " + (waiting or "no locked day graded yet.")
-    avg = summarize(day)["above_avg_vs_spy"]
+        return f"{head} " + (waiting or "no locked day graded yet.")
+    got = summarize(day)
+    top = "" if shadow is None else f", top 10 vs SPY {pct(got['top_avg_vs_spy'])}"
     return (
-        f"Shadow: {day['scored']} scored, {day['above']} above line, "
-        f"above-line avg vs SPY {pct(avg)} ({day['session']})"
+        f"{head} {day['scored']} scored, {day['above']} above line, "
+        f"above-line avg vs SPY {pct(got['above_avg_vs_spy'])}{top} ({day['session']})"
     )
 
 
@@ -339,6 +364,7 @@ def locks_path(state: Path) -> Path:
 
 
 def logged_hashes(state: Path) -> dict[str, str]:
+    """Each locked file's hash, by its folder in the dataset."""
     path = locks_path(state)
     if not path.exists():
         return {}
@@ -346,8 +372,17 @@ def logged_hashes(state: Path) -> dict[str, str]:
     for line in path.read_text(encoding="utf-8").splitlines():
         if line.strip():
             rec = json.loads(line)
-            out.setdefault(rec["session"], rec["sha256"])  # the first lock of a session stands
+            where = rec.get("path") or folder("locked", date.fromisoformat(rec["session"]))
+            out.setdefault(where, rec["sha256"])  # the first lock of a folder stands
     return out
+
+
+def locked_sessions(state: Path, shadow: str | None = None) -> list[date]:
+    """The sessions locked for the picks' model, or for one shadow model."""
+    root = lane("locked", shadow) + "/"
+    return sorted(
+        date.fromisoformat(p.removeprefix(root)) for p in logged_hashes(state) if p.startswith(root)
+    )
 
 
 def lock(
@@ -358,17 +393,18 @@ def lock(
     session: date,
     df: pd.DataFrame,
     now: datetime,
+    shadow: str | None = None,
 ) -> dict[str, Any]:
     """Write the morning's file to the dataset and log its hash on the state branch.
     Refuses at or after 9:30 am, and refuses to replace a session already locked."""
     if now >= lock_deadline(session):
         raise LockRefused(f"it is {now.isoformat()}, at or after 9:30 am of {session}")
-    path = folder("locked", session)
-    if session.isoformat() in logged_hashes(state) or api.file_exists(
+    path = folder("locked", session, shadow)
+    if path in logged_hashes(state) or api.file_exists(
         repo, f"{path}/meta.json", repo_type="dataset"
     ):
-        raise LockRefused(f"{session} is already locked")
-    meta = write(work, "locked", session, df, now)
+        raise LockRefused(f"{path} is already locked")
+    meta = write(work, "locked", session, df, now, shadow)
     api.upload_folder(
         repo_id=repo,
         repo_type="dataset",
@@ -384,16 +420,23 @@ def lock(
     return meta
 
 
-def sessions_in(api: Any, repo: str, kind: str) -> list[date]:
+def children(api: Any, repo: str, path: str) -> list[str]:
     try:
-        tree = api.list_repo_tree(repo, path_in_repo=f"{PREFIX}/{kind}", repo_type="dataset")
-        names = [str(getattr(t, "path", "")).rsplit("/", 1)[-1] for t in tree]
+        tree = api.list_repo_tree(repo, path_in_repo=path, repo_type="dataset")
+        return [str(getattr(t, "path", "")).rsplit("/", 1)[-1] for t in tree]
     except Exception as exc:  # no such folder yet is fine; anything else is a real failure
         if isinstance(exc, FileNotFoundError) or "NotFound" in type(exc).__name__:
             return []
         raise
+
+
+def shadows_in(api: Any, repo: str) -> list[str]:
+    return sorted(children(api, repo, f"{PREFIX}/{SHADOW}"))
+
+
+def sessions_in(api: Any, repo: str, kind: str, shadow: str | None = None) -> list[date]:
     out = []
-    for n in names:
+    for n in children(api, repo, lane(kind, shadow)):
         try:
             out.append(date.fromisoformat(n))
         except ValueError:
@@ -426,6 +469,15 @@ def graded_days(state: Path) -> list[dict[str, Any]]:
     return [json.loads(p.read_text(encoding="utf-8")) for p in sorted(d.glob("*.json"))]
 
 
+def path_of(day: Mapping[str, Any]) -> str:
+    """A graded day's folder in the dataset."""
+    return str(day.get("path") or folder(day["kind"], date.fromisoformat(day["session"])))
+
+
+def day_file(state: Path, path: str) -> Path:
+    return days_path(state) / (path.removeprefix(f"{PREFIX}/").replace("/", "-") + ".json")
+
+
 def ready(session: date, now: datetime) -> date | None:
     """The exit session, once its 9:45 am price window has closed; else None."""
     exit_ = clock.next_session(session)
@@ -433,21 +485,30 @@ def ready(session: date, now: datetime) -> date | None:
 
 
 def grade_pending(
-    api: Any, repo: str, state: Path, work: Path, prices: Prices, now: datetime
+    api: Any,
+    repo: str,
+    state: Path,
+    work: Path,
+    prices: Prices,
+    now: datetime,
+    lineup: Sequence[tuple[str, str]] = (),
 ) -> list[dict[str, Any]]:
-    """Grade every locked or backfilled session not graded yet whose exit price exists, save
-    each day on the state branch, and rewrite the scoreboard. Returns the days graded now."""
-    done = {(d["kind"], d["session"]) for d in graded_days(state)}
+    """Grade every locked or backfilled session not graded yet whose exit price exists, the
+    picks' model's and each shadow model's, save each day on the state branch, and rewrite
+    the scoreboard (``lineup``: its columns, see write_board). Returns the days graded now."""
+    done = {path_of(d) for d in graded_days(state)}
     logged = logged_hashes(state)
     new = []
-    for kind in KINDS:
-        for session in sessions_in(api, repo, kind):
-            if (kind, session.isoformat()) in done:
+    lanes: list[tuple[str, str | None]] = [(k, None) for k in KINDS]
+    lanes += [("locked", v) for v in shadows_in(api, repo)]
+    for kind, shadow in lanes:
+        for session in sessions_in(api, repo, kind, shadow):
+            path = folder(kind, session, shadow)
+            if path in done:
                 continue
             exit_ = ready(session, now)
             if exit_ is None:
                 continue
-            path = folder(kind, session)
             blob = Path(
                 api.hf_hub_download(
                     repo, f"{path}/predictions.parquet", repo_type="dataset", local_dir=work
@@ -463,12 +524,16 @@ def grade_pending(
             rec: dict[str, Any] = {
                 "kind": kind,
                 "session": session.isoformat(),
+                "path": path,
+                "shadow": shadow is not None,
                 "exit_session": exit_.isoformat(),
                 "model_version": meta.get("model_version"),
                 "graded_at": now.astimezone(UTC).isoformat(),
             }
             up = uploaded_at(api, repo, f"{path}/predictions.parquet") if kind == "locked" else None
-            bad = problems(meta, blob, logged.get(session.isoformat()), up)
+            bad = problems(meta, blob, logged.get(path), up)
+            if shadow is not None and meta.get("model_version") != shadow:
+                bad.append(f"its model is {meta.get('model_version')}, not {shadow}")
             if bad:
                 rec["refused"] = bad
             else:
@@ -480,23 +545,32 @@ def grade_pending(
                     rec["refused"] = [str(exc)]
                 else:
                     rec.update(day)
-            out = days_path(state) / f"{kind}-{session.isoformat()}.json"
+            out = day_file(state, path)
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(json.dumps(rec, indent=1) + "\n", encoding="utf-8")
             new.append(rec)
-    write_board(state)
+    write_board(state, lineup)
     return new
 
 
-def write_board(state: Path) -> dict[str, Any]:
-    """The public scoreboard: running totals for locked days, separate ones for backfill,
-    and each day's numbers. Aggregates only; the per-stock files stay in the dataset."""
+def version_of(day: Mapping[str, Any]) -> str:
+    v = day.get("model_version")
+    return ", ".join(map(str, v)) if isinstance(v, list) else str(v)
+
+
+def write_board(state: Path, lineup: Sequence[tuple[str, str]] = ()) -> dict[str, Any]:
+    """The public scoreboard: one column per model version (``lineup``'s (version, role)
+    first, role "picks" or "shadow", then any other version graded), each with running totals
+    for its locked days, separate ones for its backfill, and each day's numbers. Aggregates
+    only; the per-stock files stay in the dataset."""
     days = graded_days(state)
-    board: dict[str, Any] = {"line": LINE, "buckets": [b[0] for b in BUCKETS]}
-    for kind in KINDS:
-        ok = [d for d in days if d["kind"] == kind and "refused" not in d]
-        board[kind] = totals(ok)
-        board[f"{kind}_days"] = [
+    ok = [d for d in days if "refused" not in d]
+    order = dict(lineup)
+    for d in ok:
+        order.setdefault(version_of(d), "shadow" if d.get("shadow") else "picks")
+
+    def rows(group: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [
             {
                 "session": d["session"],
                 "scored": d["scored"],
@@ -504,10 +578,37 @@ def write_board(state: Path) -> dict[str, Any]:
                 "model_version": d.get("model_version"),
                 **{k: v for k, v in summarize(d).items() if k != "calibration"},
             }
-            for d in sorted(ok, key=lambda d: d["session"], reverse=True)
+            for d in sorted(group, key=lambda d: d["session"], reverse=True)
         ]
+
+    models = []
+    for version, role in order.items():
+        mine = [d for d in ok if version_of(d) == version]
+        locked: dict[str, dict[str, Any]] = {}
+        # A version locked both as the picks' model and as a shadow on one morning counts once.
+        for d in sorted(mine, key=lambda d: bool(d.get("shadow"))):
+            if d["kind"] == "locked":
+                locked.setdefault(d["session"], d)
+        back = [d for d in mine if d["kind"] == "backfill"]
+        models.append(
+            {
+                "version": version,
+                "role": role,
+                "locked": totals(list(locked.values())),
+                "locked_days": rows(list(locked.values())),
+                "backfill": totals(back),
+                "backfill_days": rows(back),
+            }
+        )
+    board: dict[str, Any] = {"line": LINE, "buckets": [b[0] for b in BUCKETS], "models": models}
     board["refused"] = [
-        {"kind": d["kind"], "session": d["session"], "why": d["refused"]}
+        {
+            "kind": d["kind"],
+            "session": d["session"],
+            "model_version": d.get("model_version"),
+            "path": path_of(d),
+            "why": d["refused"],
+        }
         for d in days
         if "refused" in d
     ]
@@ -517,8 +618,14 @@ def write_board(state: Path) -> dict[str, Any]:
     return board
 
 
-def latest_locked(state: Path) -> dict[str, Any] | None:
-    ok = [d for d in graded_days(state) if d["kind"] == "locked" and "refused" not in d]
+def latest_locked(state: Path, shadow: str | None = None) -> dict[str, Any] | None:
+    """The latest locked morning graded, the picks' model's or one shadow model's."""
+    root = lane("locked", shadow) + "/"
+    ok = [
+        d
+        for d in graded_days(state)
+        if path_of(d).startswith(root) and d["kind"] == "locked" and "refused" not in d
+    ]
     return max(ok, key=lambda d: d["session"]) if ok else None
 
 

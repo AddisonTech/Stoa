@@ -40,6 +40,7 @@ The day, on the $100 account's clock:
 from __future__ import annotations
 
 import dataclasses
+import io
 import json
 import logging
 import traceback
@@ -470,11 +471,19 @@ def grade_scoreboard(rt: BigRuntime, now: datetime) -> list[dict[str, Any]]:
         Path(f"{rt.base.big_paper.feed_dir}-scoreboard"),
         prices,
         now,
+        lineup(rt),
     )
 
 
+def lineup(rt: BigRuntime) -> list[tuple[str, str]]:
+    """The scoreboard's columns: the picks' model, then each shadow model."""
+    bp = rt.base.big_paper
+    return [(bp.model or FROZEN_VERSION, "picks"), *((v, "shadow") for v in bp.shadow_models)]
+
+
 def shadow_summary_line(rt: BigRuntime, now: datetime) -> str:
-    """The 5:15 pm summary's shadow line; grading never stops the summary."""
+    """The 5:15 pm summary's shadow lines, the picks' model's and each shadow model's;
+    grading never stops the summary."""
     from stoa import shadowboard
 
     try:
@@ -482,14 +491,127 @@ def shadow_summary_line(rt: BigRuntime, now: datetime) -> str:
     except Exception as exc:
         log.warning("shadow scoreboard not graded: %s", exc)
         return f"Shadow: not graded today ({type(exc).__name__})."
-    day = shadowboard.latest_locked(rt.root)
-    waiting = None
-    if day is None:
-        locks = sorted(shadowboard.logged_hashes(rt.root))
-        if locks:
-            nxt = clock.next_session(date.fromisoformat(locks[0]))
-            waiting = f"first locked day {locks[0]} is graded after 9:45 am on {nxt}."
-    return shadowboard.shadow_line(day, waiting)
+    out = []
+    for shadow in [None, *rt.base.big_paper.shadow_models]:
+        day = shadowboard.latest_locked(rt.root, shadow)
+        waiting = None
+        if day is None:
+            locks = shadowboard.locked_sessions(rt.root, shadow)
+            if locks:
+                nxt = clock.next_session(locks[0])
+                waiting = f"first locked day {locks[0]} is graded after 9:45 am on {nxt}."
+        out.append(shadowboard.shadow_line(day, waiting, shadow))
+    return "\n".join(out)
+
+
+def shadow_lock(rt: BigRuntime) -> Result:
+    """Right after the 9:00 am picks, in the same run: score the morning's rows with each
+    shadow model (big_paper.shadow_models) and lock each list beside the picks' own, before
+    9:30 am. The rows are the ones the picks scored, read again from the feed folder the
+    picks left; the picks' model must give them the picks' locked p to the last bit, or
+    nothing is locked. It never changes the picks, their state or the account, and a dry
+    run scores and logs without locking."""
+    import pickle
+
+    import pandas as pd
+
+    from stoa import shadowboard
+    from stoa.newsbrain import feed
+
+    bp = rt.base.big_paper
+    if off_reason(rt.base, rt.secrets, dry=rt.dry):
+        return Result(EXIT_OK, "off")
+    token = hf_token(rt)
+    if not bp.shadow_models or token is None:
+        return Result(EXIT_OK, "none")
+    now = rt.now()
+    fd = feed.Feed(bp.feed_dir)
+    if rt.dry:
+        session = fd.state().session
+        checks = sorted(
+            (fd.root / "checks").glob("*/rows.parquet"), key=lambda p: p.stat().st_mtime
+        )
+        if not checks:
+            raise feed.FeedError("no dry picks rows in the feed folder")
+        locked = pd.read_parquet(checks[-1])
+    else:
+        session = clock.to_ny(now).date()
+        todo = [
+            v
+            for v in bp.shadow_models
+            if shadowboard.folder("locked", session, v) not in shadowboard.logged_hashes(rt.root)
+        ]
+        if not todo:
+            return Result(EXIT_OK, "already_locked", session)
+        path = shadowboard.folder("locked", session)
+        logged = shadowboard.logged_hashes(rt.root).get(path)
+        if logged is None:
+            log.info("shadow models: the picks locked nothing for %s, so neither do they", session)
+            return Result(EXIT_OK, "no_picks_lock", session)
+        blob = (Path(f"{bp.feed_dir}-scoreboard") / path / "predictions.parquet").read_bytes()
+        if shadowboard.sha256(blob) != logged:
+            raise feed.FeedError(f"the picks' locked file for {session} does not match its hash")
+        locked = pd.read_parquet(io.BytesIO(blob))
+    version, sha = model_choice(rt)
+    model = fd.root / "models" / version / "model_h1.pkl" if version else None
+    if version and sha is None:
+        meta = json.loads((fd.root / "models" / version / "meta.json").read_text(encoding="utf-8"))
+        sha = str(meta["sha256"])
+    rows, _ = feed.scored(fd, session, model, sha)
+    ours = rows.set_index("symbol")["p"].sort_index()
+    theirs = locked.set_index("symbol")["p"].sort_index()
+    if not (ours.index.equals(theirs.index) and (ours.to_numpy() == theirs.to_numpy()).all()):
+        raise feed.FeedError(f"the rows read again for {session} do not give the picks' own p")
+    rows = rows.drop(columns="p")
+    store = feed.Feed(Path(f"{bp.feed_dir}-shadow"))
+    failed = []
+    for v, pin in bp.shadow_models.items():
+        if not rt.dry and shadowboard.folder("locked", session, v) in shadowboard.logged_hashes(
+            rt.root
+        ):
+            continue
+        try:
+            feed.pull_state(store, bp.feed_repo, token, only=[f"models/{v}/**"])
+            blob = (store.root / "models" / v / "model_h1.pkl").read_bytes()
+            if shadowboard.sha256(blob) != pin:
+                raise feed.FeedError(f"{v} does not match its pinned sha256")
+            brain = pickle.loads(blob)
+            t9.register_kind(sc.GRADED)
+            df = shadowboard.predictions(rows.assign(p=brain.predict(rows)), v)
+            if rt.dry:
+                log.info(
+                    "dry shadow %s for %s: %s rows, %s above the line, top %s",
+                    v,
+                    session,
+                    len(df),
+                    int(df["above"].sum()),
+                    [(s, round(p, 4)) for s, p in zip(df["symbol"][:5], df["p"][:5], strict=True)],
+                )
+                continue
+            meta = shadowboard.lock(
+                hub(rt, token),
+                bp.feed_repo,
+                rt.root,
+                Path(f"{bp.feed_dir}-scoreboard"),
+                session,
+                df,
+                rt.now(),
+                shadow=v,
+            )
+            log.info(
+                "shadow %s locked %s: %s rows, %s above the line, sha256 %s",
+                v,
+                session,
+                meta["rows"],
+                meta["above"],
+                meta["sha256"],
+            )
+        except Exception as exc:
+            log.warning("shadow %s not locked for %s: %s", v, session, exc)
+            failed.append(v)
+    if failed:
+        return Result(EXIT_FAILED, "failed", session)
+    return Result(EXIT_OK, "dry" if rt.dry else "locked", session)
 
 
 def replay_store(rt: BigRuntime) -> Path:

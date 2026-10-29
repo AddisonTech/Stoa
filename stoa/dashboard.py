@@ -840,66 +840,102 @@ def _shadow_table(labels: tuple[str, ...], rows: list[tuple[str, ...]]) -> str:
     return f'<table class="stack"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>'
 
 
+def _shadow_col(m: dict[str, Any]) -> str:
+    role = "picks model" if m.get("role") == "picks" else "shadow, never trades"
+    return f"{m.get('version')} ({role})"
+
+
 def render_shadow(data: dict[str, Any]) -> str:
-    """The shadow scoreboard: every stock the big account's brain scores, graded."""
+    """The shadow scoreboard: every stock the big account's brain scores, graded, one column
+    per model (the picks' model and each shadow model), each with its own totals."""
     b = data.get("shadow_board") or {}
-    t = b.get("locked") or {}
+    models = [m for m in b.get("models") or [] if isinstance(m, dict)]
+    line = float(b.get("line", 0.55))
     note = (
         '<p class="muted small">Every stock the big account&#39;s news brain scores each '
         "morning is locked before the 9:30 open, buys or not, and graded the next morning: in "
         "at 9:45 am, out at 9:45 am a session later, against SPY over the same span, the "
-        "trades&#39; own rule. A hit beat SPY after costs. Backfilled days, scored after the "
-        "fact, are kept apart and never counted here.</p>"
+        "trades&#39; own rule. A hit beat SPY after costs. Shadow models score the same "
+        "stocks the same morning and are locked and graded the same way, but never trade. "
+        "Each column keeps its own totals. Backfilled days, scored after the fact, are kept "
+        "apart and never counted in the locked numbers.</p>"
     )
-    bf = b.get("backfill") or {}
-    back = (
-        '<p class="muted small">Backfill (scored after the fact, inside the retrained '
-        f"model's training window): {bf['days']} mornings, above-line average vs SPY "
-        f"{_vs(bf.get('above_avg_vs_spy')) or 'n/a'}, top 10 vs SPY "
-        f"{_vs(bf.get('top_avg_vs_spy')) or 'n/a'}.</p>"
-        if bf.get("days")
-        else ""
+    back = "".join(
+        f'<p class="muted small">Backfill for {_e(m["version"])} (scored after the fact, '
+        f"inside its training window): {m['backfill']['days']} mornings, above-line average "
+        f"vs SPY {_vs(m['backfill'].get('above_avg_vs_spy')) or 'n/a'}, top 10 vs SPY "
+        f"{_vs(m['backfill'].get('top_avg_vs_spy')) or 'n/a'}.</p>"
+        for m in models
+        if (m.get("backfill") or {}).get("days")
     )
-    if not t.get("days"):
+    graded = [m for m in models if (m.get("locked") or {}).get("days")]
+    if not graded:
+        waiting = ", ".join(_shadow_col(m) for m in models)
         return (
             _empty(
-                "No locked morning graded yet. The first lock is the next 9:00 am picks; it is "
-                "graded after 9:45 am the session after."
+                "No locked morning graded yet. Each 9:00 am picks locks the list it scored"
+                + (f" ({waiting})" if waiting else "")
+                + "; it is graded after 9:45 am the session after."
             )
             + back
             + note
         )
-    tiles = (
-        f"<p>Since {_e(t['first'])}: {t['days']} mornings, {t['scored']} stocks scored, "
-        f"{t['above']} above the {b.get('line', 0.55):.2f} line. Hit rate above the line "
-        f"{_rate(t.get('hit_rate')) or 'n/a'}; above-line average vs SPY "
-        f"{_vs(t.get('above_avg_vs_spy')) or 'n/a'}; top 10 vs SPY "
-        f"{_vs(t.get('top_avg_vs_spy')) or 'n/a'}.</p>"
-    )
-    cal = _shadow_table(
-        ("Bucket", "Stocks", "Average p", "Beat SPY after costs"),
+    cols = [_shadow_col(m) for m in models]
+    t = [m.get("locked") or {} for m in models]
+
+    def row(label: str, cell: Any) -> tuple[str, ...]:
+        return (label, *(cell(x) if x.get("days") else "waiting" for x in t))
+
+    tiles = _shadow_table(
+        ("Locked mornings", *cols),
         [
-            (
-                c["bucket"],
-                str(c["n"]),
-                f"{c['mean_p']:.3f}" if c["mean_p"] is not None else "",
-                _rate(c["hit_rate"]),
-            )
-            for c in t.get("calibration", [])
+            row("Graded since", lambda x: f"{x['first']} ({x['days']} mornings)"),
+            row("Stocks scored", lambda x: str(x["scored"])),
+            row(f"Above the {line:.2f} line", lambda x: str(x["above"])),
+            row("Hit rate above the line", lambda x: _rate(x.get("hit_rate")) or "n/a"),
+            row("Above-line average vs SPY", lambda x: _vs(x.get("above_avg_vs_spy")) or "n/a"),
+            row("Top 10 vs SPY", lambda x: _vs(x.get("top_avg_vs_spy")) or "n/a"),
+            row("All stocks beat SPY after costs", lambda x: _rate(x.get("all_hit_rate")) or "n/a"),
         ],
     )
+
+    def cal_cell(c: dict[str, Any]) -> str:
+        if not c["n"]:
+            return "0"
+        return f"{c['n']}, average p {c['mean_p']:.3f}, {_rate(c['hit_rate'])} beat SPY"
+
+    buckets = [str(x) for x in b.get("buckets") or []]
+    by = [{c["bucket"]: c for c in x.get("calibration", [])} for x in t]
+    cal = _shadow_table(
+        ("Bucket", *cols),
+        [(k, *(cal_cell(c[k]) if k in c else "" for c in by)) for k in buckets],
+    )
+    recent = sorted(
+        ((d, m) for m in models for d in (m.get("locked_days") or [])[:10]),
+        key=lambda dm: (dm[0]["session"], dm[1].get("role") == "picks"),
+        reverse=True,
+    )
     days = _shadow_table(
-        ("Morning", "Scored", "Above line", "Hit rate", "Above-line vs SPY", "Top 10 vs SPY"),
+        (
+            "Morning",
+            "Model",
+            "Scored",
+            "Above line",
+            "Hit rate",
+            "Above-line vs SPY",
+            "Top 10 vs SPY",
+        ),
         [
             (
                 d["session"],
+                str(m.get("version")),
                 str(d["scored"]),
                 str(d["above"]),
                 _rate(d.get("hit_rate")),
                 _vs(d.get("above_avg_vs_spy")),
                 _vs(d.get("top_avg_vs_spy")),
             )
-            for d in (b.get("locked_days") or [])[:10]
+            for d, m in recent[:20]
         ],
     )
     return tiles + "<h3>Calibration</h3>" + cal + "<h3>Recent mornings</h3>" + days + back + note
