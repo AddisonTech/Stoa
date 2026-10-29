@@ -565,3 +565,39 @@ Decided 2026-10-28 by the owner.
 - **Unchanged.** The big account's sizing, rails, kill switch and keys, the $100 account, trial 12's and trial 13's code and records.
 - **Result, 2026-10-28.** Version `t12-all-20261027`: trained on 2016-02-02 to 2026-10-27 (the last label ends at the open of 2026-10-28), 1,633,249 rows over 2,700 sessions, git 88ee6d5, built on the Dell; registry entry 48dd44d677bb. Its calibration (trial 9's rule: the last quarter of sessions, mid-2024 to 2026) never gives a p above 0.520, so it can never reach the 0.55 buy line: swapped in, the account would hold only SPY. The data behind it: in 2025 and 2026 its own top-ranked stocks beat SPY after costs 42% of the time, against a 44% base rate, while the frozen model's p >= 0.55 picks still did 53% of the time (above the base, below what p claims). **Not swapped**: the picks keep trial 9's frozen model, and the scoreboard grades that model from 2026-10-29. Whether to swap anyway, to shadow-score the retrained model beside it, or to change the line is the owner's call. The model and its five backfilled mornings are on the Dell (`data\newsbrain\models\t12-all-20261027`, `data\newsbrain\scoreboard-out`), not uploaded.
 - **Side by side, decided 2026-10-29 by the owner.** The frozen model stays the picks' model. `t12-all-20261027` becomes a shadow model (`big_paper.shadow_models`): every morning, right after the picks, it scores the same rows, and its list is locked before 9:30 am and graded on the shadow scoreboard exactly as the frozen model's is, with its own totals and its own column on the card. It never trades. Its five backfilled mornings count in its column's backfill totals, never in its locked ones.
+
+## Trial 14: trial 12 with idle money in cash
+
+Decided 2026-10-29 by the owner: the big paper account stops parking idle money in SPY, so its result shows the brain's picks alone. Written and registered before any run.
+
+**Pre-registration** (registry `trial14:preregistration`, spec hash `f385bc9d5040ef7b`, `stoa/newsbrain/trial14.py`, `spec()`):
+
+- **Same as trial 12** (spec e75fa8775469de92): trial 9's frozen 1 session model, the 13 features, p of at least 0.55 and up to 10 a session, SPY never a pick, buy at 9:45 am and sell at 9:45 am one session later, 20% a position and 5 positions, the cost model and every trial 12 rail (10 orders a day, the 2% reserve, the 3% daily loss stop, the regime filter, the 40% sector cap, the 0.8 correlation limit, the close-based ATR exits, the 25% kill switch). No overlay, no broker-side stops.
+- **The one change:** money not in a pick stays in cash. SPY is never bought or held.
+- **Account:** $100,000, the big paper account.
+- **Run:** once, on trial 12's windows (2023-01-01 to 2026-06-30), with trial 12's checks (trial 9's pass bar). One configuration, logged as one trial. Fewer than 30 trades is STARVED.
+- **Reference:** trial 12's SPY core replayed at $100,000 beside it with the same code, so the only difference is where idle money sits. Not logged as a trial. Trial 12's own report ($100) is shown as recorded and never rerun.
+- **In-sample.** Trial 12 already ran on this window, these same signals with idle money in cash included (at $100, `trial12:cash:h1`). A lead, not proof. The holdout was spent by trial 12 and is never read again. The real grade is the live big paper account.
+
+**Result, 2026-10-29: FAIL** (registry `trial14:cash:h1:validation`; full report on the state branch, `shared/results/trial14-20261029/`). Test window, 2023-01-01 to 2026-06-30:
+
+| | Trial 14 (cash) | Trial 12 at $100,000 (SPY core) | Trial 12 as recorded ($100) | SPY |
+|---|---|---|---|---|
+| Total return | +54.0% | +173.9% | +169.4% | +103.1% |
+| Max drawdown | 9.3% | 14.9% | 14.9% | 18.8% |
+| Sharpe | 1.26 | 1.68 | 1.66 | 1.42 |
+| Closed trades | 197 | 194 | 193 | |
+| Average share in cash | 95.5% | 1.8% | not recorded | 0% |
+
+Checks: trial 14 passes drawdown, Sharpe and Sortino against SPY on 2025 to mid-2026 (1.29 against 1.04), the 25% drawdown cap, the trade count and the cost check. It fails Sharpe against SPY on 2023 to 2024 (1.37 against 1.82), the deflated Sharpe (0.183, needs 0.95) and Sharpe against MTUM (1.29 against 1.50). Trial 12 failed only the last two. Picks beat SPY after costs 54% of the time, as in trial 12.
+
+In plain words: the picks alone made about half of what SPY made, with about half of SPY's worst drop, because the account sat in cash 95% of the time. Trial 12's lead over SPY came mostly from the SPY it held, plus the picks on top. The live account now shows the picks alone; on days with no pick it stays flat while SPY moves.
+
+## The big paper account runs trial 14
+
+Decided 2026-10-29 by the owner.
+
+- **What.** `big_paper.strategy: trial14` and `big_paper.idle_money: cash`. Everything about trial 12 stays the same: the frozen model, the 0.55 line, the picks, the timing, the sizing, the rails, the kill switch and the risk caps. The shadow scoreboard and its shadow models are unchanged.
+- **The switch.** The first 9:00 am plan after it holds the SPY left from trial 12's core as a sale (reason `idle_cash`), placed at 9:45 am alongside that day's picks. While `idle_money` is `cash`, the 9:45 am run has no SPY core and never buys SPY. SPY stays the benchmark line on the dashboard and in the 5:15 pm summary.
+- **Why not stay on trial 12.** The owner wants the account's result to show the brain's picks only. Trial 14's result above, which fails, did not change that.
+- **Unchanged.** The $100 account, the shadow scoreboard and shadow models, the kill switch, the risk caps, and trial 12's and trial 13's code and records.

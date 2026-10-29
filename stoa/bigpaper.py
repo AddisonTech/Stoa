@@ -1,10 +1,13 @@
 """The big paper account: a news brain trial on its own ~$100,000 Alpaca paper account.
 
-``big_paper.strategy`` names the trial. ``trial12`` (the setting) runs trial 12 exactly as
+``big_paper.strategy`` names the trial. ``trial12`` runs trial 12 exactly as
 registered (spec e75fa8775469de92): its sizing (up to 5 picks at 20% of the account each),
 its rails, its SPY core, no overlay and no broker-side stops, as its backtest ran.
 ``trial13`` adds trial 13's overlay (``stoa/overlay.py``): ATR sizing under a 5% cap, the
-drawdown brake, the exposure cap and broker-side ATR stops.
+drawdown brake, the exposure cap and broker-side ATR stops. ``trial14`` (spec
+f385bc9d5040ef7b) is trial 12 exactly with idle money held as cash (``big_paper.idle_money``):
+the 9:00 am plan sells any SPY still held, alongside that day's picks, and the 9:45 am run
+never buys SPY. SPY stays the benchmark line.
 
 It is kept apart from the $100 account in every way:
 
@@ -29,7 +32,9 @@ The day, on the $100 account's clock:
   the 8:15 am feed builds (``newsbrain.feed``), run through the event strategy. Paper with
   hundreds of trades to come, so the picks are auto-approved: the alert says what will be
   bought and sold. Stale or missing data means no buys that day, and the alert says why.
-- 9:45 am EXECUTE: yesterday's picks sold, today's bought, idle money in SPY. The kill
+- 9:45 am EXECUTE: yesterday's picks sold, today's bought, idle money in SPY (in cash under
+  trial 14). ``--dry`` makes today's plan as the picks would and runs it against a copy of
+  the account in the simulator: no order is sent and nothing is saved. The kill
   switch sells every position in the account, SPY and any stock bought by hand included,
   and cancels every working order first. Under trial 13: the overlay's exposure cap on
   SPY and broker-side stops on anything held from a prior session.
@@ -57,6 +62,7 @@ from stoa import alerts, clock, event_signals, risk, stops
 from stoa.broker.alpaca import AlpacaBroker, make_trading_client
 from stoa.broker.base import Broker, BrokerPosition
 from stoa.broker.core import CoreBroker
+from stoa.broker.sim import SimBroker
 from stoa.config import Secrets, Settings
 from stoa.data.base import Bars, DataError
 from stoa.data.factory import make_provider
@@ -71,6 +77,7 @@ from stoa.newsbrain import trial as t9
 from stoa.newsbrain import trial13
 from stoa.overlay import Overlay, OverlayState, account_settings
 from stoa.planner import DecisionInput, make_plan
+from stoa.portfolio import Lot, Portfolio
 from stoa.state import KillSwitch, State, StateStore
 from stoa.trader import ExecutionReport, execute_plan
 from stoa.universe import AssetInfo, Universe
@@ -78,7 +85,7 @@ from stoa.universe import AssetInfo, Universe
 log = logging.getLogger(__name__)
 
 EXIT_OK, EXIT_FAILED = 0, 1
-KIND = t9.kind_for(sc.GRADED)  # trial 12's 1 session signal; trial 13 uses the same
+KIND = t9.kind_for(sc.GRADED)  # trial 12's 1 session signal; trials 13 and 14 use the same
 SignalSource = Callable[[date], list[event_signals.Signal]]
 
 
@@ -108,6 +115,7 @@ class Result:
     status: str
     session: date | None = None
     sent: list[str] = field(default_factory=list)
+    plan: Any = None  # the picks' plan, for a dry execute
 
 
 @dataclass
@@ -146,10 +154,23 @@ class BigRuntime:
         return self.strategy == "trial13"
 
     @property
+    def core(self) -> bool:
+        """Idle money sits in SPY (trials 12 and 13); under trial 14 it stays in cash."""
+        return self.base.big_paper.idle_money == "spy"
+
+    @property
+    def label(self) -> str:
+        """The trial and where idle money sits, for the alerts."""
+        return f"Trial {self.strategy.removeprefix('trial')}, idle money in " + (
+            "SPY" if self.core else "cash"
+        )
+
+    @property
     def settings(self) -> Settings:
         """The account's settings: its trial's size cap, its starting money, its state folder.
 
-        Trial 12's are the config's own (20% a position, 5 positions), as its backtest ran.
+        Trial 12's are the config's own (20% a position, 5 positions), as its backtest ran;
+        trial 14's are trial 12's.
         """
         bp = self.base.big_paper
         if self.overlaid:
@@ -736,8 +757,10 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
         sigs = rt.signals(session) if rt.signals else feed_signals(rt, session, now)
     except Exception as exc:
         sigs = []
+        where = "SPY" if rt.core else "cash"
         notes.append(
-            f"No buys today; the account stays in SPY. The news brain's data is not ready: {exc}."
+            f"No buys today; the account stays in {where}. The news brain's data is not ready: "
+            f"{exc}."
         )
     t9.register_kind(sc.GRADED)
     wanted = sorted({x.symbol for x in sigs} | set(held))
@@ -802,6 +825,18 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
         for sym, p in sorted(held.items())
         if sym not in holdings
     ]
+    if not rt.core and core is not None and core.qty > 0:
+        # Trial 14: idle money is cash, so SPY left from the SPY core is sold with the picks.
+        blind.append(
+            PlannedOrder(
+                symbol=s.benchmark,
+                side=Side.SELL,
+                qty=core.qty,
+                ref_price=core.current_price,
+                reason="idle_cash",
+                thesis="idle money is held as cash under trial 14; SPY is never bought again",
+            )
+        )
     if blind:
         decision = dataclasses.replace(decision, orders=(*decision.orders, *blind))
     plan = make_plan(
@@ -838,7 +873,8 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
             notes=notes,
         )
     current = ov.current if ov is not None else None
-    send(rt, result, picks_alert(plan.orders, sigs, current, notes, session))
+    send(rt, result, picks_alert(plan.orders, sigs, current, notes, session, rt.label))
+    result.plan = plan
     return result
 
 
@@ -848,11 +884,14 @@ def picks_alert(
     st: OverlayState | None,
     notes: list[str],
     session: date,
+    label: str = "",
 ) -> alerts.Alert:
     p_of = {x.symbol: x.score for x in sigs}
     buys = [o for o in orders if o.side is Side.BUY]
     sells = [o for o in orders if o.side is Side.SELL]
     lines = [f"Picks for {session}, auto-approved (paper). Orders go in at 9:45 am."]
+    if label:
+        lines[0] = f"{label}. {lines[0]}"
     for o in buys:
         lines.append(
             f"Buy {o.symbol} {alerts.money(o.notional or 0)}"
@@ -909,6 +948,8 @@ def execute(rt: BigRuntime, force: bool = False) -> Result:
 
 
 def _execute(rt: BigRuntime, force: bool) -> Result:
+    if rt.dry:
+        return dry_execute(rt)
     s = rt.settings
     now = rt.now()
     w = s.job_windows
@@ -949,9 +990,10 @@ def _execute(rt: BigRuntime, force: bool) -> Result:
     hwm = state.high_water_mark or account.equity
     flatten = state.kill_switch.active or risk.kill_switch_breached(account.equity, hwm, s.risk)
     # The kill switch runs on the raw account so every position goes, SPY included.
+    # Under trial 14 there is no SPY core: idle money stays in cash and SPY is never bought.
     broker: Any = (
         raw
-        if flatten
+        if flatten or not rt.core
         else CoreBroker(
             raw, symbol=s.benchmark, reserve_pct=s.risk.cash_buffer_pct, session=session
         )
@@ -1023,6 +1065,96 @@ def _execute(rt: BigRuntime, force: bool) -> Result:
     state.pending_plan = None
     state.mark_executed(session)
     store.save(state)
+    return result
+
+
+def dry_execute(rt: BigRuntime) -> Result:
+    """Today's plan as the 9:00 am picks would make it, then the 9:45 am run on a copy of the
+    account in the simulator, at the latest prices: the same broker wrapper, rails and SPY
+    rule as the real run. No order is sent and nothing is saved."""
+    s = rt.settings
+    picked = _picks(rt, force=True)
+    plan, session = picked.plan, picked.session
+    assert plan is not None and session is not None
+    raw = make_broker(rt)
+    account = raw.account()
+    held = {k: p for k, p in raw.positions().items() if p.qty > 0}
+    symbols = sorted({o.symbol for o in plan.orders} | set(held) | {s.benchmark})
+    prices = {**{k: p.current_price for k, p in held.items()}, **raw.latest_prices(symbols)}
+    buys = sorted({o.symbol for o in plan.orders if o.side is Side.BUY})
+    assets = {sym: raw.asset(sym) for sym in buys}
+    for k in held:
+        assets.setdefault(k, AssetInfo(k, tradable=True, fractionable=True))
+    assets[s.benchmark] = AssetInfo(s.benchmark, tradable=True, fractionable=True)
+    universe = Universe(
+        watchlist=tuple(symbols),
+        benchmark=s.benchmark,
+        assets=assets,
+        whole_shares=frozenset(k for k, a in assets.items() if not a.fractionable),
+    )
+    before = clock.previous_session(session)
+    sim = SimBroker(
+        Portfolio(
+            cash=max(account.cash, Decimal(0)),
+            positions={
+                k: Lot(qty=p.qty, avg_cost=p.avg_entry_price, entry_session=before)
+                for k, p in held.items()
+            },
+        ),
+        s.costs,
+        universe,
+    )
+    sim.begin_session(session, prices)
+    state = rt.store.load()  # read only: never saved
+    hwm = state.high_water_mark or account.equity
+    flatten = state.kill_switch.active or risk.kill_switch_breached(account.equity, hwm, s.risk)
+    broker: Any = (
+        sim
+        if flatten or not rt.core
+        else CoreBroker(
+            sim, symbol=s.benchmark, reserve_pct=s.risk.cash_buffer_pct, session=session
+        )
+    )
+    report = execute_plan(
+        plan,
+        broker,
+        state,
+        s,
+        universe,
+        session,
+        state.last_close_equity,
+        gate=None,
+        sectors={o.symbol: o.sector or "Unknown" for o in plan.orders},
+    )
+    if isinstance(broker, CoreBroker):
+        cap = None
+        if rt.overlaid:
+            ov = load_overlay(rt)
+            cap = ov.current.exposure_cap if ov.current else None
+        broker.sweep(state.kill_switch.active, cap)
+    filled = [o for o in sim.orders.values() if o.filled]
+    spy = {
+        side: sum(
+            (o.filled_qty for o in filled if o.symbol == s.benchmark and o.side is side),
+            Decimal(0),
+        )
+        for side in Side
+    }
+    log.info(
+        "dry execute for %s (idle money in %s): %s",
+        session,
+        "SPY" if rt.core else "cash",
+        [(o.side.value, o.symbol, str(o.filled_qty)) for o in filled],
+    )
+    log.info(
+        "dry execute for %s: SPY sold %s shares, SPY bought %s shares, cash after %s",
+        session,
+        spy[Side.SELL],
+        spy[Side.BUY],
+        sim.portfolio.cash,
+    )
+    result = Result(EXIT_OK, "dry", session, plan=plan)
+    send(rt, result, fills_alert(report, [], broker, session))
     return result
 
 
@@ -1181,7 +1313,7 @@ def _summary(rt: BigRuntime, force: bool) -> Result:
     state.mark_decided(session)
     store.save(state)
     curve = read_curve(rt.root)
-    lines = [f"Equity {alerts.money(equity)}"]
+    lines = [f"{rt.label}. Equity {alerts.money(equity)}"]
     if prev:
         day = float(equity / prev - 1)
         spy_day = spy_close / prev_spy - 1 if spy_close and prev_spy else None
@@ -1195,10 +1327,12 @@ def _summary(rt: BigRuntime, force: bool) -> Result:
             f"Since {curve[0]['session']}: {alerts.pct(since)}, SPY {alerts.pct(spy_since)}."
         )
     core = positions.get(s.benchmark)
-    lines.append(
-        f"{len(held)} picks held, {alerts.money(core.market_value if core else 0)} in SPY, "
-        f"{alerts.money(account.cash)} cash."
+    in_spy = (
+        f"{alerts.money(core.market_value if core else 0)} in SPY, "
+        if rt.core or (core is not None and core.qty > 0)
+        else ""
     )
+    lines.append(f"{len(held)} picks held, {in_spy}{alerts.money(account.cash)} cash.")
     off_high = st.drawdown if st is not None else risk.drawdown(equity, hwm)
     brake = ""
     if st is not None and st.halted:

@@ -21,6 +21,8 @@ name: bigpaper
 # After the picks, a separate step scores the same rows with each shadow model
 # (big_paper.shadow_models) and locks their lists beside the picks' own; it never changes the
 # picks, and its failure leaves the run green.
+# A dry EXECUTE makes the morning's plan as PICKS would, so it runs on Windows too, then
+# runs the plan against a copy of the account in the simulator: no order, nothing saved.
 # EXECUTE, SUMMARY and scoreboard stay on Linux. feed-reset puts the dataset's live state back to the
 # replay_from commit (docs/RUNBOOK.md 13b).
 # The GitHub crons below are the backup, a few minutes late, in both the EDT and EST slot.
@@ -53,7 +55,7 @@ on:
         type: string
         default: ""
       dry:
-        description: "Dry run of feed or picks: no orders, nothing saved, alerts only logged"
+        description: "Dry run of feed, picks or execute: no orders, nothing saved, alerts only logged"
         type: boolean
         default: false
       replay:
@@ -80,6 +82,7 @@ jobs:
   run:
     runs-on: >-
       ${{ (contains(fromJSON('["feed","picks","model-check"]'), inputs.job) || inputs.replay != ''
+      || (inputs.job == 'execute' && inputs.dry)
       || contains(fromJSON('["22 12 * * 1-5","22 13 * * 1-5","7 13 * * 1-5","7 14 * * 1-5"]'),
       github.event.schedule)) && 'windows-latest' || 'ubuntu-latest' }}
     timeout-minutes: ${{ inputs.replay != '' && 120 || 45 }}
@@ -163,7 +166,7 @@ jobs:
         # The feed and the picks run the news brain: the exact versions the rolling state was
         # built and checked with (the state refuses another pandas), CPU-only torch.
         run: |
-          if [ "$JOB" = "feed" ] || [ "$JOB" = "picks" ] || [ "$JOB" = "replay" ] || [ "$JOB" = "feed-reset" ] || [ "$JOB" = "model-check" ]; then
+          if [ "$JOB" = "feed" ] || [ "$JOB" = "picks" ] || [ "$JOB" = "replay" ] || [ "$JOB" = "feed-reset" ] || [ "$JOB" = "model-check" ] || { [ "$JOB" = "execute" ] && [ "$DRY_INPUT" = "true" ]; }; then
             pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
             pip install ".[yahoo,reader]" pandas==3.1.0 numpy==2.5.4 scikit-learn==1.9.1 \
               transformers==5.20.2 huggingface_hub==2.3.0
@@ -175,7 +178,9 @@ jobs:
           python -c "import numpy as np; np.show_runtime()"
 
       - name: Cache FinBERT
-        if: steps.secrets.outputs.ready == 'true' && contains(fromJSON('["feed","picks","replay"]'), steps.pick.outputs.job)
+        if: >-
+          steps.secrets.outputs.ready == 'true' && (contains(fromJSON('["feed","picks","replay"]'), steps.pick.outputs.job)
+          || (steps.pick.outputs.job == 'execute' && inputs.dry))
         uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface/hub

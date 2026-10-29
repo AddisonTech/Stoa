@@ -2,8 +2,8 @@
 
 Jobs: news, minute, sec, score, panel, trial9, trial10, preregister11, trial11,
 news_timing, harness, preregister12, trial12, preregister12h,
-holdout12, preregister13, trial13, coverage, feedseed <session>. Each logs to
-data/newsbrain/logs/ and can be stopped and restarted at any time.
+holdout12, preregister13, trial13, preregister14, trial14, coverage, feedseed <session>.
+Each logs to data/newsbrain/logs/ and can be stopped and restarted at any time.
 
 ``feedseed`` is the big paper feed's one seed build on the Dell: the rolling state as of a
 session's 9:00 am cutoff, from the full history, into ``big_paper.feed_dir``. ``feedpush``
@@ -243,6 +243,35 @@ def main(argv: list[str]) -> int:
             prices = Prices(ROOT / "entry", MinuteStore())
             got = trial13.run_trial13(settings, pd.read_parquet(PANEL), prices.at_945, registry)
             path = trial13.OUT / "report.json"
+            body = json.loads(path.read_text(encoding="utf-8"))
+            body["price_sources"] = prices.sources
+            path.write_text(json.dumps(body, indent=1, default=str), encoding="utf-8")
+            print(json.dumps({"verdict": got["verdict"], "checks": got["checks"]}, indent=1))
+    elif job in ("preregister14", "trial14"):
+        from pathlib import Path
+
+        import pandas as pd
+
+        from stoa.config import load_settings
+        from stoa.experiments import Registry
+        from stoa.newsbrain import trial14
+        from stoa.newsbrain.panel import PANEL
+
+        settings = load_settings(Path("config/default.yaml"))
+        registry = Registry(settings.registry_path)
+        if job == "preregister14":
+            trial14.preregister(registry)  # written once, never rewritten
+            print(
+                f"trial 14 pre-registered in {settings.registry_path} (spec {trial14.spec_hash()})"
+            )
+        else:
+            # 9:45 am prices as trial 13 read them (the harness's rule).
+            from stoa.newsbrain.harness import Prices
+            from stoa.newsbrain.timing import MinuteStore
+
+            prices = Prices(ROOT / "entry", MinuteStore())
+            got = trial14.run_trial14(settings, pd.read_parquet(PANEL), prices.at_945, registry)
+            path = trial14.OUT / "report.json"
             body = json.loads(path.read_text(encoding="utf-8"))
             body["price_sources"] = prices.sources
             path.write_text(json.dumps(body, indent=1, default=str), encoding="utf-8")

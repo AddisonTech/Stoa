@@ -441,14 +441,18 @@ class BigPaperConfig(_Frozen):
     """The big paper account: one news brain trial on its own ~$100,000 Alpaca paper account.
 
     ``strategy`` names the trial: ``trial12`` exactly as registered (its sizing, its rails,
-    its SPY core, no overlay), or ``trial13`` (trial 12's picks with trial 13's overlay).
+    its SPY core, no overlay), ``trial13`` (trial 12's picks with trial 13's overlay), or
+    ``trial14`` (trial 12 exactly, with idle money held as cash). ``idle_money`` says where
+    money not in a pick sits, and must be the trial's own: ``spy`` for trials 12 and 13,
+    ``cash`` for trial 14.
     Kept apart from the $100 account: its own keys (ALPACA_BIG_PAPER_KEY_ID and
     ALPACA_BIG_PAPER_SECRET), its own state folder and its own alerts, tagged with
     ``tag``. It trades only when ``enabled`` is true and both keys are set.
     """
 
     enabled: bool = False
-    strategy: Literal["trial12", "trial13"] = "trial12"
+    strategy: Literal["trial12", "trial13", "trial14"] = "trial12"
+    idle_money: Literal["spy", "cash"] = "spy"
     feed_dir: Path = Path("state/big-paper-feed")  # the news brain's rolling state and pulls
     feed_repo: str = "ASmith91/stoa-feed"  # private Hugging Face dataset that keeps feed_dir
     state_dir: Path = Path("state/big-paper")
@@ -470,6 +474,15 @@ class BigPaperConfig(_Frozen):
         if not v.strip():
             raise ValueError("big_paper.tag must not be blank: it tells the two accounts apart")
         return v.strip()
+
+    @model_validator(mode="after")
+    def _idle_money(self) -> BigPaperConfig:
+        want = "cash" if self.strategy == "trial14" else "spy"
+        if self.idle_money != want:
+            raise ValueError(
+                f"big_paper.idle_money must be {want} under {self.strategy}, as registered"
+            )
+        return self
 
 
 class SweepConfig(_Frozen):

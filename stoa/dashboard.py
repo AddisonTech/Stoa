@@ -954,6 +954,15 @@ INTRO_TRIAL13 = (
     "auto-approved. Paper money; kept apart from the $100 account above.</p>"
 )
 
+INTRO_TRIAL14 = (
+    '<p class="muted small">Trial 14 on its own $100,000 Alpaca paper account: trial 12 '
+    "exactly (the news brain's picks, up to 5 at a time at 20% of the account each, sold "
+    "after one session), with every other dollar held as cash instead of SPY, so the account "
+    "shows the picks alone. SPY is the line to beat. Picks are auto-approved. Paper money; "
+    "kept apart from the $100 account above.</p>"
+)
+INTROS = {"trial13": INTRO_TRIAL13, "trial14": INTRO_TRIAL14}
+
 
 def big_paper_title(data: dict[str, Any]) -> str:
     strategy = str((data.get("big_paper") or {}).get("strategy") or "trial12")
@@ -963,7 +972,7 @@ def big_paper_title(data: dict[str, Any]) -> str:
 def render_big_paper(data: dict[str, Any]) -> str:
     b = data.get("big_paper") or {}
     c = b.get("curve") or {"dates": [], "series": {}}
-    intro = INTRO_TRIAL13 if b.get("strategy") == "trial13" else INTRO_TRIAL12
+    intro = INTROS.get(str(b.get("strategy")), INTRO_TRIAL12)
     if not c["dates"]:
         return intro + _empty("Not trading yet. Its first day summary starts this chart.")
     lines = [

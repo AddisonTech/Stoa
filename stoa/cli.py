@@ -421,7 +421,9 @@ def execute(ctx: Ctx, force: bool) -> None:
     ),
 )
 @click.option("--force", is_flag=True, help="Run outside the window or again for the same session.")
-@click.option("--dry", is_flag=True, help="Feed or picks with no orders and nothing saved.")
+@click.option(
+    "--dry", is_flag=True, help="Feed, picks or execute with no orders and nothing saved."
+)
 @click.option("--at", "at", default="", help="Dry runs only: replay this New York time.")
 @click.option(
     "--replay-from",
@@ -447,8 +449,8 @@ def bigpaper_cmd(
         why = bigpaper.off_reason(s, sec)
         click.echo(f"big paper account: {'on' if why is None else 'off, ' + why}")
         return
-    if dry and job not in ("feed", "picks", "shadow-lock"):
-        raise click.UsageError("--dry runs only the feed, the picks and shadow-lock")
+    if dry and job not in ("feed", "picks", "execute", "shadow-lock"):
+        raise click.UsageError("--dry runs only the feed, the picks, execute and shadow-lock")
     if (at or replay_from) and not dry:
         raise click.UsageError("--at and --replay-from need --dry")
     if model and not (dry or job == "model-check"):

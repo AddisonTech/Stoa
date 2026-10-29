@@ -116,6 +116,7 @@ def settings(tmp_path: Path, enabled: bool = True, strategy: str = "trial12") ->
         big_paper__enabled="true" if enabled else "false",
         big_paper__state_dir=str(tmp_path / "big"),
         big_paper__strategy=strategy,
+        big_paper__idle_money="cash" if strategy == "trial14" else "spy",
         earnings__block_when_unknown="false",
         risk__block_entries_when_risk_off="false",
         risk__max_pair_correlation="1.0",
@@ -158,7 +159,10 @@ def test_the_two_accounts_never_share_keys_or_state(tmp_path: Path) -> None:
     rt, _ = runtime(tmp_path, FakeBroker(D(100), {"SPY": D(400)}))
     assert rt.settings.state.dir == tmp_path / "big"
     assert make_settings().state.dir != make_settings().big_paper.state_dir
-    assert make_settings().big_paper.strategy == "trial12"  # shipped on trial 12
+    shipped = make_settings().big_paper
+    assert shipped.strategy == "trial14" and shipped.idle_money == "cash"  # since 2026-10-29
+    with pytest.raises(ValueError, match="idle_money must be spy under trial12"):
+        make_settings(big_paper__strategy="trial12")  # a trial keeps its own idle money
     assert rt.settings.risk == rt.base.risk  # trial 12's rails, as registered
     assert rt.settings.backtest.starting_equity == D(100000)
     t13, _ = runtime(tmp_path, FakeBroker(D(100), {"SPY": D(400)}), strategy="trial13")
@@ -448,6 +452,79 @@ def test_summary_sets_trial_13s_brake_when_set_to_trial_13(tmp_path: Path) -> No
     assert "no new positions" in rec.alerts[-1].message
 
 
+# ---- trial 14: idle money in cash --------------------------------------------------------------
+
+
+def test_trial_14_sells_spy_with_the_picks_and_never_buys_it_again(tmp_path: Path) -> None:
+    fb = FakeBroker(
+        D(2000),
+        {"SPY": D(400), "MSFT": D(200)},
+        held={"SPY": D(245)},  # $98,000 left in SPY by trial 12's core
+        last_equity=D(100000),
+    )
+    decided = clock.previous_session(SESSION)
+    close = bars_for(["AAPL"], decided)["AAPL"]["close"].iloc[-1]
+    fb.prices["AAPL"] = D(str(round(float(close), 2)))  # the price sanity check passes
+    sigs = [Signal("AAPL", decided, t9.kind_for(1), 0.70, "p 0.70")]
+    kw = {"bars": bars_for, "signals": lambda d: sigs, "calendar": no_earnings, "sectors": {}}
+    rt, rec = runtime(tmp_path, fb, "trial14", now=lambda: at(SESSION, "09:00"), **kw)
+    assert rt.settings.risk == rt.base.risk  # trial 12's rails and sizing, unchanged
+    assert bigpaper.picks(rt).status == "picked"
+    plan = StateStore(tmp_path / "big").load().pending_plan
+    assert plan is not None and plan.strategy == "trial14"
+    orders = {(o.symbol, o.side): o for o in plan.orders}
+    assert orders[("SPY", Side.SELL)].qty == D(245) and orders[("SPY", Side.SELL)].reason == (
+        "idle_cash"
+    )
+    assert orders[("AAPL", Side.BUY)].notional == D(20000)  # 20% of the account, as trial 12
+    assert ("SPY", Side.BUY) not in orders
+    msg = rec.alerts[-1].message
+    assert msg.startswith("Trial 14, idle money in cash.") and "SPY (idle cash)" in msg
+    rt.now = lambda: at(SESSION, "09:46")
+    assert bigpaper.execute(rt).status == "executed"
+    assert "SPY" not in fb.positions()
+    assert fb.held["AAPL"] * fb.prices["AAPL"] == pytest.approx(D(20000))
+    assert fb.cash == pytest.approx(D(80000))  # the rest stays in cash: no sweep
+    assert not any(o.symbol == "SPY" and o.side is Side.BUY for o in fb.orders.values())
+    assert "SPY core" not in rec.alerts[-1].message
+    store = StateStore(tmp_path / "big")
+    st = store.load()
+    st.last_close_equity, st.last_benchmark_close = D(100000), D(400)
+    store.save(st)
+    rt.now = lambda: at(SESSION, "17:16")
+    assert bigpaper.summary(rt).status == "summarized"
+    day = rec.alerts[-1].message
+    assert day.startswith("Trial 14, idle money in cash. Equity $100,000.00")
+    assert "1 picks held, $80,000.00 cash." in day and "in SPY" not in day
+    assert "SPY" in day  # still the line to beat
+
+
+def test_a_dry_execute_runs_the_plan_on_a_copy_and_touches_nothing(tmp_path: Path) -> None:
+    fb = FakeBroker(
+        D(2000),
+        {"SPY": D(400), "AAPL": D(100)},
+        held={"SPY": D(245)},
+        last_equity=D(100000),
+    )
+    sigs = [Signal("AAPL", clock.previous_session(SESSION), t9.kind_for(1), 0.70, "p 0.70")]
+    kw = {"bars": bars_for, "signals": lambda d: sigs, "calendar": no_earnings, "sectors": {}}
+    for strategy, spy_after in (("trial14", D(0)), ("trial12", None)):
+        rt, rec = runtime(
+            tmp_path / strategy,
+            fb,
+            strategy,
+            now=lambda: at(SESSION, "16:30"),
+            dry=True,
+            **kw,  # type: ignore[arg-type]
+        )
+        r = bigpaper.execute(rt)
+        assert r.status == "dry" and r.session == SESSION and rec.alerts == []
+        assert fb.orders == {} and fb.held == {"SPY": D(245)} and fb.cash == D(2000)
+        assert not (tmp_path / strategy / "big").exists()
+        sells = [o.symbol for o in r.plan.orders if o.side is Side.SELL]
+        assert sells == (["SPY"] if spy_after is not None else [])
+
+
 def test_the_workflow_reads_only_the_big_keys() -> None:
     text = (ROOT / ".github" / "workflows" / "bigpaper.yml").read_text(encoding="utf-8")
     assert "secrets.ALPACA_BIG_PAPER_KEY_ID" in text and "secrets.ALPACA_BIG_PAPER_SECRET" in text
@@ -501,7 +578,8 @@ def test_the_dashboard_shows_the_big_account_from_day_one(tmp_path: Path) -> Non
     page = dashboard.build(dash_settings(tmp_path), tmp_path / "site", ROOT).read_text(
         encoding="utf-8"
     )
-    assert "Big paper account (trial 12)" in page and "Not trading yet" in page
+    assert "Big paper account (trial 14)" in page and "Not trading yet" in page
+    assert "held as cash instead of SPY" in page and "SPY is the line to beat" in page
     assert "trial 13" not in page.lower()
 
 

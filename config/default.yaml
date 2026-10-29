@@ -265,7 +265,8 @@ dashboard:
 
 big_paper:                         # a news brain trial on its own ~$100,000 Alpaca paper account (stoa/bigpaper.py)
   enabled: true                    # on since 2026-10-28; trades only with ALPACA_BIG_PAPER_KEY_ID and ALPACA_BIG_PAPER_SECRET set
-  strategy: trial12                # trial12 exactly as registered (spec e75fa8775469de92); trial13 adds its overlay
+  strategy: trial14                # trial12 exactly as registered (spec e75fa8775469de92); trial13 adds its overlay; trial14 is trial12 with idle money in cash (spec f385bc9d5040ef7b)
+  idle_money: cash                 # where money not in a pick sits: spy (trials 12 and 13) or cash (trial 14); SPY stays the benchmark line
   feed_dir: state/big-paper-feed   # the news brain's rolling state, built by the 8:15 am feed (stoa/newsbrain/feed.py)
   feed_repo: ASmith91/stoa-feed    # private Hugging Face dataset keeping feed_dir (HF_TOKEN), never stoa-state or this repo
   state_dir: state/big-paper       # its own state, never the $100 account's
