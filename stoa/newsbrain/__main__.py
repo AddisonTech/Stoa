@@ -3,7 +3,7 @@
 Jobs: news, minute, sec, score, panel, trial9, trial10, preregister11, trial11,
 news_timing, harness, preregister12, trial12, preregister12h,
 holdout12, preregister13, trial13, preregister14, trial14, coverage, feedseed <session>,
-events, preregister15.
+events, preregister15, learnbase <last session>, learnpush.
 Each logs to data/newsbrain/logs/ and can be stopped and restarted at any time.
 
 ``feedseed`` is the big paper feed's one seed build on the Dell: the rolling state as of a
@@ -18,6 +18,9 @@ downloads the whole dataset, the dry runs' pulls and checks included, into
 
 ``events`` runs the local event reader over every news month not yet labelled, newest
 first, on the GPU (stoa/newsbrain/eventread.py, trial 15).
+
+``learnbase <last session>`` builds trial 15's learning base on the Dell (the retrain-all's
+rows); ``learnpush`` uploads it once to the feed's dataset (scripts/push-learn-base.ps1).
 
 ``retrain <last session>`` refits trial 12's model on every session labelled by the open
 of that session (stoa/newsbrain/retrain.py). ``backfill <version> <session>...`` scores
@@ -366,6 +369,27 @@ def main(argv: list[str]) -> int:
         settings = load_settings(Path("config/default.yaml"))
         trial15.preregister(Registry(settings.registry_path))  # written once, never rewritten
         print(f"trial 15 pre-registered in {settings.registry_path} (spec {trial15.spec_hash()})")
+    elif job == "learnbase":
+        from stoa.newsbrain import learn15
+
+        print(json.dumps(learn15.build_base(date.fromisoformat(argv[1])), indent=1, default=str))
+    elif job == "learnpush":
+        import os
+        from pathlib import Path
+
+        from stoa.config import load_settings
+        from stoa.newsbrain import feed, learn15
+
+        token = os.environ.get("HF_TOKEN", "")
+        if not token:
+            print("HF_TOKEN is not set in this process; nothing sent")
+            return 2
+        repo = load_settings(Path("config/default.yaml")).big_paper.feed_repo
+        stage = feed.Feed(ROOT / "trial15" / "upload")
+        (stage.root / "learn").mkdir(parents=True, exist_ok=True)
+        (stage.root / learn15.BASE).write_bytes(learn15.LOCAL_BASE.read_bytes())
+        feed.push_state(stage, repo, token, "trial 15 learning base", only=[learn15.BASE])
+        print(json.dumps({"pushed": learn15.BASE, "to": repo}))
     elif job == "events":
         from stoa.newsbrain.alpaca_pull import NEWS_DIR
         from stoa.newsbrain.eventread import run_history
