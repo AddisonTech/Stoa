@@ -597,9 +597,9 @@ def signals(feed: Feed, session: date) -> list[event_signals.Signal]:
 def scored(
     feed: Feed, session: date, model: Path | None = None, sha256: str | None = None
 ) -> tuple[pd.DataFrame, list[event_signals.Signal]]:
-    """The session's rows with the model's p, and the picks from them. ``model`` is a
-    pickle to use instead of the state's own (trial 9's frozen model); ``sha256`` must
-    match it when given."""
+    """The session's rows with the model's p and its conviction (trial 15's rank), and the
+    picks from them. ``model`` is a pickle to use instead of the state's own (trial 9's
+    frozen model); ``sha256`` must match it when given."""
     st = feed.state()
     if st.session != session:
         raise FeedError(f"the news brain state is at {st.session}, not {session}")
@@ -613,7 +613,9 @@ def scored(
     brain = pickle.loads(blob)
     t9.register_kind(sc.GRADED)
     p = brain.predict(rows)
-    return rows.assign(p=p), sc.signals(rows, p, sc.GRADED)
+    from stoa.newsbrain.trial15 import conviction
+
+    return rows.assign(p=p, conviction=conviction(brain, rows)), sc.signals(rows, p, sc.GRADED)
 
 
 def save_check(

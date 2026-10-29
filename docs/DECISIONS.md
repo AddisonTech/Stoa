@@ -611,3 +611,30 @@ Decided 2026-10-29 by the owner: "If I wanted to buy SPY, I would not need an ap
 - **Already done by hand.** The owner sold the big account's SPY on 2026-10-29 at about 3 pm New York time; that afternoon's dry picks run planned no orders.
 - **Unchanged.** The kill switch, the risk caps, the keys, the workflows and the 8:15 am feed. Trials 12, 13 and 14 and their records stay as they are. The pre-registration to turn off the $100 account's SPY fallback (registry `fallback-off:preregistration`, spec `94fc7428e857a21c`) stays in the registry but was never applied; with the account stopped the fallback cannot buy anything.
 - **Undo.** Set a `stop` value back to `false`, as its own recorded decision.
+
+## Trial 15: the owner's brain, 5 picks a day
+
+Decided 2026-10-29 by the owner. The rules are in the registry before any trial 15 code (registry `trial15:preregistration`, spec hash `557c95176a137379`, `stoa/newsbrain/trial15.py`, `spec()`; state branch commit 69dc0d2). In short: every trading day, the 5 stocks the brain is most sure of, bought at 9:45 am at equal weight with 2% kept in cash, sold at 9:45 am the next session. No SPY, no 0.55 line, no regime filter. The 25% kill switch and the price sanity check stay. The owner's target is that picks beat SPY after costs 75% of the time; it is reported every day and never used to tune anything.
+
+**What stays stopped.** The $100 account (`stop.usd100`) and the old shadow scoreboard (`stop.shadow`). `stop.big_paper` is back to `false` and `big_paper.strategy` is `trial15`, so the big paper account's first trial 15 orders go in at 9:45 am on 2026-10-30.
+
+**Calls made while building it (each its own line so it can be argued with):**
+
+- **The brain on day one is trial 9's frozen model.** The new brain goes live only after it beats the frozen one on the pre-registered comparison and its live inputs run every morning. Until then the frozen model ranks the stocks.
+- **Conviction is the score before calibration.** The frozen model's calibrated p has flat steps: on the 2026-10-28 dry run the top 4 stocks all had p 0.494435. Ranking on the classifier's own probability ranks the same way and breaks those ties; ties left after that go by symbol.
+- **Funds are never picks.** A pick must be an operating company: it has an industry code (SIC) in the SEC map and that code is not a fund or trust (6221, 6722, 6726). SPY, QQQ, sector and country funds have no code and are skipped. A few real foreign companies with no code on file (TEVA was one on 2026-10-28) are skipped too; that is the cost of a simple rule.
+- **A stock picked again is kept and resized,** not sold and bought back the same morning: topped up when it is $50 or more below its weight, trimmed when $50 or more above. Same exposure, half the trading cost. The risk engine knows these orders as `resize`.
+- **Rails switched off for trial 15:** the sector cap, the 0.8 correlation limit, the 3% daily loss stop, the regime filter, the ATR exits and the earnings blackout. Each would change which 5 are held, and the owner asked for the top 5. Kept: the kill switch (everything sold at 25% below the high, nothing bought until reset by hand) and the price sanity check.
+- **The price sanity check reads from 9:00 am, not the last close.** Each buy's reference price is the latest trade when the 9:00 am plan is made (pre-market when there is one). The check still refuses an order whose price moved more than 8% between the plan and 9:45 am. Measured from the last close instead, it would refuse nearly every small company that jumped on overnight news, which is what the pre-market hunter looks for.
+- **"Beat SPY" is the shadow scoreboard's rule:** the pick's 9:45 am to 9:45 am return, minus SPY's over the same span, minus a round trip of slippage (by dollar volume) and the fee. Hit rate is the share of picks above zero; average edge is the mean of that number.
+- **The 5:15 pm summary grades the picks bought the session before.** A pick bought at 9:45 am today is sold at 9:45 am tomorrow, so its result is not known at 5:15 pm today. The summary shows today's 5 from 9:45 am to the close (not final, no costs), then the session before's 5 graded in full, that day's hit rate and the running hit rate against 75%. Records: `state/big-paper/trial15/picks/<session>.json` (what each pick saw) and `trial15/days.jsonl` (the grades).
+
+**The event reader (history).** `stoa/newsbrain/eventread.py`, `python -m stoa.newsbrain events`, running on the Dell GPU since 2026-10-29 4:14 pm.
+
+- **Model:** Qwen2.5-1.5B-Instruct (Apache 2.0, pinned revision). It fits the Dell's 6 GB laptop GPU with room for a batch; larger open models do not fit in half precision. Never Claude on history.
+- **Answers are picked, not written:** the model's next token is read only over the allowed letters, then the allowed signs, then the allowed sizes, so every label has the same shape and keeps its probabilities (direction = p(good) minus p(bad); size = expected size).
+- **20 event types,** the owner's 10 plus analyst up and down split, buyback or dividend, product or partnership, layoffs or bankruptcy, insider or big holder trades, dividend cut, index change and "other". "Other" is the first choice and the prompt has 11 made-up examples; without them the small model called lifestyle stories lawsuits (tested on 2,000 items from 2024-03).
+- **Only companies:** items whose company has an SEC filer behind it (1.68M of 1.82M article and company pairs); crypto, currencies and most funds are skipped.
+- **The headline and 120 characters of summary.** The GPU tops out near 50 items a second, so text length sets the run time (about 10 hours for the decade).
+- **Known limit:** an open model trained on text through about 2024 may know how some stories ended. The labels are what the text says; every outcome comes from prices. This is written into the registered spec.
+- **The holdout months are read.** The holdout was spent by trial 12 and is never graded again; its news may train later refits, as the retrain-all did.

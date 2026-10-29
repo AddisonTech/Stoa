@@ -437,16 +437,18 @@ def check_sells(
 ) -> tuple[list[PlannedOrder], list[Rejection]]:
     """Sells run unless they would round-trip or the symbol is no longer held.
 
-    Every Stoa exit closes the whole position, so the quantity is whatever is
-    held right now (a split overnight changes it). Price sanity does not apply
-    to sells: skipping a stop after a gap down would keep the account in the
-    position it is trying to leave.
+    Every Stoa exit closes the whole position (except trial 15's "resize", which trims a
+    repeat pick to its weight), so the quantity is whatever is held right now (a split
+    overnight changes it). Price sanity does not apply to sells: skipping a stop after a gap
+    down would keep the account in the position it is trying to leave.
     """
     out: list[PlannedOrder] = []
     rejections: list[Rejection] = []
     count = ctx.orders_today
     for o in sells:
         qty = held_qty.get(o.symbol, ZERO)
+        if o.reason == "resize" and o.qty is not None:
+            qty = min(qty, o.qty)  # trial 15 trims a repeat pick to its weight
         if qty <= 0:
             rejections.append(_reject(o.symbol, Side.SELL, "no_position", "not held at execution"))
             continue
@@ -495,7 +497,8 @@ def check_buys(
         if not ctx.universe.can_buy(sym):
             rejections.append(_reject(sym, Side.BUY, "not_fractionable", "broker asset flags"))
             continue
-        topping_up = fallback_buy and sym in ctx.held
+        # The fallback tops up SPY; trial 15 tops up a repeat pick to its weight.
+        topping_up = (fallback_buy or o.reason == "resize") and sym in ctx.held
         if sym in ctx.held and not topping_up:
             rejections.append(_reject(sym, Side.BUY, "already_held", "held at execution"))
             continue

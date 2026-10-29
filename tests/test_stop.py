@@ -29,9 +29,10 @@ D = Decimal
 DAY3 = date(2021, 10, 14)
 
 
-def test_the_shipped_config_stops_all_three_and_leaves_the_kill_switch_alone() -> None:
+def test_the_shipped_config_stops_the_100_dollar_account_and_shadow_not_trial_15() -> None:
     s = load_settings(ROOT / "config" / "default.yaml")
-    assert s.stop.usd100 and s.stop.big_paper and s.stop.shadow
+    assert s.stop.usd100 and s.stop.shadow
+    assert not s.stop.big_paper and s.big_paper.strategy == "trial15"  # back on, 2026-10-29
     assert s.risk.kill_switch_drawdown_pct == D("0.25")
     assert s.big_paper.enabled  # on, so the 9:45 am run can sell; the stop keeps it from buying
 

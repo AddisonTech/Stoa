@@ -116,7 +116,7 @@ def settings(tmp_path: Path, enabled: bool = True, strategy: str = "trial12") ->
         big_paper__enabled="true" if enabled else "false",
         big_paper__state_dir=str(tmp_path / "big"),
         big_paper__strategy=strategy,
-        big_paper__idle_money="cash" if strategy == "trial14" else "spy",
+        big_paper__idle_money="cash" if strategy in ("trial14", "trial15") else "spy",
         earnings__block_when_unknown="false",
         risk__block_entries_when_risk_off="false",
         risk__max_pair_correlation="1.0",
@@ -160,7 +160,7 @@ def test_the_two_accounts_never_share_keys_or_state(tmp_path: Path) -> None:
     assert rt.settings.state.dir == tmp_path / "big"
     assert make_settings().state.dir != make_settings().big_paper.state_dir
     shipped = make_settings().big_paper
-    assert shipped.strategy == "trial14" and shipped.idle_money == "cash"  # since 2026-10-29
+    assert shipped.strategy == "trial15" and shipped.idle_money == "cash"  # trial 15, 2026-10-29
     with pytest.raises(ValueError, match="idle_money must be spy under trial12"):
         make_settings(big_paper__strategy="trial12")  # a trial keeps its own idle money
     assert rt.settings.risk == rt.base.risk  # trial 12's rails, as registered
@@ -578,8 +578,9 @@ def test_the_dashboard_shows_the_big_account_from_day_one(tmp_path: Path) -> Non
     page = dashboard.build(dash_settings(tmp_path), tmp_path / "site", ROOT).read_text(
         encoding="utf-8"
     )
-    assert "Big paper account (trial 14)" in page and "Not trading yet" in page
-    assert "held as cash instead of SPY" in page and "SPY is the line to beat" in page
+    assert "Big paper account (trial 15)" in page and "Not trading yet" in page
+    assert "No pick graded yet. The target is 75%." in page
+    assert "the 5 stocks it is most sure of" in page and "No SPY" in page
     assert "trial 13" not in page.lower()
 
 

@@ -442,16 +442,17 @@ class BigPaperConfig(_Frozen):
 
     ``strategy`` names the trial: ``trial12`` exactly as registered (its sizing, its rails,
     its SPY core, no overlay), ``trial13`` (trial 12's picks with trial 13's overlay), or
-    ``trial14`` (trial 12 exactly, with idle money held as cash). ``idle_money`` says where
-    money not in a pick sits, and must be the trial's own: ``spy`` for trials 12 and 13,
-    ``cash`` for trial 14.
+    ``trial14`` (trial 12 exactly, with idle money held as cash), or ``trial15`` (the top 5
+    by conviction every day at equal weight, stoa/newsbrain/trial15.py). ``idle_money`` says
+    where money not in a pick sits, and must be the trial's own: ``spy`` for trials 12 and
+    13, ``cash`` for trials 14 and 15.
     Kept apart from the $100 account: its own keys (ALPACA_BIG_PAPER_KEY_ID and
     ALPACA_BIG_PAPER_SECRET), its own state folder and its own alerts, tagged with
     ``tag``. It trades only when ``enabled`` is true and both keys are set.
     """
 
     enabled: bool = False
-    strategy: Literal["trial12", "trial13", "trial14"] = "trial12"
+    strategy: Literal["trial12", "trial13", "trial14", "trial15"] = "trial12"
     idle_money: Literal["spy", "cash"] = "spy"
     feed_dir: Path = Path("state/big-paper-feed")  # the news brain's rolling state and pulls
     feed_repo: str = "ASmith91/stoa-feed"  # private Hugging Face dataset that keeps feed_dir
@@ -477,7 +478,7 @@ class BigPaperConfig(_Frozen):
 
     @model_validator(mode="after")
     def _idle_money(self) -> BigPaperConfig:
-        want = "cash" if self.strategy == "trial14" else "spy"
+        want = "cash" if self.strategy in ("trial14", "trial15") else "spy"
         if self.idle_money != want:
             raise ValueError(
                 f"big_paper.idle_money must be {want} under {self.strategy}, as registered"

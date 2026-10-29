@@ -347,7 +347,25 @@ def big_paper(settings: Settings) -> dict[str, Any]:
         "curve": {"dates": dates, "series": series},
         "trades": trade_log(records, state),
         "kill_switch": state.kill_switch.active,
+        "trial15": trial15_card(root),
     }
+
+
+def trial15_card(root: Path) -> dict[str, Any]:
+    """Trial 15's picks and grades: the latest morning's 5, the last graded day and the
+    running hit rate against the 75% target."""
+    from stoa.newsbrain import trial15
+
+    folder = root / "trial15"
+    days: list[dict[str, Any]] = []
+    path = folder / "days.jsonl"
+    if path.exists():
+        days = [json.loads(x) for x in path.read_text(encoding="utf-8").splitlines() if x.strip()]
+    latest: dict[str, Any] | None = None
+    picks = sorted((folder / "picks").glob("*.json")) if (folder / "picks").exists() else []
+    if picks:
+        latest = json.loads(picks[-1].read_text(encoding="utf-8"))
+    return {"tally": trial15.tally(days), "last_day": days[-1] if days else None, "latest": latest}
 
 
 def last_run(records: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -962,7 +980,14 @@ INTRO_TRIAL14 = (
     "shows the picks alone. SPY is the line to beat. Picks are auto-approved. Paper money; "
     "kept apart from the $100 account above.</p>"
 )
-INTROS = {"trial13": INTRO_TRIAL13, "trial14": INTRO_TRIAL14}
+INTRO_TRIAL15 = (
+    '<p class="muted small">Its own $100,000 Alpaca paper account runs trial 15: every trading '
+    "day the brain picks the 5 stocks it is most sure of, sells yesterday's 5 at 9:45 am and "
+    "buys today's at equal weight, 2% kept in cash. No SPY. A pick is a hit when it beats SPY "
+    "from 9:45 am to 9:45 am the next session after costs; the owner's target is 75%. "
+    "Kept apart from the $100 account above.</p>"
+)
+INTROS = {"trial13": INTRO_TRIAL13, "trial14": INTRO_TRIAL14, "trial15": INTRO_TRIAL15}
 INTRO_STOPPED = (
     '<p class="muted small">Stopped by the owner on 2026-10-29: everything held is sold and '
     "nothing is bought until the next trial starts. Its own $100,000 Alpaca paper account; "
@@ -978,10 +1003,47 @@ def big_paper_title(data: dict[str, Any]) -> str:
     return f"Big paper account (trial {strategy.removeprefix('trial')})"
 
 
+def render_trial15(b: dict[str, Any]) -> str:
+    """The latest 5 picks, the last graded day and the running hit rate against 75%."""
+    t15 = b.get("trial15") or {}
+    out = []
+    latest = t15.get("latest")
+    if latest:
+        names = ", ".join(_e(str(p["symbol"])) for p in latest.get("picks", []))
+        out.append(f"<p>Picks for {_e(str(latest['session']))}: {names or 'none'}.</p>")
+    day = t15.get("last_day")
+    if day:
+        cells = []
+        for g in day.get("picks", []):
+            if g.get("hit") is None:
+                cells.append(f"{_e(g['symbol'])} no price")
+            else:
+                word = "beat" if g["hit"] else "lost to"
+                cells.append(f"{_e(g['symbol'])} {word} SPY by {abs(float(g['net'])):.1%}")
+        graded = [g for g in day.get("picks", []) if g.get("hit") is not None]
+        hits = sum(1 for g in graded if g["hit"])
+        out.append(
+            f"<p>Picks of {_e(str(day['session']))}, after costs: {'; '.join(cells)}. "
+            f"Day hit rate {hits} of {len(graded)}.</p>"
+        )
+    t = t15.get("tally") or {}
+    if t.get("picks"):
+        out.append(
+            f"<p>Running hit rate {t['hit_rate']:.0%} ({t['hits']} of {t['picks']} picks over "
+            f"{t['days']} days) against the 75% target; average edge "
+            f"{_pct(t['avg_edge'])} a pick. {_progress(t['hits'], t['picks'])}</p>"
+        )
+    else:
+        out.append('<p class="muted small">No pick graded yet. The target is 75%.</p>')
+    return "".join(out)
+
+
 def render_big_paper(data: dict[str, Any]) -> str:
     b = data.get("big_paper") or {}
     c = b.get("curve") or {"dates": [], "series": {}}
     intro = INTRO_STOPPED if b.get("stopped") else INTROS.get(str(b.get("strategy")), INTRO_TRIAL12)
+    if b.get("strategy") == "trial15" and not b.get("stopped"):
+        intro += render_trial15(b)
     if not c["dates"]:
         return intro + _empty("Not trading yet. Its first day summary starts this chart.")
     lines = [

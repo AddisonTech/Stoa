@@ -74,9 +74,9 @@ from stoa.live import live_calendar
 from stoa.models import ClosedTrade, Holding, PlannedOrder, PositionMeta, Side, dec
 from stoa.newsbrain import spycore as sc
 from stoa.newsbrain import trial as t9
-from stoa.newsbrain import trial13
+from stoa.newsbrain import trial13, trial15
 from stoa.overlay import Overlay, OverlayState, account_settings
-from stoa.planner import DecisionInput, make_plan
+from stoa.planner import Decision, DecisionInput, make_plan
 from stoa.portfolio import Lot, Portfolio
 from stoa.state import KillSwitch, State, StateStore
 from stoa.trader import ExecutionReport, execute_plan
@@ -140,6 +140,7 @@ class BigRuntime:
     model_override: str | None = None
     hub: Any = None  # huggingface_hub.HfApi for the shadow scoreboard; from HF_TOKEN when None
     prices_945: Any = None  # shadowboard.Prices for grading; Alpaca's minute bars when None
+    chosen: list[dict[str, Any]] | None = None  # trial 15: what the morning's picks saw
 
     def __post_init__(self) -> None:
         self.notifier = Tagged(self.notifier, self.base.big_paper.tag)
@@ -152,6 +153,11 @@ class BigRuntime:
     def overlaid(self) -> bool:
         """Trial 13's overlay is on (``big_paper.strategy: trial13``)."""
         return self.strategy == "trial13"
+
+    @property
+    def top5(self) -> bool:
+        """Trial 15: the top 5 by conviction every day, equal weight, idle money in cash."""
+        return self.strategy == "trial15"
 
     @property
     def core(self) -> bool:
@@ -168,6 +174,8 @@ class BigRuntime:
         """The trial and where idle money sits, for the alerts."""
         if self.stopped:
             return "Stopped by the owner"
+        if self.top5:
+            return "Trial 15, top 5 a day, idle money in cash"
         return f"Trial {self.strategy.removeprefix('trial')}, idle money in " + (
             "SPY" if self.core else "cash"
         )
@@ -403,6 +411,12 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
         meta = json.loads((fd.root / "models" / version / "meta.json").read_text(encoding="utf-8"))
         sha = str(meta["sha256"])
     rows, sigs = feed.scored(fd, session, path, sha)
+    if rt.top5:
+        sic_path = fd.state().root / "static" / "sic.json"
+        sic = json.loads(sic_path.read_text(encoding="utf-8"))
+        chosen = trial15.choose(rows, sic)
+        rt.chosen = trial15.records(chosen)
+        sigs = trial15.signals(chosen, session)
     log.info("picks model: %s", version or FROZEN_VERSION)
     if not rt.dry and not rt.base.stop.shadow:
         lock_scoreboard(rt, session, rows, version or FROZEN_VERSION, now)
@@ -743,6 +757,8 @@ def picks_session(now: datetime, s: Settings) -> date | None:
 
 
 def _picks(rt: BigRuntime, force: bool) -> Result:
+    if rt.top5:
+        return _picks15(rt, force)
     s = rt.settings
     now = rt.now()
     session = picks_session(now, s)
@@ -899,6 +915,99 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
     return result
 
 
+def _picks15(rt: BigRuntime, force: bool) -> Result:
+    """Trial 15's 9:00 am plan: sell what is held and not picked, buy the top 5 by conviction
+    at (equity x 0.98) / 5 each, resize a pick already held. No SPY, no 0.55 line, no regime
+    filter, no sector cap; the 9:45 am run keeps the kill switch and the price sanity check.
+
+    Each order's reference price is the latest trade at 9:00 am (pre-market when there is
+    one), so the sanity check at 9:45 am catches a move after the plan, not the overnight
+    news the pick is about."""
+    s = rt.settings
+    now = rt.now()
+    session = picks_session(now, s)
+    force = force or rt.dry
+    if session is None:
+        if not force:
+            return Result(EXIT_OK, "outside_window")
+        session = clock.next_session(clock.to_ny(now).date() - timedelta(days=1))
+    store = rt.store
+    state = store.load()
+    if session in state.swept_sessions and not force:
+        return Result(EXIT_OK, "already_done", session)
+    result = Result(EXIT_OK, "picked", session)
+    decided = clock.previous_session(session)
+    broker = make_broker(rt)
+    account = broker.account()
+    held = {k: p for k, p in broker.positions().items() if p.qty > 0}
+    notes: list[str] = []
+    sigs: list[event_signals.Signal] = []
+    if rt.stopped:
+        notes.append("No picks. Everything held is sold at 9:45 am and nothing is bought.")
+    else:
+        try:
+            sigs = rt.signals(session) if rt.signals else feed_signals(rt, session, now)
+        except Exception as exc:
+            notes.append(
+                "No buys today; what is held is sold and the money stays in cash. The news "
+                f"brain's data is not ready: {exc}."
+            )
+        sigs = sigs[: trial15.PICKS]
+    equity = state.last_close_equity or account.equity
+    symbols = sorted({x.symbol for x in sigs} | set(held))
+    try:
+        ref = broker.latest_prices(symbols) if symbols else {}
+    except Exception as exc:  # the plan still sells; buys need a price
+        log.warning("no 9:00 am prices: %s", exc)
+        ref = {}
+    frac = {sym: broker.asset(sym).fractionable for sym in symbols}
+    orders = trial15.plan_orders(sigs, held, equity, ref, frac)
+    unpriced = [x.symbol for x in sigs if x.symbol not in held and not ref.get(x.symbol)]
+    if unpriced:
+        notes.append("No price at 9:00 am, so not bought: " + ", ".join(unpriced) + ".")
+    if rt.stopped:
+        everything = {k: risk.HeldPosition(k, p.qty, p.current_price) for k, p in held.items()}
+        orders = risk.flatten_orders(everything, "stopped")
+    plan = make_plan(
+        Decision(orders=tuple(orders)),
+        strategy=rt.strategy,
+        mode="paper",
+        session=decided,
+        execute_session=session,
+        created_at=now,
+        equity=equity,
+    )
+    if rt.dry:
+        result.status = "dry"
+        log.info(
+            "dry plan for %s: %s",
+            session,
+            [(o.side.value, o.symbol, str(o.notional or o.qty)) for o in plan.orders],
+        )
+    else:
+        state.pending_plan = plan
+        state.swept_sessions = [*state.swept_sessions, session][-60:]
+        store.archive_plan(plan)
+        store.save(state)
+        rt.journal.write(
+            now,
+            "picks",
+            session,
+            "plan",
+            plan=plan.model_dump(mode="json"),
+            signals=[
+                {"symbol": x.symbol, "conviction": x.score, "rank": i + 1, "detail": x.detail}
+                for i, x in enumerate(sigs)
+            ],
+            notes=notes,
+        )
+        save_picks15(rt, session, sigs)
+    if plan.orders or not rt.stopped:
+        send(rt, result, picks_alert(plan.orders, sigs, None, notes, session, rt.label))
+    result.plan = plan
+    return result
+
+
 def picks_alert(
     orders: Any,
     sigs: list[event_signals.Signal],
@@ -907,7 +1016,10 @@ def picks_alert(
     session: date,
     label: str = "",
 ) -> alerts.Alert:
-    p_of = {x.symbol: x.score for x in sigs}
+    p_of = {
+        x.symbol: f"conviction {x.score:.3f}" if x.kind == trial15.KIND else f"p {x.score:.2f}"
+        for x in sigs
+    }
     buys = [o for o in orders if o.side is Side.BUY]
     sells = [o for o in orders if o.side is Side.SELL]
     lines = [f"Picks for {session}, auto-approved (paper). Orders go in at 9:45 am."]
@@ -916,7 +1028,7 @@ def picks_alert(
     for o in buys:
         lines.append(
             f"Buy {o.symbol} {alerts.money(o.notional or 0)}"
-            + (f" (p {p_of[o.symbol]:.2f})" if o.symbol in p_of else "")
+            + (f" ({p_of[o.symbol]})" if o.symbol in p_of else "")
         )
     if sells:
         lines.append(
@@ -1048,9 +1160,9 @@ def _execute(rt: BigRuntime, force: bool) -> Result:
         s,
         universe,
         session,
-        state.last_close_equity,
+        None if rt.top5 else state.last_close_equity,  # trial 15 has no daily loss stop
         gate=None,  # auto-approved: paper, and hundreds of trades to come
-        sectors={o.symbol: o.sector or "Unknown" for o in plan.orders},
+        sectors={} if rt.top5 else {o.symbol: o.sector or "Unknown" for o in plan.orders},
         before_sells=cancel_before_sells,
         before_flatten=cancel_everything,
         stopped=rt.stopped,
@@ -1145,9 +1257,9 @@ def dry_execute(rt: BigRuntime) -> Result:
         s,
         universe,
         session,
-        state.last_close_equity,
+        None if rt.top5 else state.last_close_equity,
         gate=None,
-        sectors={o.symbol: o.sector or "Unknown" for o in plan.orders},
+        sectors={} if rt.top5 else {o.symbol: o.sector or "Unknown" for o in plan.orders},
         stopped=rt.stopped,
     )
     if isinstance(broker, CoreBroker):
@@ -1373,8 +1485,148 @@ def _summary(rt: BigRuntime, force: bool) -> Result:
         lines.append("Stopped: the next 9:45 am run sells anything held, and nothing is bought.")
     if not rt.base.stop.shadow:
         lines.append(shadow_summary_line(rt, now))
+    if rt.top5:
+        lines += summary15_lines(rt, session)
     send(rt, result, alerts.Alert(title=f"Day summary {session}", message="\n".join(lines)))
     return result
+
+
+# ---- trial 15's record: each morning's 5 picks, graded against SPY ----------------------------
+
+
+def dir15(rt: BigRuntime) -> Path:
+    return rt.root / "trial15"
+
+
+def save_picks15(rt: BigRuntime, session: date, sigs: list[event_signals.Signal]) -> None:
+    """The morning's picks and what each saw, for the summary's grading and the nightly
+    review (trial15/picks/<session>.json, committed with the account's state)."""
+    seen = {str(r.get("symbol")): r for r in rt.chosen or []}
+    body = {
+        "session": session.isoformat(),
+        "model": rt.base.big_paper.model or FROZEN_VERSION,
+        "picks": [
+            {
+                "rank": i + 1,
+                "symbol": x.symbol,
+                "conviction": x.score,
+                "detail": x.detail,
+                "saw": seen.get(x.symbol, {}),
+            }
+            for i, x in enumerate(sigs)
+        ],
+    }
+    out = dir15(rt) / "picks" / f"{session.isoformat()}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(body, indent=1) + "\n", encoding="utf-8")
+
+
+def picks15(rt: BigRuntime, session: date) -> list[dict[str, Any]]:
+    path = dir15(rt) / "picks" / f"{session.isoformat()}.json"
+    if not path.exists():
+        return []
+    return list(json.loads(path.read_text(encoding="utf-8"))["picks"])
+
+
+def graded15(rt: BigRuntime) -> list[dict[str, Any]]:
+    path = dir15(rt) / "days.jsonl"
+    if not path.exists():
+        return []
+    lines = path.read_text(encoding="utf-8").splitlines()
+    return [json.loads(x) for x in lines if x.strip()]
+
+
+def prices945(rt: BigRuntime) -> Any:
+    if rt.prices_945 is not None:
+        return rt.prices_945
+    from stoa import shadowboard
+    from stoa.data.factory import alpaca_data_client
+
+    return shadowboard.alpaca_945(alpaca_data_client(rt.settings, data_secrets(rt.secrets)))
+
+
+def grade15(rt: BigRuntime, session: date) -> dict[str, Any] | None:
+    """Grade the picks bought at 9:45 am on the session before ``session`` and sold at
+    9:45 am on ``session``, once, into trial15/days.jsonl."""
+    before = clock.previous_session(session)
+    done = {d["session"] for d in graded15(rt)}
+    picks = picks15(rt, before)
+    if not picks or before.isoformat() in done:
+        return None
+    syms = [str(p["symbol"]) for p in picks]
+    at = prices945(rt)
+    entry, exit_ = at(before, {*syms, "SPY"}), at(session, {*syms, "SPY"})
+    adv = {str(p["symbol"]): p.get("saw", {}).get("adv") for p in picks}
+    day = {
+        "session": before.isoformat(),
+        "sold": session.isoformat(),
+        "picks": trial15.grade(syms, entry, exit_, adv),
+    }
+    path = dir15(rt) / "days.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(day) + "\n")
+    return day
+
+
+def summary15_lines(rt: BigRuntime, session: date) -> list[str]:
+    """The 5:15 pm summary's trial 15 lines: today's 5 picks so far against SPY, the picks
+    of the session before graded 9:45 am to 9:45 am after costs, that day's hit rate and the
+    running hit rate against the 75% target. A grading failure never stops the summary."""
+    lines: list[str] = []
+    try:
+        day = grade15(rt, session)
+        today = picks15(rt, session)
+        if today:
+            syms = [str(p["symbol"]) for p in today]
+            at = prices945(rt)(session, {*syms, "SPY"})
+            bars = fetch_bars(rt, syms, session)
+
+            def so_far(sym: str) -> float | None:
+                b = bars.get(sym)
+                if b is None or not len(b) or b.index[-1].date() != session or not at.get(sym):
+                    return None
+                return float(cell(b, b.index[-1], "close")) / float(at[sym]) - 1
+
+            spy = so_far("SPY")
+            parts = [
+                f"{sym} {alerts.pct(r)}" if (r := so_far(sym)) is not None else f"{sym} n/a"
+                for sym in syms
+            ]
+            lines.append(
+                "Today's 5 picks, 9:45 am to the close: "
+                + ", ".join(parts)
+                + (f" (SPY {alerts.pct(spy)})." if spy is not None else ".")
+            )
+        if day is not None:
+            graded = [g for g in day["picks"] if g["hit"] is not None]
+            hits = sum(1 for g in graded if g["hit"])
+            words = []
+            for g in day["picks"]:
+                if g["hit"] is None:
+                    words.append(f"{g['symbol']} no price")
+                else:
+                    verb = "beat" if g["hit"] else "lost to"
+                    words.append(f"{g['symbol']} {verb} SPY by {abs(g['net']):.1%}")
+            share = f"{hits / len(graded):.0%}" if graded else "n/a"
+            lines.append(
+                f"Picks of {day['session']}, 9:45 am to 9:45 am after costs: "
+                + "; ".join(words)
+                + f". Day hit rate {hits} of {len(graded)} ({share})."
+            )
+        t = trial15.tally(graded15(rt))
+        if t["picks"]:
+            lines.append(
+                f"Running: {t['hits']} of {t['picks']} picks beat SPY ({t['hit_rate']:.0%}) "
+                f"over {t['days']} days, target 75%. Average edge "
+                f"{alerts.pct(t['avg_edge'])} a pick."
+            )
+        else:
+            lines.append("Running hit rate: none graded yet (target 75%).")
+    except Exception as exc:
+        log.warning("trial 15 grading failed: %s", exc)
+        lines.append(f"Trial 15 grading failed tonight ({exc}); it retries tomorrow.")
+    return lines
 
 
 def scoreboard(rt: BigRuntime) -> Result:

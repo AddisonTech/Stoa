@@ -2,7 +2,8 @@
 
 Jobs: news, minute, sec, score, panel, trial9, trial10, preregister11, trial11,
 news_timing, harness, preregister12, trial12, preregister12h,
-holdout12, preregister13, trial13, preregister14, trial14, coverage, feedseed <session>.
+holdout12, preregister13, trial13, preregister14, trial14, coverage, feedseed <session>,
+events, preregister15.
 Each logs to data/newsbrain/logs/ and can be stopped and restarted at any time.
 
 ``feedseed`` is the big paper feed's one seed build on the Dell: the rolling state as of a
@@ -14,6 +15,9 @@ the dataset's live state back to an earlier commit (an id or a message such as
 downloads the whole dataset, the dry runs' pulls and checks included, into
 ``data/newsbrain/feedcheck/hf`` for the Dell's rebuild to compare
 (``scripts/pull-feed.ps1``, a read token, never saved).
+
+``events`` runs the local event reader over every news month not yet labelled, newest
+first, on the GPU (stoa/newsbrain/eventread.py, trial 15).
 
 ``retrain <last session>`` refits trial 12's model on every session labelled by the open
 of that session (stoa/newsbrain/retrain.py). ``backfill <version> <session>...`` scores
@@ -352,6 +356,21 @@ def main(argv: list[str]) -> int:
                 feed.Feed(Path(tmp)), settings.big_paper.feed_repo, token, argv[1]
             )
         print(json.dumps({"reset": settings.big_paper.feed_repo, "to": argv[1], "commit": rev}))
+    elif job == "preregister15":
+        from pathlib import Path
+
+        from stoa.config import load_settings
+        from stoa.experiments import Registry
+        from stoa.newsbrain import trial15
+
+        settings = load_settings(Path("config/default.yaml"))
+        trial15.preregister(Registry(settings.registry_path))  # written once, never rewritten
+        print(f"trial 15 pre-registered in {settings.registry_path} (spec {trial15.spec_hash()})")
+    elif job == "events":
+        from stoa.newsbrain.alpaca_pull import NEWS_DIR
+        from stoa.newsbrain.eventread import run_history
+
+        run_history(NEWS_DIR)
     elif job == "feedpull":
         import os
         from pathlib import Path
