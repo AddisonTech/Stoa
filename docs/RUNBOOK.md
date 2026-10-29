@@ -222,6 +222,16 @@ To reset: Actions, daily, Run workflow, pick **kill-switch-reset**. Leave equity
 
 On a laptop: `stoa kill-switch status` and `stoa kill-switch reset`.
 
+## 11a. The owner's stop
+
+Since 2026-10-29 all three are stopped (`stop:` in `config/default.yaml`): the $100 account (`stop.usd100`), the big paper account (`stop.big_paper`) and the shadow scoreboard (`stop.shadow`).
+
+- **A stopped account** sells everything it holds at its next 9:45 am run, SPY and anything bought by hand included, and buys nothing. After that it trades nothing. It cancels its open orders first, the same way the kill switch does, but it is not the kill switch: no drawdown is involved, the kill switch stays off and nothing needs a reset.
+- **Alerts.** The morning alert says what will be sold, the 9:45 am alert starts with "STOPPED by the owner", and the 5:15 pm summary says the account is stopped. Once an account holds nothing, its mornings are quiet. The daily summary still records equity against SPY.
+- **The shadow scoreboard** scores, locks and grades nothing, and the summary has no shadow lines.
+- **Still running.** The workflows and the big account's 8:15 am feed, which keeps the news brain's data current for the next trial.
+- **To start again.** Set the account's `stop` value back to `false`, as its own recorded decision, after the next trial is registered.
+
 ## 12. Go-live checklist
 
 Do not go live until all of these are true. Stoa enforces the first three itself and refuses live mode until they hold (`stoa exam status`).
@@ -305,6 +315,8 @@ Do not use `vercel deploy --cwd live`: with the Root Directory set it fails with
 **Rotating the paper keys means updating them in Vercel too**, or the card goes blank. Environment variables only reach new builds, so redeploy afterwards. In the dashboard: stoa-live, Settings, Environment Variables, edit `ALPACA_PAPER_KEY_ID` and `ALPACA_PAPER_SECRET` (Production), then Deployments, the top production deployment, Redeploy. Or from the command line: `npx vercel@65.2.0 env rm ALPACA_PAPER_KEY_ID production --cwd live`, then `npx vercel@65.2.0 env add ALPACA_PAPER_KEY_ID production --cwd live` (it asks for the value), the same for the secret, then the redeploy command above. Never add the live keys there.
 
 ## 13b. The big paper account (trial 14)
+
+Stopped since 2026-10-29 (section 11a): it sells what it holds at the next 9:45 am run and then trades nothing. What follows is how trial 14 ran.
 
 A second, separate Alpaca paper account of about $100,000 runs trial 14 (spec `f385bc9d5040ef7b`, `big_paper.strategy: trial14`, `big_paper.idle_money: cash`): trial 12 exactly as registered (spec `e75fa8775469de92`), the news brain's picks, its sizing and its rails, with no overlay, but with idle money held as cash instead of SPY, so the account's result shows the picks alone. SPY stays the line it is measured against. From 2026-10-28 to 2026-10-29 it ran trial 12 with its SPY core; the first 9:45 am run after the switch sells that SPY alongside the day's picks, and SPY is never bought again while `idle_money` is `cash`. Each trial keeps its own idle money: the config refuses `trial12` or `trial13` with `cash`, and `trial14` with `spy`. The $100 account above keeps the v1 rules, its keys and its state, and nothing here changes it (since 2026-10-28 its picks also go through without a tap, section 6). Trial 12 (`trial12` with `spy`) and trial 13's overlay (`trial13` with `spy`, `stoa/overlay.py`) are still there and run only if the settings are changed.
 

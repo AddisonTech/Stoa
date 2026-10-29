@@ -304,6 +304,11 @@ healthcheck:
   timeout_seconds: 10
   retries: 2
 
+stop:                              # the owner's stop, 2026-10-29: a stopped account sells everything at its next 9:45 am run, buys nothing, then trades nothing
+  usd100: true                     # the $100 account
+  big_paper: true                  # the big paper account; its 8:15 am feed still runs
+  shadow: true                     # the shadow scoreboard: nothing scored, locked or graded
+
 fallback:
   enabled: true
   sharpe_window: 63

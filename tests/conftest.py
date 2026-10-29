@@ -13,8 +13,17 @@ ROOT = Path(__file__).resolve().parents[1]
 SMALL_WATCHLIST = ["SPY", "QQQ", "AAPL", "MSFT", "NVDA", "JPM", "XOM", "KO"]
 
 
+# The shipped config has the owner's stop on (2026-10-29); the tests trade, so it is off here.
+# tests/test_stop.py checks the stop itself and the shipped setting.
+NOT_STOPPED = {
+    "STOA__STOP__USD100": "false",
+    "STOA__STOP__BIG_PAPER": "false",
+    "STOA__STOP__SHADOW": "false",
+}
+
+
 def make_settings(**overrides: str) -> Settings:
-    env = {f"STOA__{k.upper()}": v for k, v in overrides.items()}
+    env = {**NOT_STOPPED, **{f"STOA__{k.upper()}": v for k, v in overrides.items()}}
     return load_settings(ROOT / "config" / "default.yaml", env=env)
 
 

@@ -341,6 +341,7 @@ def big_paper(settings: Settings) -> dict[str, Any]:
     return {
         "enabled": settings.big_paper.enabled,
         "strategy": settings.big_paper.strategy,
+        "stopped": settings.stop.big_paper,
         "tag": settings.big_paper.tag,
         "equity": float(rows[-1]["equity"]) if rows else None,
         "curve": {"dates": dates, "series": series},
@@ -962,17 +963,25 @@ INTRO_TRIAL14 = (
     "kept apart from the $100 account above.</p>"
 )
 INTROS = {"trial13": INTRO_TRIAL13, "trial14": INTRO_TRIAL14}
+INTRO_STOPPED = (
+    '<p class="muted small">Stopped by the owner on 2026-10-29: everything held is sold and '
+    "nothing is bought until the next trial starts. Its own $100,000 Alpaca paper account; "
+    "kept apart from the $100 account above.</p>"
+)
 
 
 def big_paper_title(data: dict[str, Any]) -> str:
-    strategy = str((data.get("big_paper") or {}).get("strategy") or "trial12")
+    b = data.get("big_paper") or {}
+    if b.get("stopped"):
+        return "Big paper account (stopped)"
+    strategy = str(b.get("strategy") or "trial12")
     return f"Big paper account (trial {strategy.removeprefix('trial')})"
 
 
 def render_big_paper(data: dict[str, Any]) -> str:
     b = data.get("big_paper") or {}
     c = b.get("curve") or {"dates": [], "series": {}}
-    intro = INTROS.get(str(b.get("strategy")), INTRO_TRIAL12)
+    intro = INTRO_STOPPED if b.get("stopped") else INTROS.get(str(b.get("strategy")), INTRO_TRIAL12)
     if not c["dates"]:
         return intro + _empty("Not trading yet. Its first day summary starts this chart.")
     lines = [

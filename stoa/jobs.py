@@ -17,7 +17,7 @@ import logging
 import time
 import traceback
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any, Literal
@@ -796,6 +796,8 @@ def _decide(
         send(rt, result, fallback_alert)
     track = state.track
     halt = track.fallback_reason if track.fallback_active else None
+    if s.stop.usd100:
+        halt = "stopped by the owner"
 
     strategy = build_strategy_for(rt, state, bars, session, notes)
     decision: Decision = strategy.decide(
@@ -816,6 +818,10 @@ def _decide(
         )
     )
     notes.extend(decision.notes)
+    if s.stop.usd100:  # the owner's stop: whatever the strategy, the evening plan buys nothing
+        decision = replace(
+            decision, orders=tuple(o for o in decision.orders if o.side is Side.SELL)
+        )
     stops.raise_stops(state, book.positions, features, s.exits)
     closes = _prices(bars, session, "close")
     state.holdings_at_close = {
@@ -1025,7 +1031,11 @@ def _summary(
         spy_day=_day_change(bars, s.benchmark, session) if bars and session else None,
         day_lines=day_lines(state, book, snap, bars, session) if bars and session else (),
         next_line=(
-            "Tomorrow: the picks come at 9:00 am, after the overnight news sweep."
+            (
+                "Stopped by the owner: the next 9:45 am run sells anything held and buys nothing."
+                if s.stop.usd100
+                else "Tomorrow: the picks come at 9:00 am, after the overnight news sweep."
+            )
             if bars and session
             else None
         ),
@@ -1148,6 +1158,7 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         fallback_active=track.fallback_active,
         before_sells=cancel_before_sells,
         before_flatten=cancel_everything,
+        stopped=s.stop.usd100,
     )
     closed = closed_trades(report, meta_before)
     state.add_trades(closed)
@@ -1656,6 +1667,26 @@ def _sweep(rt: Runtime, force: bool) -> JobResult:
         state = store.load()
         plan = state.pending_plan
         notes.append("The evening run did not happen, so the plan was made this morning.")
+    if s.stop.usd100:
+        # The owner's stop: EXECUTE sells everything held and buys nothing; no news is read.
+        holding = sorted(state.sim_positions if s.mode == "signal" else state.positions_meta)
+        if holding:
+            send(
+                rt,
+                result,
+                alerts.Alert(
+                    title="Stopped by the owner",
+                    message=(
+                        "At 9:45 am Stoa sells everything the account holds "
+                        f"({', '.join(holding)}) and buys nothing. After that it trades nothing."
+                    ),
+                    priority=alerts.HIGH,
+                ),
+            )
+        state.mark_swept(session)
+        store.save(state)
+        result.status = "stopped"
+        return result
     if plan is None or plan.execute_session != session:
         send(
             rt,

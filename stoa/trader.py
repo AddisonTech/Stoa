@@ -47,6 +47,7 @@ class ExecutionReport:
     rejections: list[Rejection] = field(default_factory=list)
     flattened: bool = False
     kill_switch_tripped: bool = False
+    stopped: bool = False  # flattened by the owner's stop, not the kill switch
 
 
 def traded_sides(orders: list[OrderStatus]) -> dict[str, frozenset[Side]]:
@@ -197,6 +198,7 @@ def execute_plan(
     fallback_active: bool = False,
     before_sells: BeforeSells | None = None,
     before_flatten: BeforeFlatten | None = None,
+    stopped: bool = False,
 ) -> ExecutionReport:
     """Run one plan. Safe to call again for the same session after a crash.
 
@@ -213,6 +215,9 @@ def execute_plan(
 
     ``before_flatten`` runs once when the kill switch is on, before the flatten
     sells. EXECUTE uses it to cancel every working order at the broker.
+
+    ``stopped`` is the owner's stop (config ``stop``): the same flatten as the kill
+    switch, every position sold and nothing bought, without turning the kill switch on.
     """
     report = ExecutionReport(session=session)
     positions = broker.positions()
@@ -226,13 +231,20 @@ def execute_plan(
         )
         report.kill_switch_tripped = True
 
-    if state.kill_switch.active:
+    if state.kill_switch.active or stopped:
         # All out: every working order is cancelled and every position at the broker
         # is sold, watchlist or not. A name outside the watchlist (bought by hand, or
         # left over from a wider universe) is still money at risk.
+        why = "kill_switch" if state.kill_switch.active else "stopped"
         report.flattened = True
+        report.stopped = why == "stopped"
         report.rejections.extend(
-            Rejection(symbol=o.symbol, side=o.side, reason="kill_switch", detail="entries halted")
+            Rejection(
+                symbol=o.symbol,
+                side=o.side,
+                reason=why,
+                detail="entries halted" if why == "kill_switch" else "stopped by the owner",
+            )
             for o in plan.orders
             if o.side is Side.BUY
         )
@@ -246,7 +258,7 @@ def execute_plan(
                     "client_order_id": client_order_id(plan.plan_id, session, o.symbol, Side.SELL)
                 }
             )
-            for o in risk.flatten_orders(held)
+            for o in risk.flatten_orders(held, why)
         ]
         if before_flatten is None and before_sells is not None and flatten:
             before_sells(sorted({o.symbol for o in flatten}))

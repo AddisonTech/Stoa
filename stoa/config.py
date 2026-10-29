@@ -527,6 +527,16 @@ class FallbackConfig(_Frozen):
     min_history_sessions: int = Field(default=63, ge=20)
 
 
+class StopConfig(_Frozen):
+    """The owner's stop. A stopped account sells everything it holds at its next 9:45 am
+    run and buys nothing, then trades nothing; a stopped shadow scoreboard scores, locks and
+    grades nothing. Not the kill switch: no drawdown is involved and nothing needs a reset."""
+
+    usd100: bool = False  # the $100 account
+    big_paper: bool = False  # the big paper account; its 8:15 am feed still runs
+    shadow: bool = False  # the shadow scoreboard
+
+
 class ExamConfig(_Frozen):
     paper_min_sessions: int = Field(default=42, ge=1)
     paper_target_sessions: int = Field(default=63, ge=1)
@@ -571,6 +581,7 @@ class Settings(_Frozen):
     crosscheck: CrossCheckConfig = CrossCheckConfig()
     healthcheck: HealthcheckConfig = HealthcheckConfig()
     fallback: FallbackConfig = FallbackConfig()
+    stop: StopConfig = StopConfig()
     exam: ExamConfig = ExamConfig()
     demo: DemoConfig = DemoConfig()
 

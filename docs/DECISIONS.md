@@ -601,3 +601,13 @@ Decided 2026-10-29 by the owner.
 - **The switch.** The first 9:00 am plan after it holds the SPY left from trial 12's core as a sale (reason `idle_cash`), placed at 9:45 am alongside that day's picks. While `idle_money` is `cash`, the 9:45 am run has no SPY core and never buys SPY. SPY stays the benchmark line on the dashboard and in the 5:15 pm summary.
 - **Why not stay on trial 12.** The owner wants the account's result to show the brain's picks only. Trial 14's result above, which fails, did not change that.
 - **Unchanged.** The $100 account, the shadow scoreboard and shadow models, the kill switch, the risk caps, and trial 12's and trial 13's code and records.
+
+## Every trial stops
+
+Decided 2026-10-29 by the owner: "If I wanted to buy SPY, I would not need an app." All current trials stop before the 2026-10-30 9:00 am run; the owner's own trial comes next.
+
+- **What.** `stop.usd100`, `stop.big_paper` and `stop.shadow` are `true`. The $100 account and the big paper account each sell everything they hold at their next 9:45 am run (2026-10-30) and buy nothing, then trade nothing. The shadow scoreboard scores, locks and grades nothing.
+- **How.** The 9:45 am run takes the kill switch's flatten path (cancel every open order, sell every position at the broker), without turning the kill switch on. The $100 account's evening plan and morning sweep buy nothing and read no news; the big account's 9:00 am plan lists every position as a sale and reads nothing from the news brain.
+- **Already done by hand.** The owner sold the big account's SPY on 2026-10-29 at about 3 pm New York time; that afternoon's dry picks run planned no orders.
+- **Unchanged.** The kill switch, the risk caps, the keys, the workflows and the 8:15 am feed. Trials 12, 13 and 14 and their records stay as they are. The pre-registration to turn off the $100 account's SPY fallback (registry `fallback-off:preregistration`, spec `94fc7428e857a21c`) stays in the registry but was never applied; with the account stopped the fallback cannot buy anything.
+- **Undo.** Set a `stop` value back to `false`, as its own recorded decision.

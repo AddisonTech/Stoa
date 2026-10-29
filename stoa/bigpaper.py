@@ -159,8 +159,15 @@ class BigRuntime:
         return self.base.big_paper.idle_money == "spy"
 
     @property
+    def stopped(self) -> bool:
+        """The owner's stop (``stop.big_paper``): sell everything at 9:45 am, then nothing."""
+        return self.base.stop.big_paper
+
+    @property
     def label(self) -> str:
         """The trial and where idle money sits, for the alerts."""
+        if self.stopped:
+            return "Stopped by the owner"
         return f"Trial {self.strategy.removeprefix('trial')}, idle money in " + (
             "SPY" if self.core else "cash"
         )
@@ -397,7 +404,7 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
         sha = str(meta["sha256"])
     rows, sigs = feed.scored(fd, session, path, sha)
     log.info("picks model: %s", version or FROZEN_VERSION)
-    if not rt.dry:
+    if not rt.dry and not rt.base.stop.shadow:
         lock_scoreboard(rt, session, rows, version or FROZEN_VERSION, now)
     if rt.dry:
         feed.save_check(fd, session, rows, sigs)
@@ -542,6 +549,9 @@ def shadow_lock(rt: BigRuntime) -> Result:
     bp = rt.base.big_paper
     if off_reason(rt.base, rt.secrets, dry=rt.dry):
         return Result(EXIT_OK, "off")
+    if rt.base.stop.shadow:
+        log.info("shadow scoreboard: stopped by the owner (stop.shadow); nothing scored")
+        return Result(EXIT_OK, "stopped")
     token = hf_token(rt)
     if not bp.shadow_models or token is None:
         return Result(EXIT_OK, "none")
@@ -753,15 +763,18 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
     held = picks_held(raw, s)
     core = raw.get(s.benchmark)
     notes: list[str] = []
-    try:
-        sigs = rt.signals(session) if rt.signals else feed_signals(rt, session, now)
-    except Exception as exc:
-        sigs = []
-        where = "SPY" if rt.core else "cash"
-        notes.append(
-            f"No buys today; the account stays in {where}. The news brain's data is not ready: "
-            f"{exc}."
-        )
+    sigs: list[event_signals.Signal] = []
+    if rt.stopped:
+        notes.append("No picks. Everything held is sold at 9:45 am and nothing is bought.")
+    else:
+        try:
+            sigs = rt.signals(session) if rt.signals else feed_signals(rt, session, now)
+        except Exception as exc:
+            where = "SPY" if rt.core else "cash"
+            notes.append(
+                f"No buys today; the account stays in {where}. The news brain's data is not "
+                f"ready: {exc}."
+            )
     t9.register_kind(sc.GRADED)
     wanted = sorted({x.symbol for x in sigs} | set(held))
     bars = fetch_bars(rt, wanted, decided)
@@ -839,6 +852,13 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
         )
     if blind:
         decision = dataclasses.replace(decision, orders=(*decision.orders, *blind))
+    if rt.stopped:
+        # The owner's stop: every position in the account is sold, SPY and anything bought
+        # by hand included, and nothing is bought.
+        everything = {k: risk.HeldPosition(k, p.qty, p.current_price) for k, p in raw.items()}
+        decision = dataclasses.replace(
+            decision, orders=tuple(risk.flatten_orders(everything, "stopped"))
+        )
     plan = make_plan(
         decision,
         strategy=rt.strategy,
@@ -873,7 +893,8 @@ def _picks(rt: BigRuntime, force: bool) -> Result:
             notes=notes,
         )
     current = ov.current if ov is not None else None
-    send(rt, result, picks_alert(plan.orders, sigs, current, notes, session, rt.label))
+    if plan.orders or not rt.stopped:  # once stopped and empty, the mornings are quiet
+        send(rt, result, picks_alert(plan.orders, sigs, current, notes, session, rt.label))
     result.plan = plan
     return result
 
@@ -989,11 +1010,11 @@ def _execute(rt: BigRuntime, force: bool) -> Result:
         raise RuntimeError("Alpaca says the market is closed; orders would queue blind")
     hwm = state.high_water_mark or account.equity
     flatten = state.kill_switch.active or risk.kill_switch_breached(account.equity, hwm, s.risk)
-    # The kill switch runs on the raw account so every position goes, SPY included.
-    # Under trial 14 there is no SPY core: idle money stays in cash and SPY is never bought.
+    # The kill switch and the owner's stop run on the raw account so every position goes,
+    # SPY included. Under trial 14 there is no SPY core: idle money stays in cash.
     broker: Any = (
         raw
-        if flatten or not rt.core
+        if flatten or rt.stopped or not rt.core
         else CoreBroker(
             raw, symbol=s.benchmark, reserve_pct=s.risk.cash_buffer_pct, session=session
         )
@@ -1032,6 +1053,7 @@ def _execute(rt: BigRuntime, force: bool) -> Result:
         sectors={o.symbol: o.sector or "Unknown" for o in plan.orders},
         before_sells=cancel_before_sells,
         before_flatten=cancel_everything,
+        stopped=rt.stopped,
     )
     if report.kill_switch_tripped:
         dd = float(risk.drawdown(account.equity, hwm))
@@ -1061,7 +1083,8 @@ def _execute(rt: BigRuntime, force: bool) -> Result:
         closed=[t.model_dump(mode="json") for t in closed],
         core=[o.model_dump(mode="json") for o in getattr(broker, "swaps", [])],
     )
-    send(rt, result, fills_alert(report, closed, broker, session))
+    if report.fills or report.unfilled or report.rejections or not rt.stopped:
+        send(rt, result, fills_alert(report, closed, broker, session))
     state.pending_plan = None
     state.mark_executed(session)
     store.save(state)
@@ -1110,7 +1133,7 @@ def dry_execute(rt: BigRuntime) -> Result:
     flatten = state.kill_switch.active or risk.kill_switch_breached(account.equity, hwm, s.risk)
     broker: Any = (
         sim
-        if flatten or not rt.core
+        if flatten or rt.stopped or not rt.core
         else CoreBroker(
             sim, symbol=s.benchmark, reserve_pct=s.risk.cash_buffer_pct, session=session
         )
@@ -1125,6 +1148,7 @@ def dry_execute(rt: BigRuntime) -> Result:
         state.last_close_equity,
         gate=None,
         sectors={o.symbol: o.sector or "Unknown" for o in plan.orders},
+        stopped=rt.stopped,
     )
     if isinstance(broker, CoreBroker):
         cap = None
@@ -1234,12 +1258,15 @@ def fills_alert(
         lines.append(
             "SPY core: " + ", ".join(f"{o.side.value} {alerts.shares(o.filled_qty)}" for o in swaps)
         )
-    if report.flattened:
+    if report.stopped:
+        lines.insert(0, "STOPPED by the owner: every position sold, nothing bought.")
+    elif report.flattened:
         lines.insert(0, "KILL SWITCH: every position sold.")
+    kill = report.flattened and not report.stopped
     return alerts.Alert(
         title=f"Fills {session}",
         message="\n".join(lines) or "Nothing to trade today.",
-        priority=alerts.URGENT if report.flattened else alerts.DEFAULT,
+        priority=alerts.URGENT if kill else alerts.HIGH if report.stopped else alerts.DEFAULT,
     )
 
 
@@ -1342,7 +1369,10 @@ def _summary(rt: BigRuntime, force: bool) -> Result:
     lines.append(f"Drawdown {off_high:.1%} from the high.{brake}")
     if state.kill_switch.active:
         lines.append("Kill switch ON: tomorrow's 9:45 am run sells everything.")
-    lines.append(shadow_summary_line(rt, now))
+    if rt.stopped:
+        lines.append("Stopped: the next 9:45 am run sells anything held, and nothing is bought.")
+    if not rt.base.stop.shadow:
+        lines.append(shadow_summary_line(rt, now))
     send(rt, result, alerts.Alert(title=f"Day summary {session}", message="\n".join(lines)))
     return result
 
@@ -1351,6 +1381,8 @@ def scoreboard(rt: BigRuntime) -> Result:
     """Grade the shadow scoreboard now, with no alert (the summary does it each evening)."""
     if off_reason(rt.base, rt.secrets, dry=True):
         return Result(EXIT_OK, "off")
+    if rt.base.stop.shadow:
+        return Result(EXIT_OK, "stopped")
     graded = grade_scoreboard(rt, rt.now())
     log.info("shadow scoreboard: %s", [(d["kind"], d["session"], d.get("refused")) for d in graded])
     return Result(EXIT_OK, "graded")
