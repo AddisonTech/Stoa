@@ -224,7 +224,7 @@ On a laptop: `stoa kill-switch status` and `stoa kill-switch reset`.
 
 ## 11a. The owner's stop
 
-Since 2026-10-29 all three are stopped (`stop:` in `config/default.yaml`): the $100 account (`stop.usd100`), the big paper account (`stop.big_paper`) and the shadow scoreboard (`stop.shadow`).
+Since 2026-10-29 the $100 account (`stop.usd100`) and the shadow scoreboard (`stop.shadow`) are stopped (`stop:` in `config/default.yaml`). The big paper account (`stop.big_paper`) was stopped the same day and turned back on that evening as trial 15 (section 13c); its first trial 15 orders go in at 9:45 am on 2026-10-30.
 
 - **A stopped account** sells everything it holds at its next 9:45 am run, SPY and anything bought by hand included, and buys nothing. After that it trades nothing. It cancels its open orders first, the same way the kill switch does, but it is not the kill switch: no drawdown is involved, the kill switch stays off and nothing needs a reset.
 - **Alerts.** The morning alert says what will be sold, the 9:45 am alert starts with "STOPPED by the owner", and the 5:15 pm summary says the account is stopped. Once an account holds nothing, its mornings are quiet. The daily summary still records equity against SPY.
@@ -314,9 +314,9 @@ Do not use `vercel deploy --cwd live`: with the Root Directory set it fails with
 
 **Rotating the paper keys means updating them in Vercel too**, or the card goes blank. Environment variables only reach new builds, so redeploy afterwards. In the dashboard: stoa-live, Settings, Environment Variables, edit `ALPACA_PAPER_KEY_ID` and `ALPACA_PAPER_SECRET` (Production), then Deployments, the top production deployment, Redeploy. Or from the command line: `npx vercel@65.2.0 env rm ALPACA_PAPER_KEY_ID production --cwd live`, then `npx vercel@65.2.0 env add ALPACA_PAPER_KEY_ID production --cwd live` (it asks for the value), the same for the secret, then the redeploy command above. Never add the live keys there.
 
-## 13b. The big paper account (trial 14)
+## 13b. The big paper account (the plumbing; trial 14 as it ran)
 
-Stopped since 2026-10-29 (section 11a): it sells what it holds at the next 9:45 am run and then trades nothing. What follows is how trial 14 ran.
+Since 2026-10-29 the account runs trial 15 (section 13c). The keys, the feed, the dataset, the Windows runners, the dry runs, the kill switch and the dashboard below are unchanged and serve trial 15 too. What follows is how trial 14 ran.
 
 A second, separate Alpaca paper account of about $100,000 runs trial 14 (spec `f385bc9d5040ef7b`, `big_paper.strategy: trial14`, `big_paper.idle_money: cash`): trial 12 exactly as registered (spec `e75fa8775469de92`), the news brain's picks, its sizing and its rails, with no overlay, but with idle money held as cash instead of SPY, so the account's result shows the picks alone. SPY stays the line it is measured against. From 2026-10-28 to 2026-10-29 it ran trial 12 with its SPY core; the first 9:45 am run after the switch sells that SPY alongside the day's picks, and SPY is never bought again while `idle_money` is `cash`. Each trial keeps its own idle money: the config refuses `trial12` or `trial13` with `cash`, and `trial14` with `spy`. The $100 account above keeps the v1 rules, its keys and its state, and nothing here changes it (since 2026-10-28 its picks also go through without a tap, section 6). Trial 12 (`trial12` with `spy`) and trial 13's overlay (`trial13` with `spy`, `stoa/overlay.py`) are still there and run only if the settings are changed.
 
@@ -376,6 +376,25 @@ To check them on the Dell, `powershell -NoProfile -ExecutionPolicy Bypass -File 
 **The model and rolling it back.** `big_paper.model` names the model the picks use. Blank is trial 9's frozen model, kept in the feed state (`static/model_h1.pkl`); it is blank today. The retrained `t12-all-20261027` was not swapped in: its calibrated p never goes above 0.520, so it could never buy (docs/DECISIONS.md, "Trial 12 retrain-all"). It is a shadow model instead (above). A version (say `t12-all-20261027`) reads `models/<version>/model_h1.pkl` from the private dataset, and the picks refuse it unless its sha256 equals `big_paper.model_sha256`, so a changed file cannot slip in. To roll back, set `model` back to blank (and `model_sha256` to blank) and push: the next 9:00 am picks use the frozen model again. A new version goes in only after three checks: a dry picks run on the Windows runner with that version (Run workflow, job `picks`, dry ticked, `model` set), `model-check` (it downloads the version and its backfilled mornings, scores the Dell's rows again on the Windows runner and requires the Dell's p to the last bit and picks without errors), and the feature match of section "The dry runs" above.
 
 **Retraining** (`stoa/newsbrain/retrain.py`, docs/DECISIONS.md "Trial 12 retrain-all"). On the Dell: `python -m stoa.newsbrain retrain <last session>` refits trial 9's model, same 13 features, same 1 session label, same fit and calibration split, on every session labelled by the open of `<last session>`, and saves `data\newsbrain\models\<version>\` with a `meta.json` (train window, rows, features, git sha, the pickle's sha256). `python -m stoa.newsbrain backfill <version> <sessions...>` scores past sessions for the scoreboard. `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\push-model.ps1 <version>` uploads both (a write token, never saved).
+
+## 13c. Trial 15: the owner's brain, 5 picks a day
+
+Registered 2026-10-29 (spec `557c95176a137379`, docs/DECISIONS.md "Trial 15"), `big_paper.strategy: trial15`, `big_paper.idle_money: cash`.
+
+**The day.**
+
+- **8:15 am feed.** As in 13b, plus the local event reader (`big_paper.reader: true`): Qwen2.5-1.5B-Instruct on the runner's CPU labels each new article (event type, good or bad for the company, how big), for up to 20 minutes; whatever it does not reach waits in a backlog for the next run. Labels go to `events/` in the private dataset, beside the rolling state, never inside it. A reader failure is logged and never stops the feed. On the dry feed of 2026-10-29 it labelled 448 items, nothing left over, and the whole feed took 9 minutes.
+- **9:00 am picks.** The brain ranks every stock it scores; the top 5 operating companies by conviction (funds and SPY never) are the picks. Yesterday's 5 are sold and today's 5 bought at (equity x 0.98) / 5 each; a stock picked again is resized, not sold and bought back. The reader gets 4 more minutes on what arrived since 8:15. Claude then reads the day's news behind the top 20 (the existing analyst, inside the one monthly cap); its reading is listed in the alert and never changes the picks. The plan also keeps the morning's rows for the nightly learner and locks the learner's own top 5 before 9:30 am.
+- **9:45 am execute.** Sells, then buys, with the kill switch and the price sanity check (an order is refused if its price moved more than 8% from the 9:00 am price). No SPY, no sector cap, no daily loss stop, no regime filter.
+- **5:15 pm summary.** Equity against SPY, today's 5 from 9:45 am to the close (not final), the session before's 5 graded 9:45 am to 9:45 am after costs with that day's hit rate, why each loser lost, the learner's shadow record and the running hit rate against the 75% target. Then the nightly learner refits (the "Nightly learning" step, never fails the run).
+
+**Files on the state branch** (`big-paper/trial15/`): `picks/<session>.json` (what each pick saw), `days.jsonl` (grades), `reviews/<session>.json`, `lessons.json` (reasons counted, Claude's live record), `rule_checks.json` (the rule menu's decade checks), `claude/<session>.json`, `learner.json`, `shadow/<session>.json` (locked with a sha256), `shadow_days.jsonl`, and `promoted.json` once a learner takes over. `shared/trial15/claude_ledger.json` is the Claude reader's spend, counted in the one cap.
+
+**Owner's one-time step for the nightly learner.** It needs the decade's rows in the private dataset. On the Dell: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\push-learn-base.ps1` (asks for a write token without showing it; uploads `data\newsbrain\trial15\learn_base.parquet`, 1,633,249 rows, as `learn/base.parquet`). Until then each evening's learner says "waiting_for_base" and nothing changes.
+
+**Rolling back.** A learner that took over is in `big-paper/trial15/promoted.json`; delete that file on the state branch and the picks go back to `big_paper.model` (blank: trial 9's frozen brain). To turn off the reader set `big_paper.reader: false`. To stop the account, `stop.big_paper: true` (section 11a).
+
+**History tools (Dell).** `python -m stoa.newsbrain events` (the reader over every month, GPU, resumable, newest first; progress in `data\newsbrain\events\progress.jsonl`), `python -c "from stoa.newsbrain import ripplemap; ripplemap.main()"` (the 10-K ripple map), `python -c "from stoa.newsbrain import catchup; catchup.main()"` (the pre-market catch-up table), `python -c "from stoa.newsbrain import compare15; compare15.main()"` (the registered comparison, run once).
 
 ## 14. Changing settings
 
