@@ -23,7 +23,7 @@ import dataclasses
 import json
 import logging
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
@@ -105,11 +105,17 @@ def save_ledger(settings: Settings, ledger: ShadowLedger) -> None:
 # ---- spend: one cap over every Claude call ------------------------------------------------
 
 
-def merged_view(state: State, ledger: ShadowLedger) -> State:
-    """A throwaway State whose spend and cap records cover DECIDE and the shadow job."""
-    months = set(state.llm_spend_by_month) | set(ledger.spend_by_month)
+def merged_view(
+    state: State, ledger: ShadowLedger, extra: Mapping[str, Decimal] | None = None
+) -> State:
+    """A throwaway State whose spend and cap records cover DECIDE, the shadow job and
+    ``extra`` (trial 15's live Claude reader, ``stoa/newsbrain/claude15.py``)."""
+    extra = extra or {}
+    months = set(state.llm_spend_by_month) | set(ledger.spend_by_month) | set(extra)
     spend = {
-        m: state.llm_spend_by_month.get(m, ZERO) + ledger.spend_by_month.get(m, ZERO)
+        m: state.llm_spend_by_month.get(m, ZERO)
+        + ledger.spend_by_month.get(m, ZERO)
+        + extra.get(m, ZERO)
         for m in months
     }
     return State(
@@ -118,6 +124,13 @@ def merged_view(state: State, ledger: ShadowLedger) -> State:
         cap_asks=[*state.cap_asks, *ledger.cap_asks],
         cap_warned_months=sorted(set(state.cap_warned_months) | set(ledger.cap_warned_months)),
     )
+
+
+def big_reader_spend(settings: Settings) -> dict[str, Decimal]:
+    """Trial 15's live Claude reader's spend, so the one monthly cap covers it too."""
+    from stoa.newsbrain import claude15
+
+    return claude15.spend(settings)
 
 
 def keep_new_cap_records(view: State, before: State, ledger: ShadowLedger) -> None:
@@ -190,7 +203,7 @@ def run_session(
     if session in ledger.sessions:
         return ShadowRun(session, "already_scored")
 
-    view = merged_view(state, ledger)
+    view = merged_view(state, ledger, big_reader_spend(s))
     before = view.model_copy(deep=True)
     g = spendcap.gate(
         view,
@@ -236,7 +249,9 @@ def run_session(
         if rep.failures:
             run.note = f"Failed items: {an.summarize_failures(rep.failures)}."
         an.merge_scores(scores_path(s), a.rows(items))
-    heads_up = spendcap.warn_if_due(merged_view(state, ledger), s.budget, now())
+    heads_up = spendcap.warn_if_due(
+        merged_view(state, ledger, big_reader_spend(s)), s.budget, now()
+    )
     if heads_up is not None:
         ledger.cap_warned_months = sorted({*ledger.cap_warned_months, g.month})
         send(heads_up)
@@ -257,7 +272,7 @@ def progress(
     settings: Settings, state: State, ledger: ShadowLedger, now: datetime
 ) -> dict[str, Any]:
     month = spendcap.month_of(now)
-    view = merged_view(state, ledger)
+    view = merged_view(state, ledger, big_reader_spend(settings))
     return {
         "start": settings.analyst.shadow_start.isoformat(),
         "sessions": len(ledger.sessions),

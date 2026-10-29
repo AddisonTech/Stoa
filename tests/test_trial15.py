@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -327,3 +327,27 @@ def test_a_reader_failure_never_stops_the_feed(tmp_path: Path) -> None:
     fd = nf.Feed(tmp_path)
     assert nf.read_events(fd, src, articles([1, 2])) == 0
     assert sorted(pd.read_parquet(tmp_path / "events" / "backlog.parquet")["id"]) == [1, 2]
+
+
+def test_claudes_reading_is_noted_but_never_changes_the_picks(tmp_path: Path) -> None:
+    from stoa.newsbrain import claude15
+    from tests.test_analyst import FakeClient
+    from tests.test_claude15 import archive
+
+    fb = FakeBroker(D(100000), dict(PRICES), last_equity=D(100000))
+    rt, rec = live(tmp_path, fb, [sig("AAPL"), sig("MSFT")])
+    rt.base = rt.base.model_copy(
+        update={
+            "state": rt.base.state.model_copy(update={"shared_dir": tmp_path / "shared"}),
+            "analyst": rt.base.analyst.model_copy(update={"cache_dir": tmp_path / "cache"}),
+        }
+    )
+    rt.claude_news = claude15.news_for(archive(), ["AAPL"], datetime(2021, 1, 1, tzinfo=UTC))
+    rt.claude_client = FakeClient()
+    bigpaper.picks(rt)
+    plan = StateStore(tmp_path / "big").load().pending_plan
+    assert plan is not None
+    assert {o.symbol for o in plan.orders if o.side is Side.BUY} == {"AAPL", "MSFT"}
+    msg = rec.alerts[-1].message
+    assert "Claude's second reading" in msg and "never changes the picks" in msg
+    assert (tmp_path / "big" / "trial15" / "claude" / f"{SESSION}.json").exists()

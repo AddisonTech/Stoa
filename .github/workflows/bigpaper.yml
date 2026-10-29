@@ -192,6 +192,10 @@ jobs:
         env:
           JOB: ${{ steps.pick.outputs.job }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          # Trial 15's live Claude reader at 9:00 am, inside the one monthly cap; the $100
+          # account's state is read for that cap only.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          STOA_STATE_DIR: state-branch/state
           STOA__BIG_PAPER__FEED_DIR: ${{ runner.temp }}/stoa-feed
           NPY_DISABLE_CPU_FEATURES: "${{ runner.os == 'Windows' && 'X86_V4 AVX512F AVX512CD AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL AVX512_SPR' || '' }}"
         # A replay runs each step from an empty feed folder, as a fresh runner would, with its

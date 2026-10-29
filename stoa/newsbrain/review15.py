@@ -120,6 +120,13 @@ def update_lessons(
         rule = BY_KEY[key].rule
         c["rule"] = rule
         c["rule_due"] = rule is not None and c["count"] >= trial15.LESSON_MIN_COUNT
+    for rv in reviews:
+        said = rv.get("claude_sentiment")
+        if said is None or said == 0:
+            continue
+        c = lessons.setdefault("claude", {"read": 0, "right": 0})
+        c["read"] += 1  # Claude's live record: did the sign of its reading match the result?
+        c["right"] += int((said > 0) == bool(rv["hit"]))
     lessons["reviewed_days"] = sorted({*lessons.get("reviewed_days", []), session})
     return lessons
 

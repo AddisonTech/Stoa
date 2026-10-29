@@ -141,6 +141,8 @@ class BigRuntime:
     hub: Any = None  # huggingface_hub.HfApi for the shadow scoreboard; from HF_TOKEN when None
     prices_945: Any = None  # shadowboard.Prices for grading; Alpaca's minute bars when None
     chosen: list[dict[str, Any]] | None = None  # trial 15: what the morning's picks saw
+    claude_news: Any = None  # trial 15: the day's news behind the top 20, for Claude's reading
+    claude_client: Any = None  # anthropic client for that reading, injectable
 
     def __post_init__(self) -> None:
         self.notifier = Tagged(self.notifier, self.base.big_paper.tag)
@@ -423,6 +425,14 @@ def feed_signals(rt: BigRuntime, session: date, now: datetime) -> list[event_sig
             log.info("trial 15 rules in use: %s", rules)
         chosen = trial15.choose(review15.apply_rules(rows, rules), sic)
         rt.chosen = trial15.records(chosen)
+        try:
+            from stoa.newsbrain import claude15
+
+            top = trial15.choose(rows, sic, claude15.TOP)
+            since = clock.at_ny(clock.previous_session(session), "09:00").astimezone(UTC)
+            rt.claude_news = claude15.news_for(fd.state().archive(), list(top["symbol"]), since)
+        except Exception as exc:
+            log.warning("no news gathered for Claude's reading: %s", exc)
         sigs = trial15.signals(chosen, session)
         if not rt.dry:
             keep_rows15(rt, fd, token, session, rows)
@@ -978,6 +988,8 @@ def _picks15(rt: BigRuntime, force: bool) -> Result:
         ref = {}
     frac = {sym: broker.asset(sym).fractionable for sym in symbols}
     orders = trial15.plan_orders(sigs, held, equity, ref, frac)
+    if sigs and not rt.dry and not rt.stopped:
+        notes += claude15_lines(rt, session, sigs)
     unpriced = [x.symbol for x in sigs if x.symbol not in held and not ref.get(x.symbol)]
     if unpriced:
         notes.append("No price at 9:00 am, so not bought: " + ", ".join(unpriced) + ".")
@@ -1750,6 +1762,52 @@ def shadow15_lines(rt: BigRuntime, session: date) -> list[str]:
     return [line]
 
 
+def claude15_lines(rt: BigRuntime, session: date, sigs: list[event_signals.Signal]) -> list[str]:
+    """Claude's reading of the news behind the top 20, inside the shared monthly cap, kept
+    beside the picks (trial15/claude/<session>.json). It never changes the picks, and a
+    failure or the cap only leaves it out."""
+    try:
+        from stoa.newsbrain import claude15
+
+        news = rt.claude_news
+        if news is None:
+            return []
+        key = rt.secrets.llm_api_key
+        state100 = StateStore(rt.base.state.dir).load()
+        got = claude15.read(
+            rt.base,
+            key.get_secret_value() if key is not None else None,
+            state100,
+            news,
+            rt.now,
+            rt.claude_client,
+        )
+        out = dir15(rt) / "claude" / f"{session.isoformat()}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        body = {
+            "status": got.status,
+            "note": got.note,
+            "spent_usd": got.spent_usd,
+            "by_symbol": got.by_symbol,
+        }
+        out.write_text(json.dumps(body, indent=1) + "\n", encoding="utf-8")
+        if got.status != "read":
+            return [f"Claude's second reading skipped ({got.status}: {got.note})."]
+        said = [
+            f"{x.symbol} {got.by_symbol[x.symbol]['sentiment']:+.2f}"
+            for x in sigs
+            if x.symbol in got.by_symbol
+        ]
+        return [
+            "Claude's second reading of today's news (recorded, never changes the picks): "
+            + (", ".join(said) if said else "no news on the picks")
+            + "."
+        ]
+    except Exception as exc:
+        log.warning("Claude's reading failed: %s", exc)
+        return [f"Claude's second reading failed today ({type(exc).__name__})."]
+
+
 def active_rules15(rt: BigRuntime) -> list[str]:
     """Rules from the lessons in use: due by their count and passed on the decade."""
     d = dir15(rt)
@@ -1797,6 +1855,11 @@ def review15_lines(rt: BigRuntime, day: dict[str, Any]) -> list[str]:
     end = clock.at_ny(sold, "09:45").astimezone(UTC)
     news = later_news15(rt, [str(p["symbol"]) for p in picks], start, end)
     reviews = review15.review_day(picks, day["picks"], news)
+    claude = review15.load_json(dir15(rt) / "claude" / f"{day['session']}.json")
+    for rv in reviews:
+        said = claude.get("by_symbol", {}).get(str(rv["symbol"]))
+        if said is not None:
+            rv["claude_sentiment"] = said["sentiment"]
     d = dir15(rt)
     out = d / "reviews" / f"{day['session']}.json"
     out.parent.mkdir(parents=True, exist_ok=True)

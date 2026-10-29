@@ -501,7 +501,9 @@ def collect(
         "fallback": {"active": track.fallback_active, "reason": track.fallback_reason},
         "big_paper": big_paper(settings),
         "shadow_board": shadowboard.read_board(settings.big_paper.state_dir),
-        "analyst": analyst_spend(shadow.merged_view(state, ledger), settings, built),
+        "analyst": analyst_spend(
+            shadow.merged_view(state, ledger, shadow.big_reader_spend(settings)), settings, built
+        ),
         "shadow": {
             k: v
             for k, v in shadow.progress(settings, state, ledger, built).items()
