@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "high_water_mark": "100.51028387006",
+  "high_water_mark": "101.29",
   "kill_switch": {
     "active": false,
     "tripped_session": null,
@@ -13,15 +13,16 @@
     "equity": "100",
     "benchmark_close": "759.97"
   },
-  "last_close_session": "2026-10-29",
-  "last_close_equity": "100.51028387006",
-  "last_benchmark_close": "769.36",
+  "last_close_session": "2026-10-30",
+  "last_close_equity": "101.29",
+  "last_benchmark_close": "755.72",
   "decided_sessions": [
     "2026-10-23",
     "2026-10-26",
     "2026-10-27",
     "2026-10-28",
-    "2026-10-29"
+    "2026-10-29",
+    "2026-10-30"
   ],
   "executed_sessions": [
     "2026-10-26",
@@ -40,7 +41,18 @@
   "override_sessions": [
     "2026-10-26"
   ],
-  "pending_plan": null,
+  "pending_plan": {
+    "plan_id": "ad678ef36a",
+    "strategy": "agents",
+    "mode": "paper",
+    "decided_session": "2026-10-30",
+    "execute_session": "2026-11-02",
+    "created_at": "2026-10-30T21:15:52.973388Z",
+    "orders": [],
+    "equity_at_decide": "101.29",
+    "kill_switch": false,
+    "reserves": []
+  },
   "positions_meta": {},
   "realized_by_year": {
     "2026": "1.295538385638"
@@ -180,11 +192,24 @@
         "reference_closes": {
           "MTUM": "298.34"
         }
+      },
+      {
+        "session": "2026-10-30",
+        "mode": "paper",
+        "broker_equity": "101.29",
+        "adjusted_equity": "101.141402232698641",
+        "benchmark_close": "755.72",
+        "trades_closed": 5,
+        "flow": "0",
+        "strategy": "agents",
+        "reference_closes": {
+          "MTUM": "284.1"
+        }
       }
     ],
     "cost_drag": "0.148597767301359",
     "trades_closed": 0,
-    "pending_trades": 5,
+    "pending_trades": 0,
     "last_strategy": "agents",
     "expectation": null,
     "fallback_active": false,
@@ -197,30 +222,9 @@
   "approval_required": false,
   "protective_stops": [],
   "stop_outs": [],
-  "holdings_at_close": {
-    "AAPL": {
-      "qty": "0.0523315",
-      "close": "348.91"
-    },
-    "CRM": {
-      "qty": "0.080636052",
-      "close": "230.9"
-    },
-    "KO": {
-      "qty": "0.216628015",
-      "close": "92.82"
-    },
-    "LLY": {
-      "qty": "0.015543815",
-      "close": "1373.7"
-    },
-    "MSFT": {
-      "qty": "0.037975789",
-      "close": "530.14"
-    }
-  },
+  "holdings_at_close": {},
   "last_reference_closes": {
-    "MTUM": "298.34"
+    "MTUM": "284.1"
   },
   "cap_raises": [],
   "cap_asks": [],
