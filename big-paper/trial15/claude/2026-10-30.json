@@ -1,0 +1,82 @@
+{
+ "status": "read",
+ "note": "26 new, 0 failed",
+ "spent_usd": 0.0031348749999999996,
+ "by_symbol": {
+  "AEHR": {
+   "sentiment": 0.2,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "ALGM": {
+   "sentiment": 0.1,
+   "materiality": 0.24999999999999994,
+   "items": 5.0
+  },
+  "AMD": {
+   "sentiment": 0.2333333333333333,
+   "materiality": 0.25,
+   "items": 3.0
+  },
+  "CRDO": {
+   "sentiment": 0.0,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "CRM": {
+   "sentiment": 0.1,
+   "materiality": 0.5,
+   "items": 1.0
+  },
+  "CRWD": {
+   "sentiment": -0.1,
+   "materiality": 0.25,
+   "items": 1.0
+  },
+  "IOVA": {
+   "sentiment": 0.3,
+   "materiality": 0.5,
+   "items": 1.0
+  },
+  "IREN": {
+   "sentiment": 0.4,
+   "materiality": 0.5,
+   "items": 1.0
+  },
+  "MU": {
+   "sentiment": 0.0,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "NBIS": {
+   "sentiment": 0.0,
+   "materiality": 0.05,
+   "items": 1.0
+  },
+  "OI": {
+   "sentiment": 0.0,
+   "materiality": 0.11666666666666665,
+   "items": 3.0
+  },
+  "ORCL": {
+   "sentiment": -0.06666666666666667,
+   "materiality": 0.13333333333333333,
+   "items": 3.0
+  },
+  "PANW": {
+   "sentiment": 0.0,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "PBR.A": {
+   "sentiment": 0.30000000000000004,
+   "materiality": 0.30000000000000004,
+   "items": 2.0
+  },
+  "XP": {
+   "sentiment": -0.3,
+   "materiality": 0.3,
+   "items": 1.0
+  }
+ }
+}
