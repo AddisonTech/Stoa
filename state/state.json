@@ -27,7 +27,8 @@
     "2026-10-26",
     "2026-10-27",
     "2026-10-28",
-    "2026-10-29"
+    "2026-10-29",
+    "2026-10-30"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -39,142 +40,11 @@
   "override_sessions": [
     "2026-10-26"
   ],
-  "pending_plan": {
-    "plan_id": "b65deed954",
-    "strategy": "agents",
-    "mode": "paper",
-    "decided_session": "2026-10-29",
-    "execute_session": "2026-10-30",
-    "created_at": "2026-10-29T21:15:46.957139Z",
-    "orders": [],
-    "equity_at_decide": "100.51028387006",
-    "kill_switch": false,
-    "reserves": [
-      {
-        "symbol": "CVX",
-        "side": "buy",
-        "notional": "20.10",
-        "qty": null,
-        "ref_price": "231.46",
-        "entry_atr": "4.7107142857142845",
-        "stop_price": "219.6832",
-        "reason": "entry",
-        "conviction": 5,
-        "thesis": "Momentum score 0.270: 60 day +25.2%, 120 day +29.7%, above its 50 and 200 day averages.",
-        "client_order_id": "stoa-20261030-CVX-buy-b65deed954",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "XOM",
-        "side": "buy",
-        "notional": "20.10",
-        "qty": null,
-        "ref_price": "183.29",
-        "entry_atr": "4.021878571428571",
-        "stop_price": "173.2353",
-        "reason": "entry",
-        "conviction": 4,
-        "thesis": "Momentum score 0.244: 60 day +21.7%, 120 day +28.5%, above its 50 and 200 day averages.",
-        "client_order_id": "stoa-20261030-XOM-buy-b65deed954",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "AMD",
-        "side": "buy",
-        "notional": "20.10",
-        "qty": null,
-        "ref_price": "566.42",
-        "entry_atr": "28.432642857142856",
-        "stop_price": "495.3384",
-        "reason": "entry",
-        "conviction": 3,
-        "thesis": "Momentum score 0.203: 60 day +17.5%, 120 day +24.4%, above its 50 and 200 day averages.",
-        "client_order_id": "stoa-20261030-AMD-buy-b65deed954",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "V",
-        "side": "buy",
-        "notional": "20.10",
-        "qty": null,
-        "ref_price": "410.54",
-        "entry_atr": "7.48282857142857",
-        "stop_price": "391.8329",
-        "reason": "entry",
-        "conviction": 2,
-        "thesis": "Momentum score 0.187: 60 day +11.6%, 120 day +29.3%, above its 50 and 200 day averages.",
-        "client_order_id": "stoa-20261030-V-buy-b65deed954",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "MA",
-        "side": "buy",
-        "notional": "20.10",
-        "qty": null,
-        "ref_price": "635.7",
-        "entry_atr": "11.67816428571429",
-        "stop_price": "606.5046",
-        "reason": "entry",
-        "conviction": 1,
-        "thesis": "Momentum score 0.184: 60 day +11.6%, 120 day +28.7%, above its 50 and 200 day averages.",
-        "client_order_id": "stoa-20261030-MA-buy-b65deed954",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      }
-    ]
+  "pending_plan": null,
+  "positions_meta": {},
+  "realized_by_year": {
+    "2026": "1.295538385638"
   },
-  "positions_meta": {
-    "CRM": {
-      "entry_session": "2026-10-26",
-      "entry_price": "247.904",
-      "entry_atr": "8.716889012925364774445830147",
-      "ref_session": "2026-10-29",
-      "ref_close": "230.9",
-      "stop_price": "226.12"
-    },
-    "MSFT": {
-      "entry_session": "2026-10-26",
-      "entry_price": "526.388",
-      "entry_atr": "11.08006618285911964164648911",
-      "ref_session": "2026-10-29",
-      "ref_close": "530.14",
-      "stop_price": "508.05"
-    },
-    "KO": {
-      "entry_session": "2026-10-26",
-      "entry_price": "92.278",
-      "entry_atr": "1.673565194693129510421745227",
-      "ref_session": "2026-10-29",
-      "ref_close": "92.82",
-      "stop_price": "88.14"
-    },
-    "LLY": {
-      "entry_session": "2026-10-26",
-      "entry_price": "1286.042",
-      "entry_atr": "41.74620280932042817333877781",
-      "ref_session": "2026-10-29",
-      "ref_close": "1373.7",
-      "stop_price": "1283.15"
-    },
-    "AAPL": {
-      "entry_session": "2026-10-26",
-      "entry_price": "343.77",
-      "entry_atr": "6.114998258681441153900352289",
-      "ref_session": "2026-10-29",
-      "ref_close": "348.91",
-      "stop_price": "333.09"
-    }
-  },
-  "realized_by_year": {},
   "llm_spend_by_month": {
     "2026-10": "0.000917"
   },
@@ -183,7 +53,63 @@
   "flows_since_close": "0",
   "withdrawn_since_milestone": "0",
   "principal_flow_pending": false,
-  "recent_trades": [],
+  "recent_trades": [
+    {
+      "symbol": "AAPL",
+      "entry_session": "2026-10-26",
+      "exit_session": "2026-10-30",
+      "qty": "0.0523315",
+      "entry_price": "343.77",
+      "exit_price": "344.342",
+      "fees": "0",
+      "pnl": "0.0299336180",
+      "reason": "stopped"
+    },
+    {
+      "symbol": "CRM",
+      "entry_session": "2026-10-26",
+      "exit_session": "2026-10-30",
+      "qty": "0.080636052",
+      "entry_price": "247.904",
+      "exit_price": "232.93",
+      "fees": "0",
+      "pnl": "-1.207444242648",
+      "reason": "stopped"
+    },
+    {
+      "symbol": "KO",
+      "entry_session": "2026-10-26",
+      "exit_session": "2026-10-30",
+      "qty": "0.216628015",
+      "entry_price": "92.278",
+      "exit_price": "94.71",
+      "fees": "0",
+      "pnl": "0.526839332480",
+      "reason": "stopped"
+    },
+    {
+      "symbol": "LLY",
+      "entry_session": "2026-10-26",
+      "exit_session": "2026-10-30",
+      "qty": "0.015543815",
+      "entry_price": "1286.042",
+      "exit_price": "1420.402",
+      "fees": "0",
+      "pnl": "2.088466983400",
+      "reason": "stopped"
+    },
+    {
+      "symbol": "MSFT",
+      "entry_session": "2026-10-26",
+      "exit_session": "2026-10-30",
+      "qty": "0.037975789",
+      "entry_price": "526.388",
+      "exit_price": "522.642",
+      "fees": "0",
+      "pnl": "-0.142257305594",
+      "reason": "stopped"
+    }
+  ],
   "open_orders": [],
   "sim_cash": null,
   "sim_positions": {},
@@ -256,9 +182,9 @@
         }
       }
     ],
-    "cost_drag": "0.048974999054270",
+    "cost_drag": "0.148597767301359",
     "trades_closed": 0,
-    "pending_trades": 0,
+    "pending_trades": 5,
     "last_strategy": "agents",
     "expectation": null,
     "fallback_active": false,
