@@ -654,3 +654,25 @@ Decided 2026-10-29 by the owner. The rules are in the registry before any trial 
 - **Reasons a pick lost, in order, the first that fits:** it beat SPY but not by its costs; bad news about it after the buy (the reader's labels); it had jumped more than 5% the day before; no news behind it; a loss inside its usual 20-day wobble; else a loss bigger than its wobble with no clear cause.
 - **The nightly learner is the live brain's design** (today trial 9's 13 inputs) refit on every labelled row, recent rows weighted more. It runs after the 5:15 pm summary on the runner from the decade's rows (`learn/base.parquet`, 1,633,249 rows through 2026-10-27, built on the Dell from the retrain-all's rows) plus each morning's rows the picks job keeps. It shadows from the next morning; its top 5 are locked with a sha256 before 9:30 am and graded like the picks; it takes over after 20 graded sessions only if, over the last 20, its average edge is higher and its hit rate at least as high (`promoted.json`; delete it to roll back).
 - **The decade's rows reach the private dataset only by the owner's hand.** The Dell has no Hugging Face login and the repository is public, so the rows cannot go anywhere public and cannot be uploaded from here. `scripts\push-learn-base.ps1` uploads them once with a write token typed at the prompt. Until then the learner waits and says so.
+
+**The first day, 2026-10-30.** The 8:15 am feed (31 minutes; its reader spent its 20 minutes on the night's news), the 9:00 am picks (7 minutes, done 9:10) and the 9:45 am run all went as trial 15 on the frozen brain. Picks: MU, XP, CRWV, NBIS, CRM, each bought for $19,558.28 (equity x 0.98 / 5), all filled, nothing rejected, no SPY. All five had fallen 4.6% to 6.5% the day before. Claude read 26 items behind the top 20 for $0.003. The reader left 439 articles in its backlog at 9:00 am; they are labelled at the next run.
+
+**The history reader finished** at 2:44 am on 2026-10-30: all 142 months, 1,680,374 labels, at 43 to 51 items a second on the Dell's GPU.
+
+**Result of the registered comparison, 2026-10-30: the new brain does not go live.** Run once (registry `trial15:comparison`, kind backtest, its daily top 5 returns logged; report on the state branch `shared/results/trial15-20261030/comparison.json`). 2023-01-01 to 2026-06-30, 874 days, the same 656,489 eligible rows for both brains:
+
+| | New brain (25 inputs, recent rows weighted more) | Frozen trial 9 brain |
+|---|---|---|
+| Picks beating SPY after costs | 47.4% | 47.8% |
+| Average edge a pick | +0.007% | +0.045% |
+| Days whose 5 together beat SPY | 49.9% | 49.1% |
+| 2023 / 2024 / 2025 / 2026 hit rate | 46.8% / 47.1% / 46.5% / 51.0% | 48.9% / 47.5% / 45.8% / 50.0% |
+
+The rule was a higher average edge and a hit rate at least as high; the new brain has neither, so the frozen brain stays and, as the owner asked, no live path for the new brain was built. Any stock picked at random did 43.2% (average edge -0.29%). The new brain's code, its rows and this run stay as they are; trying again with changes is a new trial.
+
+**What the new pieces found over the decade** (descriptive, all labelled panel rows 2016 to mid-2026, next session open to open against SPY after costs):
+
+- **The reader** called 78% of items "other" and 17% "earnings beat"; every other type is under 1%. The small model leans on "earnings beat" for many earnings stories, good or bad, so its types are rough. Its direction (good or bad) is the more useful part.
+- **The event memory:** no kind of event beat SPY after costs on average the next session. The best was an analyst upgrade (-0.05% a row, 47.5% beat SPY); the worst were a lost contract (-0.57%) and a bad executive change (-0.52%). Next to the average row (-0.29%, 43.1%), the gaps are small, and costs eat what is there.
+- **Ripples:** a company's customers having good or bad news made no difference to it the next session (-0.286% against -0.285%); suppliers' news a hair (-0.14% against -0.17%).
+- **The pre-market hunter:** small, thinly covered companies with news before the open did worse than average (42.8% beat SPY, -0.47% a row), because about 95% of the move is done by 9:45 am and their trading costs are higher.
