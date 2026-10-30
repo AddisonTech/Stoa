@@ -1,0 +1,22 @@
+{
+ "version": "t15-learn-20261027",
+ "sha256": "28eab9a24816321470096be603f920c16b19aa6f8f4b135a93a3b209a2bef57a",
+ "rows": 1633249,
+ "trained_through": "2026-10-27",
+ "features": [
+  "sent",
+  "surprise",
+  "first_break",
+  "quiet_spike",
+  "coverage",
+  "ripple",
+  "filing_tone",
+  "guidance",
+  "beat_miss",
+  "ret_1",
+  "ret_5",
+  "vol_20",
+  "log_adv"
+ ],
+ "half_life_years": 2.0
+}
