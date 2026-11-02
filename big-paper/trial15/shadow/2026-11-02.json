@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-02",
+ "version": "t15-learn-20261027",
+ "picks": [
+  "RDDT",
+  "FFIV",
+  "STNE",
+  "ASST",
+  "NET"
+ ],
+ "sha256": "a551ca207d66f25fa1168623340c878fa379f43fd45b0ccdc5f4bb8dcc36d3b2",
+ "locked_at": "2026-11-02T14:04:01.900387+00:00"
+}
