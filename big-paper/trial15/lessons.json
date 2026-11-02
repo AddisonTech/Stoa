@@ -1,0 +1,39 @@
+{
+ "reasons": {
+  "bad_news": {
+   "count": 2,
+   "words": "bad news about it came out after the buy",
+   "examples": [
+    "2026-10-30 MU -1.96%",
+    "2026-10-30 CRM -0.80%"
+   ],
+   "rule": null,
+   "rule_due": false
+  },
+  "no_news": {
+   "count": 1,
+   "words": "there was no news behind it that day",
+   "examples": [
+    "2026-10-30 CRWV -5.34%"
+   ],
+   "rule": "need_news",
+   "rule_due": false
+  },
+  "unexplained": {
+   "count": 1,
+   "words": "a loss bigger than its usual wobble, with no clear cause",
+   "examples": [
+    "2026-10-30 NBIS -7.93%"
+   ],
+   "rule": null,
+   "rule_due": false
+  }
+ },
+ "claude": {
+  "read": 2,
+  "right": 0
+ },
+ "reviewed_days": [
+  "2026-10-30"
+ ]
+}
