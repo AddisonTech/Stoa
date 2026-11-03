@@ -25,7 +25,19 @@ from typing import Any, Literal
 import httpx
 import pandas as pd
 
-from stoa import adjust, alerts, approvals, clock, exam, money, risk, stops, sweep, tracking
+from stoa import (
+    adjust,
+    alerts,
+    approvals,
+    clock,
+    exam,
+    mirror,
+    money,
+    risk,
+    stops,
+    sweep,
+    tracking,
+)
 from stoa.approvals import ApprovalClient
 from stoa.broker.alpaca import AlpacaBroker, make_trading_client
 from stoa.broker.base import Broker, BrokerPosition, OrderStatus
@@ -36,6 +48,7 @@ from stoa.data.base import BarProvider, Bars, DataError, fresh_subset
 from stoa.data.external import EarningsSource, PriceSource, pick_source
 from stoa.data.factory import alpaca_data_client, make_provider
 from stoa.exits import initial_stop
+from stoa.experiments import Registry
 from stoa.features import build_features, cell, slice_features, snapshot
 from stoa.files import replace_file
 from stoa.healthcheck import HealthcheckPinger, NullPinger, Pinger, Signal, safe_ping
@@ -106,6 +119,7 @@ class Runtime:
     news_client: Any = None  # stoa.data.news.AlpacaNewsClient, injectable
     analyst_client: Any = None  # anthropic client, injectable
     reader: Any = None  # stoa.reader.Reader for the morning sweep, injectable
+    mirror_files: Any = None  # stoa.mirror.Files: the state branch, for the mirror's picks
 
     @property
     def store(self) -> StateStore:
@@ -141,6 +155,10 @@ def live_lock_problems(settings: Settings, secrets: Secrets) -> list[str]:
 
 def check_mode(settings: Settings, secrets: Secrets) -> None:
     mode = settings.mode
+    try:
+        mirror.check_paper(settings)
+    except mirror.LiveRefused as exc:
+        raise Refusal(str(exc)) from exc
     if mode == "backtest":
         raise Refusal("mode is backtest; use `stoa backtest` instead of the daily jobs")
     if mode == "live":
@@ -581,7 +599,8 @@ def _book_broker(
         ]
     notes += reconcile_meta(state, positions, session, atr)
     universe = universe_from_broker(broker, s)
-    managed = {sym: p for sym, p in positions.items() if sym in s.watchlist}
+    # The mirror holds trial 15's picks, which are rarely on the watchlist: it manages them all.
+    managed = {sym: p for sym, p in positions.items() if s.usd100.mirror or sym in s.watchlist}
     holdings = {
         sym: Holding(
             symbol=sym, qty=p.qty, avg_entry_price=p.avg_entry_price, meta=state.positions_meta[sym]
@@ -791,6 +810,10 @@ def _decide(
     hwm = state.high_water_mark
 
     record_day(rt, state, book, snap, session, ref_closes)
+    if s.usd100.mirror:
+        return _decide_mirror(
+            rt, state, book, snap, bars, session, notes, now, result, summary, ref_closes
+        )
     fallback_alert = update_fallback(rt, state, session)
     if fallback_alert is not None:
         send(rt, result, fallback_alert)
@@ -896,6 +919,79 @@ def _decide(
     state.last_reference_closes = ref_closes
     state.mark_decided(session)
     store.save(state)
+    return result
+
+
+MIRROR_EVENING = (
+    "Trial 15 mirror: the evening plans nothing. At 9:45 am the account sells what it holds "
+    "that is not in the big account's new 5 and buys those 5 at (equity x 0.98) / 5 each."
+)
+
+
+def _decide_mirror(
+    rt: Runtime,
+    state: State,
+    book: Book,
+    snap: pd.DataFrame,
+    bars: Bars,
+    session: date,
+    notes: list[str],
+    now: datetime,
+    result: JobResult,
+    summary: bool,
+    ref_closes: dict[str, Decimal],
+) -> JobResult:
+    """DECIDE in mirror mode: record the day and send the summary. No v1 rules, no stops, no
+    fallback, no plan: the 9:45 am run reads the big account's picks itself."""
+    s = rt.settings
+    hwm = state.high_water_mark or book.equity
+    tripped = not state.kill_switch.active and risk.kill_switch_breached(book.equity, hwm, s.risk)
+    if tripped:
+        state.kill_switch = KillSwitch(
+            active=True, tripped_session=session, reason="drawdown limit"
+        )
+        send(
+            rt,
+            result,
+            alerts.kill_switch_alert(book.equity, hwm, float(risk.drawdown(book.equity, hwm))),
+        )
+    plan = make_plan(
+        Decision(orders=(), kill_switch_tripped=tripped),
+        strategy=mirror.STRATEGY,
+        mode=s.mode,
+        session=session,
+        execute_session=clock.next_session(session),
+        created_at=now,
+        equity=book.equity,
+    )
+    closes = _prices(bars, session, "close")
+    state.holdings_at_close = {
+        sym: HeldAtClose(qty=h.qty, close=closes.get(sym, h.avg_entry_price))
+        for sym, h in book.positions.items()
+    }
+    journal = rt.journal
+    journal.write(now, "decide", session, "decision", strategy=mirror.STRATEGY, note=MIRROR_EVENING)
+    journal.write(
+        now, "decide", session, "plan", plan=plan.model_dump(mode="json"), note=MIRROR_EVENING
+    )
+    state.track.last_strategy = mirror.STRATEGY
+    state.pending_plan = None  # the 9:45 am run makes its own plan from the picks
+    state.approval_required = False
+    state.approval_nonce = None
+    milestone = money.check_milestone(state, book.equity, s.money)
+    if milestone is not None:
+        send(rt, result, milestone)
+    if summary:
+        lines = notes + mirror.summary_lines(s, s.state.dir, session)
+        day = _summary(rt, state, book, snap, plan, lines, now, bars=bars, session=session)
+        send(rt, result, alerts.daily_summary_alert(day))
+    state.last_close_session = session
+    state.last_close_equity = book.equity
+    state.flows_since_close = ZERO
+    adjust.anchor(state, bars, session, s.benchmark)
+    state.last_reference_closes = ref_closes
+    state.mark_decided(session)
+    rt.store.save(state)
     return result
 
 
@@ -1034,7 +1130,11 @@ def _summary(
             (
                 "Stopped by the owner: the next 9:45 am run sells anything held and buys nothing."
                 if s.stop.usd100
-                else "Tomorrow: the picks come at 9:00 am, after the overnight news sweep."
+                else (
+                    "Tomorrow at 9:45 am: today's 5 are sold and the big account's new 5 bought."
+                    if s.usd100.mirror
+                    else "Tomorrow: the picks come at 9:00 am, after the overnight news sweep."
+                )
             )
             if bars and session
             else None
@@ -1082,6 +1182,8 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
         log.info("EXECUTE: session %s already executed", session)
         return JobResult(EXIT_OK, "already_done", session)
     result = JobResult(EXIT_OK, "executed", session)
+    if s.usd100.mirror:
+        return _execute_mirror(rt, state, session, result)
     plan = state.pending_plan
     if plan is None:
         log.info("EXECUTE: no plan for %s", session)
@@ -1239,6 +1341,168 @@ def _execute(rt: Runtime, force: bool) -> JobResult:
     return result
 
 
+# ---- EXECUTE in mirror mode: trial 15's picks at $100 -----------------------------------
+
+
+def mirror_files(rt: Runtime) -> mirror.Files:
+    if rt.mirror_files is None:
+        u = rt.settings.usd100
+        rt.mirror_files = mirror.BranchFiles(u.state_branch_dir, u.branch)
+    files: mirror.Files = rt.mirror_files
+    return files
+
+
+def mirror_alert(out: mirror.MirrorRun, closed: list[ClosedTrade]) -> alerts.Alert:
+    """One alert for the 9:45 am run: what was sold, what was bought, what was refused."""
+    rep = out.report
+    lines: list[str] = []
+    if out.picks is not None and out.picks.picks:
+        lines.append("Picks: " + ", ".join(out.picks.symbols) + ".")
+    pnl = {t.symbol: t.pnl for t in closed}
+    for f in rep.fills:
+        st = f.status
+        assert st.filled_avg_price is not None
+        amount = alerts.money(st.filled_qty * st.filled_avg_price)
+        price = alerts.money(st.filled_avg_price)
+        line = f"{st.side.value.capitalize()} {st.symbol} {amount} at {price}"
+        if st.symbol in pnl and st.side is Side.SELL:
+            line += f", P&L {alerts.money(pnl[st.symbol])}"
+        lines.append(line)
+    for f in rep.unfilled:
+        lines.append(f"Not filled: {f.status.side.value} {f.status.symbol} ({f.status.status})")
+    for r in rep.rejections:
+        lines.append(
+            f"Refused: {r.side.value} {r.symbol}, {r.reason.replace('_', ' ')} ({r.detail})"
+        )
+    if out.reason:
+        lines.append(f"No orders today: {out.reason}")
+    lines += out.notes
+    problem = bool(out.missing or rep.unfilled or rep.rejections or rep.flattened)
+    title = f"Trial 15 mirror {out.session}"
+    if out.missing is not None and not rep.flattened:
+        title = f"No trial 15 mirror orders {out.session}"
+    elif rep.flattened:
+        title = f"{'STOPPED' if rep.stopped else 'KILL SWITCH'}: trial 15 mirror {out.session}"
+    return alerts.Alert(
+        title=title,
+        message="\n".join(lines) or "Nothing to do.",
+        priority=alerts.HIGH if problem else alerts.DEFAULT,
+    )
+
+
+def _execute_mirror(rt: Runtime, state: State, session: date, result: JobResult) -> JobResult:
+    """9:45 am: sell yesterday's 5, buy the big account's 5 for today (stoa/mirror.py)."""
+    s = rt.settings
+    now = rt.now()
+    broker = make_broker(rt)
+    account = broker.account()
+    if account.trading_blocked:
+        raise Refusal(f"Alpaca says trading is blocked on this account (status {account.status})")
+    if isinstance(broker, AlpacaBroker) and not broker.market_is_open():
+        raise Refusal("Alpaca says the market is closed right now; orders would queue blind")
+    sync_flows(rt, state, broker, session)
+    try:
+        mirror.register(Registry(s.registry_path))
+    except Exception as exc:  # the record never stops the trades
+        log.warning("mirror: could not register the case study: %s", exc)
+    hwm = state.high_water_mark or account.equity
+    picks: mirror.Picks | mirror.Missing = (
+        mirror.Missing(session, "stopped by the owner (stop.usd100)", "not read")
+        if s.stop.usd100
+        else mirror.load_picks(s, session, mirror_files(rt))
+    )
+    if isinstance(picks, mirror.Missing):
+        log.warning("mirror: %s", picks.reason)
+    meta_before = dict(state.positions_meta)
+    before = broker.positions()
+
+    def cancel_before_sells(symbols: list[str]) -> None:
+        if isinstance(broker, stops.StopBroker):
+            for a in stops.cancel_stops(broker, symbols):
+                send(rt, result, a)
+
+    def cancel_everything() -> None:
+        if isinstance(broker, stops.StopBroker):
+            for a in stops.cancel_all_orders(broker):
+                send(rt, result, a)
+
+    out = mirror.run(
+        picks,
+        broker,
+        state,
+        s,
+        session,
+        now,
+        stopped=s.stop.usd100,
+        before_sells=cancel_before_sells,
+        before_flatten=cancel_everything,
+    )
+    report = out.report
+    closed = closed_trades(report, meta_before)
+    state.add_trades(closed)
+    track = state.track
+    track.pending_trades += len(closed)
+    for f in report.fills:
+        st = f.status
+        if st.filled_avg_price is not None:
+            track.cost_drag += tracking.fill_cost(
+                st.side, st.filled_qty, st.filled_avg_price, st.fees, s.costs
+            )
+        if f.realized_pnl is not None:
+            state.add_realized(session.year, f.realized_pnl)
+    if report.kill_switch_tripped:
+        dd = float(risk.drawdown(account.equity, hwm))
+        send(rt, result, alerts.kill_switch_alert(account.equity, hwm, dd))
+    for f in report.unfilled:
+        if not f.status.terminal:
+            state.open_orders = [
+                *state.open_orders,
+                _open_order(f.order, f.status, session, before),
+            ]
+    rt.journal.write(
+        now,
+        "execute",
+        session,
+        "execution",
+        strategy=mirror.STRATEGY,
+        plan_id=out.plan.plan_id,
+        plan=out.plan.model_dump(mode="json"),
+        picks=[p.symbol for p in out.picks.picks] if out.picks else [],
+        source=out.picks.source if out.picks else (out.missing.source if out.missing else ""),
+        missing=out.missing.reason if out.missing else None,
+        fills=[f.status.model_dump(mode="json") for f in report.fills],
+        unfilled=[f.status.model_dump(mode="json") for f in report.unfilled],
+        rejections=[r.model_dump(mode="json") for r in report.rejections],
+        flattened=report.flattened,
+        closed=[t.model_dump(mode="json") for t in closed],
+        reason=out.reason,
+        notes=out.notes,
+    )
+    held_after = [k for k, p in broker.positions().items() if p.qty > 0]
+    sales = [
+        {
+            "symbol": t.symbol,
+            "qty": float(t.qty),
+            "entry_session": t.entry_session.isoformat(),
+            "entry_price": float(t.entry_price),
+            "exit_price": float(t.exit_price),
+            "pnl": float(t.pnl),
+            "reason": t.reason,
+        }
+        for t in closed
+    ]
+    mirror.record(s.state.dir, out, held_after, sales)
+    send(rt, result, mirror_alert(out, closed))
+    state.pending_plan = None
+    state.approval_nonce = None
+    state.approval_required = False
+    state.mark_executed(session)
+    rt.store.save(state)
+    if out.missing is not None and not report.flattened:
+        result.status = "no_picks"
+    return result
+
+
 OVERRIDE_REASON = "manual_override"
 
 
@@ -1257,6 +1521,8 @@ def _manual_override(rt: Runtime, symbols: list[str] | None) -> JobResult:
     s = rt.settings
     if s.mode != "paper":
         raise Refusal("a manual override is for the paper account only")
+    if s.usd100.mirror:
+        raise Refusal("mirror mode has no taps and no planned buys to override")
     check_mode(s, rt.secrets)
     now = rt.now()
     session = _market_open(now)
@@ -1630,6 +1896,21 @@ def _clock_text(ts: datetime) -> str:
     return f"{ny.hour % 12 or 12}:{ny.minute:02d} {'am' if ny.hour < 12 else 'pm'}"
 
 
+def _sweep_mirror(rt: Runtime, state: State, session: date, result: JobResult) -> JobResult:
+    """9:00 am in mirror mode: no news read, no picks, no taps. The picks are the big
+    account's, made at 9:00 am and read at 9:45 am. A missed evening run is caught up."""
+    store = rt.store
+    if clock.previous_session(session) not in state.decided_sessions:
+        caught = _decide(rt, force=True, summary=False)
+        result.alerts_sent.extend(caught.alerts_sent)
+        state = store.load()
+    log.info("SWEEP: mirror mode; the 9:45 am run reads trial 15's picks for %s", session)
+    state.mark_swept(session)
+    store.save(state)
+    result.status = "mirror"
+    return result
+
+
 def _sweep(rt: Runtime, force: bool) -> JobResult:
     s = rt.settings
     w = s.job_windows
@@ -1652,6 +1933,8 @@ def _sweep(rt: Runtime, force: bool) -> JobResult:
         log.info("SWEEP: session %s already swept", session)
         return JobResult(EXIT_OK, "already_done", session)
     result = JobResult(EXIT_OK, "swept", session)
+    if s.usd100.mirror and not s.stop.usd100:
+        return _sweep_mirror(rt, state, session, result)
 
     # News up to the cutoff counts; a run that starts a few minutes early waits for it.
     wait = (clock.at_ny(session, w.news_cutoff) - rt.now()).total_seconds()

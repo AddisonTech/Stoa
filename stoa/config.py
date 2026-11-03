@@ -541,6 +541,22 @@ class StopConfig(_Frozen):
     shadow: bool = False  # the shadow scoreboard
 
 
+class Usd100Config(_Frozen):
+    """How the $100 account trades. ``rules`` is the v1 pipeline (planned at 5:15 pm, swept at
+    9:00 am). ``mirror_trial15`` (2026-11-03) buys the big paper account's trial 15 picks at
+    9:45 am, paper only; the v1 code and records stay in place and do not run."""
+
+    strategy: Literal["rules", "mirror_trial15"] = "rules"
+    state_branch_dir: Path = Path("state-branch")  # the stoa-state branch, checked out here
+    branch: str = "stoa-state"
+    picks_path: str = "big-paper/trial15/picks"  # the big account's picks on that branch
+    plans_path: str = "big-paper/plans"  # its 9:00 am plans: each pick's 9:00 am price
+
+    @property
+    def mirror(self) -> bool:
+        return self.strategy == "mirror_trial15"
+
+
 class ExamConfig(_Frozen):
     paper_min_sessions: int = Field(default=42, ge=1)
     paper_target_sessions: int = Field(default=63, ge=1)
@@ -586,6 +602,7 @@ class Settings(_Frozen):
     healthcheck: HealthcheckConfig = HealthcheckConfig()
     fallback: FallbackConfig = FallbackConfig()
     stop: StopConfig = StopConfig()
+    usd100: Usd100Config = Usd100Config()
     exam: ExamConfig = ExamConfig()
     demo: DemoConfig = DemoConfig()
 

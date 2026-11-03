@@ -13,12 +13,15 @@ ROOT = Path(__file__).resolve().parents[1]
 SMALL_WATCHLIST = ["SPY", "QQQ", "AAPL", "MSFT", "NVDA", "JPM", "XOM", "KO"]
 
 
-# The shipped config has the owner's stop on (2026-10-29); the tests trade, so it is off here.
-# tests/test_stop.py checks the stop itself and the shipped setting.
+# The shipped config has the owner's stop on for the shadow scoreboard (2026-10-29); the tests
+# trade, so every stop is off here. tests/test_stop.py checks the stop and the shipped setting.
+# The shipped $100 account mirrors trial 15 (2026-11-03); the older tests are about the v1
+# rules, so they run with usd100.strategy: rules. tests/test_mirror.py covers the mirror.
 NOT_STOPPED = {
     "STOA__STOP__USD100": "false",
     "STOA__STOP__BIG_PAPER": "false",
     "STOA__STOP__SHADOW": "false",
+    "STOA__USD100__STRATEGY": "rules",
 }
 
 

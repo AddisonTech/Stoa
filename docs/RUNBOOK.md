@@ -76,6 +76,8 @@ Stoa pings `/start` when DECIDE begins, the plain URL after the daily summary is
 
 ## 6. Hand approval of trades (off on paper)
 
+Since 2026-11-03 the $100 account mirrors trial 15 (section 13d): it has no taps at all on paper, no 9:00 am pick alert and no Approve or Skip. What follows is for the v1 rules (`usd100.strategy: rules`).
+
 Since 2026-10-28 the $100 account's picks go through on their own, the same way the big account's do: the owner does not want to approve trades he cannot judge (docs/DECISIONS.md). At about 9:00 am one FYI alert lists what will be bought and sold at 9:45 am, with no buttons. Every risk cap, the price checks, the broker stops and the kill switch are exactly as before. The setting is `approval.buys: mode`: buys follow `approval.mode`, which asks for no tap on paper.
 
 The Approve and Skip buttons are still in the code, for two cases:
@@ -95,6 +97,8 @@ Each plan has its own random code. An old tap, a tap from a different plan, or a
 ## 7. What happens each day
 
 All times are New York time.
+
+**Since 2026-11-03 the $100 account mirrors trial 15** (section 13d): DECIDE at 5:15 pm records the day and sends the summary but plans nothing, the 9:00 am SWEEP does nothing, and EXECUTE at 9:45 am sells yesterday's 5 and buys the big account's 5 for today. The list below is the v1 rules' day (`usd100.strategy: rules`), kept for reference.
 
 - **About 5:15 pm**: DECIDE. Stoa reads the day's bars, records the day and sends the **day summary** (priority 3), every trading day: how each position and each of today's buys did today, and the whole account against SPY, today and since the start. Then it quietly plans tomorrow (checks stops and earnings dates, runs the v1 rules and the risk engine). The daily workflow sets `STOA__SCOUT__KIND=rule`, so paper trading never calls Claude; Claude is used only by trial 7's shadow scoring. No pick alert goes out in the evening.
 - **About 9:00 am**: the SWEEP. Stoa fetches every article published since the close on the planned buys and on the reserves (names the rules passed but had no slot for), and reads each headline and summary with FinBERT, a free open-source model, on GitHub's CPU. A planned buy with clearly bad news overnight is dropped (you get a "Dropped BUY" alert with the headline). A reserve with clearly good news can take a free slot (at most one a day). Then you get the **final picks** in one alert (priority 3) listing every buy and sell; they go in at 9:45 am on their own, with no buttons. If the evening run was missed, the sweep makes the plan first from the last close. If the reader cannot run, the rules' picks go out unchanged and an alert says so. To check the reader on GitHub by hand: Actions, daily, Run workflow, pick **reader-check** (it reads two test headlines and keeps the model cached for the morning run).
@@ -224,7 +228,7 @@ On a laptop: `stoa kill-switch status` and `stoa kill-switch reset`.
 
 ## 11a. The owner's stop
 
-Since 2026-10-29 the $100 account (`stop.usd100`) and the shadow scoreboard (`stop.shadow`) are stopped (`stop:` in `config/default.yaml`). The big paper account (`stop.big_paper`) was stopped the same day and turned back on that evening as trial 15 (section 13c); its first trial 15 orders go in at 9:45 am on 2026-10-30.
+Since 2026-10-29 the shadow scoreboard (`stop.shadow`) is stopped (`stop:` in `config/default.yaml`). The big paper account (`stop.big_paper`) was stopped the same day and turned back on that evening as trial 15 (section 13c). The $100 account (`stop.usd100`) was stopped from 2026-10-29 to 2026-11-03 and is back on as a paper mirror of trial 15 (section 13d); its first mirror orders go in at 9:45 am on 2026-11-04.
 
 - **A stopped account** sells everything it holds at its next 9:45 am run, SPY and anything bought by hand included, and buys nothing. After that it trades nothing. It cancels its open orders first, the same way the kill switch does, but it is not the kill switch: no drawdown is involved, the kill switch stays off and nothing needs a reset.
 - **Alerts.** The morning alert says what will be sold, the 9:45 am alert starts with "STOPPED by the owner", and the 5:15 pm summary says the account is stopped. Once an account holds nothing, its mornings are quiet. The daily summary still records equity against SPY.
@@ -318,7 +322,7 @@ Do not use `vercel deploy --cwd live`: with the Root Directory set it fails with
 
 Since 2026-10-29 the account runs trial 15 (section 13c). The keys, the feed, the dataset, the Windows runners, the dry runs, the kill switch and the dashboard below are unchanged and serve trial 15 too. What follows is how trial 14 ran.
 
-A second, separate Alpaca paper account of about $100,000 runs trial 14 (spec `f385bc9d5040ef7b`, `big_paper.strategy: trial14`, `big_paper.idle_money: cash`): trial 12 exactly as registered (spec `e75fa8775469de92`), the news brain's picks, its sizing and its rails, with no overlay, but with idle money held as cash instead of SPY, so the account's result shows the picks alone. SPY stays the line it is measured against. From 2026-10-28 to 2026-10-29 it ran trial 12 with its SPY core; the first 9:45 am run after the switch sells that SPY alongside the day's picks, and SPY is never bought again while `idle_money` is `cash`. Each trial keeps its own idle money: the config refuses `trial12` or `trial13` with `cash`, and `trial14` with `spy`. The $100 account above keeps the v1 rules, its keys and its state, and nothing here changes it (since 2026-10-28 its picks also go through without a tap, section 6). Trial 12 (`trial12` with `spy`) and trial 13's overlay (`trial13` with `spy`, `stoa/overlay.py`) are still there and run only if the settings are changed.
+A second, separate Alpaca paper account of about $100,000 runs trial 14 (spec `f385bc9d5040ef7b`, `big_paper.strategy: trial14`, `big_paper.idle_money: cash`): trial 12 exactly as registered (spec `e75fa8775469de92`), the news brain's picks, its sizing and its rails, with no overlay, but with idle money held as cash instead of SPY, so the account's result shows the picks alone. SPY stays the line it is measured against. From 2026-10-28 to 2026-10-29 it ran trial 12 with its SPY core; the first 9:45 am run after the switch sells that SPY alongside the day's picks, and SPY is never bought again while `idle_money` is `cash`. Each trial keeps its own idle money: the config refuses `trial12` or `trial13` with `cash`, and `trial14` with `spy`. The $100 account above keeps the v1 rules, its keys and its state, and nothing here changes it (since 2026-10-28 its picks also go through without a tap, section 6; since 2026-11-03 it mirrors trial 15's picks on its own keys and state, section 13d). Trial 12 (`trial12` with `spy`) and trial 13's overlay (`trial13` with `spy`, `stoa/overlay.py`) are still there and run only if the settings are changed.
 
 **Sizing on $100,000.** Up to 5 picks at a time, each 20% of the account ($20,000 at the start; the fifth gets $18,000 because 2% always stays in cash). Every other dollar stays in cash: with no pick held, all of it; with one pick, $20,000 in it and about $80,000 cash. Cash earns nothing here, so on a day with no pick the account does not move while SPY does. Each pick is sold at 9:45 am the next session. In trial 12's test window (875 sessions) 85% of sessions held no pick at all, 92 sessions held 1, 19 held 2, 11 held 3, 5 held 4 and 2 held 5. Trial 12's backtest ran on $100, but all 458 of its picks were stocks Alpaca sells in fractions, so the bigger account buys the same picks at the same weights.
 
@@ -395,6 +399,32 @@ Registered 2026-10-29 (spec `557c95176a137379`, docs/DECISIONS.md "Trial 15"), `
 **Rolling back.** A learner that took over is in `big-paper/trial15/promoted.json`; delete that file on the state branch and the picks go back to `big_paper.model` (blank: trial 9's frozen brain). To turn off the reader set `big_paper.reader: false`. To stop the account, `stop.big_paper: true` (section 11a).
 
 **History tools (Dell).** `python -m stoa.newsbrain events` (the reader over every month, GPU, resumable, newest first; progress in `data\newsbrain\events\progress.jsonl`), `python -c "from stoa.newsbrain import ripplemap; ripplemap.main()"` (the 10-K ripple map), `python -c "from stoa.newsbrain import catchup; catchup.main()"` (the pre-market catch-up table), `python -c "from stoa.newsbrain import compare15; compare15.main()"` (the registered comparison, run once).
+
+## 13d. The $100 account mirrors trial 15
+
+Decided 2026-11-03 (docs/DECISIONS.md, "The $100 account mirrors trial 15"). `stop.usd100: false` and `usd100.strategy: mirror_trial15` in `config/default.yaml`. Paper only. First orders: 9:45 am on Wednesday 2026-11-04.
+
+**The day.**
+
+- **9:00 am** (big account). The big paper account's picks run makes trial 15's 5 picks and commits them to the state branch at about 9:10 am: `big-paper/trial15/picks/<session>.json`, with its 9:00 am plan (each pick's 9:00 am price) in `big-paper/plans/`. The $100 account's own 9:00 am SWEEP does nothing in mirror mode.
+- **9:45 am EXECUTE** (daily workflow). Right before reading, it fetches a fresh copy of the state branch (`git fetch origin stoa-state`, read with `git show`; the run's checked-out files are not touched). It sells everything held that is not in today's 5 (sells first), then buys each new pick at (equity x 0.98) / 5 as a fractional dollar order, sized from the account's own equity. A pick held again is trimmed or topped up to that weight when it is $1 or more off, never sold and bought back. One alert lists the picks, each fill and each sale's profit or loss.
+- **5:15 pm DECIDE.** Records the day and sends the summary (equity against SPY, each position, and one line on the morning's mirror run). It plans nothing: no v1 rules, no stops, no fallback.
+
+**Rails.** The 25% kill switch (everything sold, nothing bought until `kill-switch-reset`) and the 8% price check against the big account's 9:00 am price. A pick with no 9:00 am price is not bought. Off: the sector cap, correlation limit, 3% daily loss stop, regime filter, ATR exits, broker stops, max positions gate, earnings blackout, SPY fallback and every tap. It never buys SPY.
+
+**When there are no orders.** If the picks file is missing, unreadable or for another day, the account buys nothing, keeps what it holds, and sends one alert, "No trial 15 mirror orders <date>", with the exact reason. Every session with no orders has its reason in the journal (`execute`, step `execution`, `reason`), in `state/mirror/days.jsonl` and on the dashboard. If the big account picked nothing that morning, the mirror sells and stays in cash, as the big account does.
+
+**Live is refused.** With `STOA_MODE` set to live, every job refuses and alerts "paper only". Going live is a separate decision.
+
+**Dashboard.** The "$100 account: trial 15 mirror" card: equity, the return since the mirror began against SPY and against the big paper account (from the close of 2026-11-03), the running hit rate on the picks it held (trial 15's grades, 9:45 am to 9:45 am against SPY after costs, against the 75% target), and each day's picks, fills, sales and any reason for no orders.
+
+**Records.** `state/mirror/days.jsonl` on the state branch, one line a session. The registry entry `usd100:mirror_trial15` (kind `case_study`): no pass or fail line, nothing tuned from it.
+
+**A dry run.** `stoa mirror-dry --session 2026-11-03` replays a session's 9:45 am run in the simulator from the state branch: the picks, the account as of its last close, priced at the big account's 9:45 am fills. No order, nothing saved.
+
+**Rolling back.** `usd100.strategy: rules` brings the v1 rules back; `stop.usd100: true` stops the account (section 11a). Each is its own recorded decision.
+
+**Before any real cash account** (not built): this sells and rebuys every morning. In a cash account, money from a sale settles one business day later (T+1), so buying with it the same morning, then selling that stock the next morning, can count as a good faith violation. A margin account, or keeping half the money idle each day, would need checking first.
 
 ## 14. Changing settings
 

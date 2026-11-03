@@ -8,6 +8,10 @@ name: daily
 # New York time and the NYSE calendar and acts once per session.
 # The day: DECIDE at 5:15 pm (day summary, then a quiet plan), the news SWEEP at
 # 9:00 am (final picks with Approve and Skip, taps until 9:40), EXECUTE at 9:45 am.
+# Since 2026-11-03 the account mirrors trial 15 (usd100.strategy in config/default.yaml):
+# DECIDE records the day and plans nothing, SWEEP does nothing, and EXECUTE fetches the
+# stoa-state branch fresh, reads the big account's picks (big-paper/trial15/picks/), sells
+# yesterday's 5 and buys today's. The big account commits its picks at about 9:10 am.
 run-name: >-
   ${{ github.event_name == 'schedule' && format('schedule {0}', github.event.schedule)
   || format('{0} via {1}', inputs.job, inputs.source || 'manual') }}
@@ -70,7 +74,8 @@ jobs:
       STOA_NTFY_APPROVAL_TOPIC: ${{ secrets.STOA_NTFY_APPROVAL_TOPIC }}
       STOA_HEALTHCHECK_URL: ${{ secrets.STOA_HEALTHCHECK_URL }}
       FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
-      # Paper DECIDE runs the v1 rules. Claude is used only by trial 7 (analyst.yml).
+      # Paper DECIDE runs no scout in mirror mode, and the v1 rules without Claude otherwise.
+      # Claude is used only by trial 7 (analyst.yml).
       STOA__SCOUT__KIND: rule
       HF_HUB_DISABLE_TELEMETRY: "1"
       STOA_MODE: ${{ vars.STOA_MODE }}

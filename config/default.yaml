@@ -306,9 +306,16 @@ healthcheck:
   retries: 2
 
 stop:                              # the owner's stop, 2026-10-29: a stopped account sells everything at its next 9:45 am run, buys nothing, then trades nothing
-  usd100: true                     # the $100 account
+  usd100: false                    # back on 2026-11-03 as a paper mirror of trial 15 (usd100 below; docs/DECISIONS.md)
   big_paper: false                 # back on 2026-10-29 as trial 15 (docs/DECISIONS.md); first orders 2026-10-30 9:45 am
   shadow: true                     # the old shadow scoreboard: nothing scored, locked or graded
+
+usd100:                            # how the $100 account trades (docs/DECISIONS.md, "The $100 account mirrors trial 15")
+  strategy: mirror_trial15         # 9:45 am: sell yesterday's 5, buy the big account's trial 15 picks at $100 size, paper only; rules is the v1 pipeline (kept, not run)
+  state_branch_dir: state-branch   # the stoa-state branch checked out here; fetched fresh right before the picks are read
+  branch: stoa-state
+  picks_path: big-paper/trial15/picks   # the big account's picks, one file a session
+  plans_path: big-paper/plans           # its 9:00 am plans: each pick's 9:00 am price for the price check
 
 fallback:
   enabled: true

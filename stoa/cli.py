@@ -403,6 +403,45 @@ def execute(ctx: Ctx, force: bool) -> None:
     sys.exit(run_execute(runtime(ctx), force=force).code)
 
 
+@main.command("mirror-dry")
+@click.option("--session", "session_", required=True, help="The session to replay, YYYY-MM-DD.")
+@click.option("--equity", default=None, help="Account equity; blank reads the last close.")
+@pass_ctx
+def mirror_dry(ctx: Ctx, session_: str, equity: str | None) -> None:
+    """The $100 mirror's 9:45 am run for a session, in the simulator: no order, nothing saved."""
+    from stoa import mirror
+
+    s = ctx.settings
+    files = mirror.BranchFiles(s.usd100.state_branch_dir, s.usd100.branch)
+    day = date.fromisoformat(session_)
+    now = clock.at_ny(day, "09:45")
+    out, _prices, where = mirror.dry_run(s, day, files, now, Decimal(equity) if equity else None)
+    click.echo(f"Dry mirror run for {day}, priced at {where}. Picks from {files.ref or 'local'}.")
+    if out.missing is not None:
+        click.echo(f"No picks: {out.missing.reason}")
+    if out.picks is not None:
+        click.echo("Picks: " + ", ".join(out.picks.symbols))
+    click.echo(f"Equity {out.equity}; each pick gets {mirror.target_notional(out.equity)}.")
+    click.echo("Orders it would send, in order:")
+    for o in out.plan.orders:
+        size = f"${o.notional}" if o.notional is not None else f"{o.qty} sh"
+        click.echo(f"  {o.side.value.upper():4} {o.symbol:6} {size:>12}  ({o.reason})")
+    click.echo("Simulated fills:")
+    for f in out.report.fills:
+        st = f.status
+        assert st.filled_avg_price is not None
+        click.echo(
+            f"  {st.side.value.upper():4} {st.symbol:6} {st.filled_qty} sh at "
+            f"{st.filled_avg_price:.4f} = ${st.filled_qty * st.filled_avg_price:.2f}"
+        )
+    for r in out.report.rejections:
+        click.echo(f"  refused {r.side.value} {r.symbol}: {r.reason} ({r.detail})")
+    for n in out.notes:
+        click.echo(f"  note: {n}")
+    if out.reason:
+        click.echo(f"No orders: {out.reason}")
+
+
 @main.command("bigpaper")
 @click.argument(
     "job",

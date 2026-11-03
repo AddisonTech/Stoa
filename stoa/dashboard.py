@@ -184,8 +184,12 @@ def decisions(records: list[dict[str, Any]], limit: int = DECISIONS_SHOWN) -> li
                 for r in data.get("rejections") or []
             ]
             entry["quant_kills"] = len(data.get("quant_kills") or [])
+            if data.get("note"):
+                entry["note"] = str(data["note"])
         elif step == "plan":
             entry["orders"] = _orders(data.get("plan") or {})
+            if data.get("note"):
+                entry["note"] = str(data["note"])
     ordered = sorted(by_session.values(), key=lambda e: e["session"], reverse=True)
     return ordered[:limit]
 
@@ -368,6 +372,65 @@ def trial15_card(root: Path) -> dict[str, Any]:
     return {"tally": trial15.tally(days), "last_day": days[-1] if days else None, "latest": latest}
 
 
+def mirror_card(settings: Settings, state: State) -> dict[str, Any] | None:
+    """The $100 account as a mirror of trial 15: each day's picks, fills and sales, equity
+    against SPY and the big paper account from the close before its first run, and the
+    running hit rate on the picks it held, graded by trial 15's own rule."""
+    if not settings.usd100.mirror:
+        return None
+    from stoa import mirror
+    from stoa.newsbrain import trial15
+
+    days = mirror.read_days(settings.state.dir)
+    big_root = settings.big_paper.state_dir
+    big_path = big_root / "trial15" / "days.jsonl"
+    big_days = (
+        [json.loads(x) for x in big_path.read_text(encoding="utf-8").splitlines() if x.strip()]
+        if big_path.exists()
+        else []
+    )
+    grades = mirror.graded(days, big_days)
+    track = state.track.days
+    first = str(days[0]["session"]) if days else None
+    before = [d for d in track if first is not None and d.session.isoformat() < first]
+    start = before[-1] if before else None
+    curve: dict[str, Any] = {"dates": [], "series": {}}
+    returns: dict[str, float | None] = {"mirror": None, "spy": None, "big": None}
+    if start is not None and start.broker_equity > 0:
+        rows = [d for d in track if d.session >= start.session]
+        curve_path = big_root / "curve.json"
+        big_rows = json.loads(curve_path.read_text(encoding="utf-8")) if curve_path.exists() else []
+        big_eq = {str(r["session"]): _num(r.get("equity")) for r in big_rows}
+        b0 = big_eq.get(start.session.isoformat())
+        e0, s0 = float(start.broker_equity), float(start.benchmark_close)
+        mine: list[float | None] = [float(d.broker_equity) / e0 * 100 for d in rows]
+        spy: list[float | None] = [
+            float(d.benchmark_close) / s0 * 100 if s0 else None for d in rows
+        ]
+        big: list[float | None] = []
+        for d in rows:
+            v = big_eq.get(d.session.isoformat())
+            big.append(v / b0 * 100 if v is not None and b0 else None)
+        curve = {
+            "dates": [d.session.isoformat() for d in rows],
+            "series": {"$100 mirror": mine, "SPY": spy, "Big paper": big},
+        }
+
+        def ret(xs: list[float | None]) -> float | None:
+            last = xs[-1] if xs else None
+            return last / 100 - 1 if last is not None else None
+
+        returns = {"mirror": ret(mine), "spy": ret(spy), "big": ret(big)}
+    return {
+        "first_session": mirror.FIRST_SESSION.isoformat(),
+        "days": list(reversed(days[-DECISIONS_SHOWN:])),
+        "tally": trial15.tally(grades),
+        "curve": curve,
+        "returns": returns,
+        "equity": float(track[-1].broker_equity) if track else None,
+    }
+
+
 def last_run(records: list[dict[str, Any]]) -> dict[str, Any] | None:
     stamped = [r for r in records if r.get("ts")]
     if not stamped:
@@ -500,6 +563,7 @@ def collect(
         },
         "fallback": {"active": track.fallback_active, "reason": track.fallback_reason},
         "big_paper": big_paper(settings),
+        "mirror": mirror_card(settings, state),
         "shadow_board": shadowboard.read_board(settings.big_paper.state_dir),
         "analyst": analyst_spend(
             shadow.merged_view(state, ledger, shadow.big_reader_spend(settings)), settings, built
@@ -782,8 +846,10 @@ def render_decisions(data: dict[str, Any]) -> str:
         body = ""
         if orders:
             body += '<ul class="plain">' + "".join(_order_line(o) for o in orders) + "</ul>"
+        elif d.get("note"):
+            body += f'<p class="muted">{_e(d["note"])}</p>'
         else:
-            body += '<p class="muted">No trades planned.</p>'
+            body += '<p class="muted">No trades planned; this run recorded no reason.</p>'
         if exits:
             body += (
                 '<p class="sub">Exit signals</p><ul class="plain">'
@@ -836,8 +902,8 @@ def render_trades(data: dict[str, Any], note: str | None = None) -> str:
     return f'<table class="stack"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>' + (
         f'<p class="muted small">{note}</p>'
         if note
-        else '<p class="muted small">Picks are the 9:00 am picks; buys need a tap to be '
-        "placed. P&amp;L is realized on closed trades and at the last close on positions "
+        else '<p class="muted small">Fills are the 9:45 am orders; on paper nothing waits '
+        "for a tap. P&amp;L is realized on closed trades and at the last close on positions "
         "still held. Paper money.</p>"
     )
 
@@ -995,6 +1061,103 @@ INTRO_STOPPED = (
     "nothing is bought until the next trial starts. Its own $100,000 Alpaca paper account; "
     "kept apart from the $100 account above.</p>"
 )
+
+
+MIRROR_INTRO = (
+    "<p>Since 2026-11-03 the $100 paper account copies trial 15: every trading day at 9:45 am "
+    "it sells the 5 it bought the session before and buys the big paper account's 5 picks for "
+    "today, at equal weight with 2% kept in cash. Kill switch and price check on; no SPY, no "
+    "taps. A paper case study: no pass or fail line, nothing is tuned from it.</p>"
+)
+
+
+def _mirror_day(d: dict[str, Any]) -> str:
+    picks = ", ".join(_e(str(p["symbol"])) for p in d.get("picks") or []) or "none"
+    bits = [f"Picks: {picks}."]
+    buys = [f for f in d.get("fills") or [] if f.get("side") == "buy"]
+    if buys:
+        bits.append(
+            "Bought "
+            + "; ".join(
+                f"{_e(f['symbol'])} {_money((f.get('qty') or 0) * (f.get('price') or 0))}"
+                for f in buys
+            )
+            + "."
+        )
+    sales = d.get("sales") or []
+    if sales:
+        bits.append(
+            "Sold " + "; ".join(f"{_e(x['symbol'])} {_money(x.get('pnl'))}" for x in sales) + "."
+        )
+    for r in d.get("rejected") or []:
+        bits.append(
+            f"Refused {_e(r.get('side'))} {_e(r.get('symbol'))}: "
+            f"{_e(str(r.get('reason', '')).replace('_', ' '))} ({_e(r.get('detail'))})."
+        )
+    if d.get("reason"):
+        bits.append(f"<strong>No orders:</strong> {_e(d['reason'])}")
+    return (
+        f'<details class="decision"><summary><span>{_e(d.get("session"))}</span>'
+        f'<span class="muted">equity {_e(_money(d.get("equity")))} at 9:45 am</span></summary>'
+        f"<p>{' '.join(bits)}</p></details>"
+    )
+
+
+def _gap(a: float | None, b: float | None) -> float | None:
+    return a - b if a is not None and b is not None else None
+
+
+def render_mirror(data: dict[str, Any]) -> str:
+    """The $100 account's trial 15 mirror: tiles, the chart, the hit rate and each day."""
+    m = data.get("mirror")
+    if not m:
+        return ""
+    out = [MIRROR_INTRO]
+    r = m.get("returns") or {}
+    t = m.get("tally") or {}
+    hit = f"{t['hit_rate']:.0%} of {t['picks']}" if t.get("picks") else "none graded yet"
+    tiles = [
+        ("Equity", _money(m.get("equity"))),
+        ("Since the mirror began", _pct(r.get("mirror"))),
+        ("Versus SPY", _pct(_gap(r.get("mirror"), r.get("spy")))),
+        ("Versus big paper", _pct(_gap(r.get("mirror"), r.get("big")))),
+        ("Hit rate (target 75%)", hit),
+    ]
+    out.append(
+        '<div class="tiles">'
+        + "".join(
+            f'<div class="tile"><div class="k">{_e(k)}</div><div class="v">{_e(v)}</div></div>'
+            for k, v in tiles
+        )
+        + "</div>"
+    )
+    c = m.get("curve") or {}
+    if c.get("dates"):
+        css = {"$100 mirror": "s-stoa", "SPY": "s-spy", "Big paper": "s-ref"}
+        lines = [_Line(k, css.get(k, "s-ref"), v) for k, v in c["series"].items()]
+        legend = "".join(
+            f'<li><span class="key {ln.css}"></span>{_e(ln.name)}</li>' for ln in lines
+        )
+        out.append(
+            f'<ul class="legend">{legend}</ul>{line_chart(c["dates"], lines)}'
+            f'<p class="muted small">Growth of 100 from the close of {_e(c["dates"][0])}, the '
+            "evening before the mirror's first orders.</p>"
+        )
+    if t.get("picks"):
+        out.append(
+            f"<p>Running hit rate {t['hit_rate']:.0%} ({t['hits']} of {t['picks']} picks held, "
+            f"over {t['days']} days), graded by trial 15's rule: 9:45 am to 9:45 am, against "
+            f"SPY, after costs. Average edge {_pct(t['avg_edge'])} a pick. "
+            f"{_progress(t['hits'], t['picks'])}</p>"
+        )
+    days = m.get("days") or []
+    if days:
+        out.append("".join(_mirror_day(d) for d in days))
+    else:
+        out.append(
+            _empty(f"No mirror run yet. The first orders go in at 9:45 am on {m['first_session']}.")
+        )
+    return "".join(out)
 
 
 def big_paper_title(data: dict[str, Any]) -> str:
@@ -1385,7 +1548,13 @@ def render(data: dict[str, Any]) -> str:
         f'<section class="card"><h2>Live</h2>{render_live(data)}</section>'
         f'<section class="tiles">{tiles_html}</section>'
         f'<section class="card"><h2>Equity vs SPY and MTUM</h2>{render_curves(data)}</section>'
-        f'<section class="card"><h2>Positions</h2>{render_positions(data)}</section>'
+        + (
+            '<section class="card"><h2>$100 account: trial 15 mirror</h2>'
+            f"{render_mirror(data)}</section>"
+            if data.get("mirror")
+            else ""
+        )
+        + f'<section class="card"><h2>Positions</h2>{render_positions(data)}</section>'
         '<div class="grid2">'
         f'<section class="card"><h2>Exam progress toward live</h2>{render_exam(data)}</section>'
         f'<section class="card"><h2>Runs and checks</h2>{render_health(data)}</section>'
