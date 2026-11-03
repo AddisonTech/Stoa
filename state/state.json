@@ -13,9 +13,9 @@
     "equity": "100",
     "benchmark_close": "759.97"
   },
-  "last_close_session": "2026-11-02",
+  "last_close_session": "2026-11-03",
   "last_close_equity": "101.27",
-  "last_benchmark_close": "752.1",
+  "last_benchmark_close": "754.35",
   "decided_sessions": [
     "2026-10-23",
     "2026-10-26",
@@ -23,7 +23,8 @@
     "2026-10-28",
     "2026-10-29",
     "2026-10-30",
-    "2026-11-02"
+    "2026-11-02",
+    "2026-11-03"
   ],
   "executed_sessions": [
     "2026-10-26",
@@ -212,12 +213,25 @@
         "reference_closes": {
           "MTUM": "275.14"
         }
+      },
+      {
+        "session": "2026-11-03",
+        "mode": "paper",
+        "broker_equity": "101.27",
+        "adjusted_equity": "101.121402232698641",
+        "benchmark_close": "754.35",
+        "trades_closed": 0,
+        "flow": "0",
+        "strategy": "agents",
+        "reference_closes": {
+          "MTUM": "278.33"
+        }
       }
     ],
     "cost_drag": "0.148597767301359",
     "trades_closed": 0,
     "pending_trades": 0,
-    "last_strategy": "agents",
+    "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
     "fallback_reason": "",
@@ -231,7 +245,7 @@
   "stop_outs": [],
   "holdings_at_close": {},
   "last_reference_closes": {
-    "MTUM": "275.14"
+    "MTUM": "278.33"
   },
   "cap_raises": [],
   "cap_asks": [],
