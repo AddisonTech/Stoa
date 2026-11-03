@@ -610,7 +610,7 @@ Decided 2026-10-29 by the owner: "If I wanted to buy SPY, I would not need an ap
 - **How.** The 9:45 am run takes the kill switch's flatten path (cancel every open order, sell every position at the broker), without turning the kill switch on. The $100 account's evening plan and morning sweep buy nothing and read no news; the big account's 9:00 am plan lists every position as a sale and reads nothing from the news brain.
 - **Already done by hand.** The owner sold the big account's SPY on 2026-10-29 at about 3 pm New York time; that afternoon's dry picks run planned no orders.
 - **Unchanged.** The kill switch, the risk caps, the keys, the workflows and the 8:15 am feed. Trials 12, 13 and 14 and their records stay as they are. The pre-registration to turn off the $100 account's SPY fallback (registry `fallback-off:preregistration`, spec `94fc7428e857a21c`) stays in the registry but was never applied; with the account stopped the fallback cannot buy anything.
-- **Undo.** Set a `stop` value back to `false`, as its own recorded decision.
+- **Undo.** Set a `stop` value back to `false`, as its own recorded decision. `stop.usd100` was undone on 2026-11-03 ("The $100 account mirrors trial 15").
 
 ## Trial 15: the owner's brain, 5 picks a day
 
@@ -676,3 +676,17 @@ The rule was a higher average edge and a hit rate at least as high; the new brai
 - **The event memory:** no kind of event beat SPY after costs on average the next session. The best was an analyst upgrade (-0.05% a row, 47.5% beat SPY); the worst were a lost contract (-0.57%) and a bad executive change (-0.52%). Next to the average row (-0.29%, 43.1%), the gaps are small, and costs eat what is there.
 - **Ripples:** a company's customers having good or bad news made no difference to it the next session (-0.286% against -0.285%); suppliers' news a hair (-0.14% against -0.17%).
 - **The pre-market hunter:** small, thinly covered companies with news before the open did worse than average (42.8% beat SPY, -0.47% a row), because about 95% of the move is done by 9:45 am and their trading costs are higher.
+
+## The $100 account mirrors trial 15
+
+Decided 2026-11-03 by the owner: the $100 account buys every day so it has a case study.
+
+- **Undoing the stop.** `stop.usd100` goes back to `false`. That is this recorded decision, as "Every trial stops" requires. `stop.big_paper` and `stop.shadow` are unchanged.
+- **What.** `usd100.strategy: mirror_trial15`. Every trading day at 9:45 am the $100 paper account sells what it still holds from the session before and buys the same 5 stocks the big paper account picked that morning (`big-paper/trial15/picks/<session>.json` on the state branch, fetched fresh right before it is read), at (equity x 0.98) / 5 each, as fractional dollar orders sized from its own equity. It holds them one session, 9:45 am to 9:45 am, like trial 15.
+- **A stock picked again** is kept and resized to its weight, not sold and bought back: the risk engine refuses to buy back a stock sold the same morning. At $100 the big account's $50 resize step would never fire, so the mirror resizes whenever the difference is $1 or more (the smallest order Alpaca takes). The 5 end the morning at equal weight, give or take a dollar.
+- **Rails, matching trial 15.** Kept: the 25% kill switch and the 8% price sanity check. The price check compares the 9:45 am price with the big account's 9:00 am price for the same stock, from its 9:00 am plan in `big-paper/plans/` (written in the same commit as the picks). A pick with no 9:00 am price is not bought, as in trial 15. Off for this account in this mode: the sector cap, the correlation limit, the 3% daily loss stop, the regime filter, the ATR exits, the broker-side stops, the earnings blackout and the SPY fallback. The max positions gate is raised to the 10 order a day cap so it never decides which picks are bought; the order cap stays. It never buys SPY. Nothing waits for Approve or Skip.
+- **No picks, no buys.** If the picks file is missing, unreadable or for another day, the account buys nothing, keeps what it holds, logs the exact reason and sends one alert. If the big account picked nothing that day (its brain's data was not ready), the mirror does what the big account does: sells and stays in cash. Every session with no orders records its reason in the journal and on the dashboard.
+- **Paper only.** Mirror mode refuses to run if `STOA_MODE` is live and says why. Going live is a separate decision.
+- **A paper case study, not a trial.** Registered as `usd100:mirror_trial15` (kind `case_study`, no returns, so it never counts in the trial penalty). It has no pass or fail line and nothing is tuned from it. The dashboard grades the picks it actually bought by trial 15's own rule (9:45 am to 9:45 am, against SPY, after costs) and shows its equity against SPY and against the big paper account.
+- **Unchanged.** Trial 15, the big paper account, its keys, its picks, the learner, the feed, the shadow scoreboard settings. The v1 rules, their code and records stay in place and do not run in this mode; `usd100.strategy: rules` would bring them back, as its own decision.
+- **First orders:** 9:45 am New York time on Wednesday 2026-11-04.
