@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-03",
+ "version": "t15-learn-20261030",
+ "picks": [
+  "INTC",
+  "DDOG",
+  "FTNT",
+  "TXG",
+  "RBRK"
+ ],
+ "sha256": "d5bde7d44fb27768ee5b708e50022d30671abe29475dcd17e8caefcf20162319",
+ "locked_at": "2026-11-03T14:03:38.813458+00:00"
+}

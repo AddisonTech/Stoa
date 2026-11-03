@@ -1,0 +1,87 @@
+{
+ "status": "read",
+ "note": "33 new, 0 failed",
+ "spent_usd": 0.0036958650000000004,
+ "by_symbol": {
+  "ASST": {
+   "sentiment": 0.2,
+   "materiality": 0.32499999999999996,
+   "items": 2.0
+  },
+  "COIN": {
+   "sentiment": 0.0,
+   "materiality": 0.1375,
+   "items": 4.0
+  },
+  "CRWV": {
+   "sentiment": 0.225,
+   "materiality": 0.32500000000000007,
+   "items": 4.0
+  },
+  "DDOG": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "DELL": {
+   "sentiment": 0.3,
+   "materiality": 0.3,
+   "items": 3.0
+  },
+  "FTNT": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "HPE": {
+   "sentiment": 0.2,
+   "materiality": 0.275,
+   "items": 2.0
+  },
+  "HUT": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "INTC": {
+   "sentiment": -0.03333333333333333,
+   "materiality": 0.11666666666666665,
+   "items": 3.0
+  },
+  "IREN": {
+   "sentiment": 0.0,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "MU": {
+   "sentiment": 0.4,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "NTAP": {
+   "sentiment": 0.3,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "PENG": {
+   "sentiment": 0.4,
+   "materiality": 0.5,
+   "items": 2.0
+  },
+  "SNDK": {
+   "sentiment": -0.06666666666666667,
+   "materiality": 0.13333333333333333,
+   "items": 3.0
+  },
+  "SNOW": {
+   "sentiment": 0.2333333333333333,
+   "materiality": 0.2833333333333333,
+   "items": 3.0
+  },
+  "WDC": {
+   "sentiment": 0.1,
+   "materiality": 0.4,
+   "items": 1.0
+  }
+ }
+}
