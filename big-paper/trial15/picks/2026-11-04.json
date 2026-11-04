@@ -1,0 +1,121 @@
+{
+ "session": "2026-11-04",
+ "model": "t9-frozen",
+ "picks": [
+  {
+   "rank": 1,
+   "symbol": "CORZ",
+   "conviction": 0.5573234842422842,
+   "detail": "conviction 0.557, news tone +0.00, articles 0, surprise +0.0, filing tone +0.00, ripple +0.47, last day +13.9%",
+   "saw": {
+    "symbol": "CORZ",
+    "conviction": 0.5573234842422842,
+    "p": 0.5692307692307692,
+    "adv": 219044037.46075,
+    "sent": 0.0,
+    "n": 0.0,
+    "surprise": 0.0,
+    "filing_tone": 0.0,
+    "ripple": 0.46500155329704285,
+    "ret_1": 0.13874450219912027,
+    "ret_5": -0.001752541184717904,
+    "vol_20": 0.062046215327609844,
+    "log_adv": 19.2047833518617,
+    "coverage": 0.0,
+    "first_break": 0.0
+   }
+  },
+  {
+   "rank": 2,
+   "symbol": "PANW",
+   "conviction": 0.5252009406641533,
+   "detail": "conviction 0.525, news tone +0.19, articles 2, surprise -0.7, filing tone +0.00, ripple +0.00, last day -0.4%",
+   "saw": {
+    "symbol": "PANW",
+    "conviction": 0.5252009406641533,
+    "p": 0.5035460992907801,
+    "adv": 2079441707.772,
+    "sent": 0.19296107068657875,
+    "n": 2.0,
+    "surprise": -0.6674575257910931,
+    "filing_tone": 0.0,
+    "ripple": 0.0,
+    "ret_1": -0.004321619470033067,
+    "ret_5": -0.1282051282051282,
+    "vol_20": 0.037029559822602094,
+    "log_adv": 21.4553652849063,
+    "coverage": 0.9295359586241758,
+    "first_break": 1.0
+   }
+  },
+  {
+   "rank": 3,
+   "symbol": "HUT",
+   "conviction": 0.5217928783040628,
+   "detail": "conviction 0.522, news tone +0.04, articles 3, surprise -0.4, filing tone +0.00, ripple +0.00, last day +15.9%",
+   "saw": {
+    "symbol": "HUT",
+    "conviction": 0.5217928783040628,
+    "p": 0.49443468072642055,
+    "adv": 486492228.853,
+    "sent": 0.04091972609361013,
+    "n": 3.0,
+    "surprise": -0.35078450685277984,
+    "filing_tone": 0.0,
+    "ripple": 0.0,
+    "ret_1": 0.15898554676847554,
+    "ret_5": -0.05331155331155335,
+    "vol_20": 0.07261426435604218,
+    "log_adv": 20.002731485882077,
+    "coverage": 0.2876820724517809,
+    "first_break": 1.0
+   }
+  },
+  {
+   "rank": 4,
+   "symbol": "TXG",
+   "conviction": 0.5200213672087239,
+   "detail": "conviction 0.520, news tone +0.00, articles 0, surprise +0.0, filing tone +0.00, ripple +0.25, last day +5.9%",
+   "saw": {
+    "symbol": "TXG",
+    "conviction": 0.5200213672087239,
+    "p": 0.49443468072642055,
+    "adv": 283468563.448,
+    "sent": 0.0,
+    "n": 0.0,
+    "surprise": 0.0,
+    "filing_tone": 0.0,
+    "ripple": 0.24998050613535774,
+    "ret_1": 0.059386662339769636,
+    "ret_5": -0.1631632914637271,
+    "vol_20": 0.06129811773236464,
+    "log_adv": 19.462611787674987,
+    "coverage": 0.0,
+    "first_break": 0.0
+   }
+  },
+  {
+   "rank": 5,
+   "symbol": "GLXY",
+   "conviction": 0.519833393666821,
+   "detail": "conviction 0.520, news tone +0.93, articles 1, surprise +1.5, filing tone +0.00, ripple +0.00, last day +15.4%",
+   "saw": {
+    "symbol": "GLXY",
+    "conviction": 0.519833393666821,
+    "p": 0.49443468072642055,
+    "adv": 138607282.94925,
+    "sent": 0.9323409795761108,
+    "n": 1.0,
+    "surprise": 1.5315624331516806,
+    "filing_tone": 0.0,
+    "ripple": 0.0,
+    "ret_1": 0.15352981494174078,
+    "ret_5": -0.02037252619324803,
+    "vol_20": 0.07819119072059987,
+    "log_adv": 18.74715518987094,
+    "coverage": 0.5007752879124893,
+    "first_break": 1.0
+   }
+  }
+ ]
+}

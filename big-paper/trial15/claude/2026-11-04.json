@@ -1,0 +1,52 @@
+{
+ "status": "read",
+ "note": "21 new, 0 failed",
+ "spent_usd": 0.002689725,
+ "by_symbol": {
+  "AEHR": {
+   "sentiment": 0.05,
+   "materiality": 0.1,
+   "items": 2.0
+  },
+  "CLSK": {
+   "sentiment": 0.05,
+   "materiality": 0.25,
+   "items": 2.0
+  },
+  "GLXY": {
+   "sentiment": 0.1,
+   "materiality": 0.15,
+   "items": 1.0
+  },
+  "HUT": {
+   "sentiment": 0.0,
+   "materiality": 0.5333333333333333,
+   "items": 3.0
+  },
+  "IOVA": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 2.0
+  },
+  "PANW": {
+   "sentiment": 0.0,
+   "materiality": 0.3,
+   "items": 2.0
+  },
+  "RIOT": {
+   "sentiment": 0.2333333333333333,
+   "materiality": 0.4666666666666666,
+   "items": 3.0
+  },
+  "TWST": {
+   "sentiment": -0.2,
+   "materiality": 0.425,
+   "items": 2.0
+  },
+  "XMTR": {
+   "sentiment": 0.15,
+   "materiality": 0.3,
+   "items": 4.0
+  }
+ }
+}
