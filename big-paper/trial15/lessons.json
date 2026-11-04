@@ -20,31 +20,37 @@
    "rule_due": false
   },
   "unexplained": {
-   "count": 2,
+   "count": 4,
    "words": "a loss bigger than its usual wobble, with no clear cause",
    "examples": [
     "2026-10-30 NBIS -7.93%",
-    "2026-11-02 TEAM -4.37%"
+    "2026-11-02 TEAM -4.37%",
+    "2026-11-03 DELL -8.65%",
+    "2026-11-03 MU -4.58%"
    ],
    "rule": null,
    "rule_due": false
   },
   "noise": {
-   "count": 1,
+   "count": 4,
    "words": "a normal day's wobble for a stock this jumpy",
    "examples": [
-    "2026-11-02 NOW -1.55%"
+    "2026-11-02 NOW -1.55%",
+    "2026-11-03 INTC -5.73%",
+    "2026-11-03 IREN -3.09%",
+    "2026-11-03 SNOW -2.59%"
    ],
    "rule": "skip_volatile",
    "rule_due": false
   }
  },
  "claude": {
-  "read": 5,
-  "right": 1
+  "read": 9,
+  "right": 2
  },
  "reviewed_days": [
   "2026-10-30",
-  "2026-11-02"
+  "2026-11-02",
+  "2026-11-03"
  ]
 }
