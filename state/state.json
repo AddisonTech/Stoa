@@ -13,9 +13,9 @@
     "equity": "100",
     "benchmark_close": "759.97"
   },
-  "last_close_session": "2026-11-03",
-  "last_close_equity": "101.27",
-  "last_benchmark_close": "754.35",
+  "last_close_session": "2026-11-04",
+  "last_close_equity": "98.5890193972669",
+  "last_benchmark_close": "766.81",
   "decided_sessions": [
     "2026-10-23",
     "2026-10-26",
@@ -24,7 +24,8 @@
     "2026-10-29",
     "2026-10-30",
     "2026-11-02",
-    "2026-11-03"
+    "2026-11-03",
+    "2026-11-04"
   ],
   "executed_sessions": [
     "2026-10-26",
@@ -261,6 +262,19 @@
         "reference_closes": {
           "MTUM": "278.33"
         }
+      },
+      {
+        "session": "2026-11-04",
+        "mode": "paper",
+        "broker_equity": "98.5890193972669",
+        "adjusted_equity": "98.400761629989368",
+        "benchmark_close": "766.81",
+        "trades_closed": 0,
+        "flow": "0",
+        "strategy": "mirror_trial15",
+        "reference_closes": {
+          "MTUM": "272.86"
+        }
       }
     ],
     "cost_drag": "0.188257767277532",
@@ -278,9 +292,26 @@
   "approval_required": false,
   "protective_stops": [],
   "stop_outs": [],
-  "holdings_at_close": {},
+  "holdings_at_close": {
+    "CORZ": {
+      "qty": "1.506609937",
+      "close": "13.162"
+    },
+    "GLXY": {
+      "qty": "1.234129947",
+      "close": "16.068"
+    },
+    "PANW": {
+      "qty": "0.056750538",
+      "close": "349.424"
+    },
+    "TXG": {
+      "qty": "0.293882269",
+      "close": "67.476"
+    }
+  },
   "last_reference_closes": {
-    "MTUM": "278.33"
+    "MTUM": "272.86"
   },
   "cap_raises": [],
   "cap_asks": [],
