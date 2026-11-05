@@ -35,7 +35,8 @@
     "2026-10-30",
     "2026-11-02",
     "2026-11-03",
-    "2026-11-04"
+    "2026-11-04",
+    "2026-11-05"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -53,33 +54,41 @@
   ],
   "pending_plan": null,
   "positions_meta": {
-    "CORZ": {
-      "entry_session": "2026-11-04",
-      "entry_price": "13.162",
+    "NBIS": {
+      "entry_session": "2026-11-05",
+      "entry_price": "127.052",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "PANW": {
-      "entry_session": "2026-11-04",
-      "entry_price": "349.424",
+    "DELL": {
+      "entry_session": "2026-11-05",
+      "entry_price": "341.562",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "TXG": {
-      "entry_session": "2026-11-04",
-      "entry_price": "67.476",
+    "MU": {
+      "entry_session": "2026-11-05",
+      "entry_price": "730.652",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "GLXY": {
-      "entry_session": "2026-11-04",
-      "entry_price": "16.068",
+    "CRWV": {
+      "entry_session": "2026-11-05",
+      "entry_price": "45.056",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "AAOI": {
+      "entry_session": "2026-11-05",
+      "entry_price": "52.336",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
@@ -87,7 +96,7 @@
     }
   },
   "realized_by_year": {
-    "2026": "1.295538385638"
+    "2026": "-8.032077917184"
   },
   "llm_spend_by_month": {
     "2026-10": "0.000917"
@@ -152,6 +161,50 @@
       "fees": "0",
       "pnl": "-0.142257305594",
       "reason": "stopped"
+    },
+    {
+      "symbol": "CORZ",
+      "entry_session": "2026-11-04",
+      "exit_session": "2026-11-05",
+      "qty": "1.506609937",
+      "entry_price": "13.162",
+      "exit_price": "11.86",
+      "fees": "0",
+      "pnl": "-1.961606137974",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "GLXY",
+      "entry_session": "2026-11-04",
+      "exit_session": "2026-11-05",
+      "qty": "1.234129947",
+      "entry_price": "16.068",
+      "exit_price": "13.27",
+      "fees": "0",
+      "pnl": "-3.453095591706",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "PANW",
+      "entry_session": "2026-11-04",
+      "exit_session": "2026-11-05",
+      "qty": "0.056750538",
+      "entry_price": "349.424",
+      "exit_price": "316.548",
+      "fees": "0",
+      "pnl": "-1.865730687288",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "TXG",
+      "entry_session": "2026-11-04",
+      "exit_session": "2026-11-05",
+      "qty": "0.293882269",
+      "entry_price": "67.476",
+      "exit_price": "60.51",
+      "fees": "0",
+      "pnl": "-2.047183885854",
+      "reason": "hold_period"
     }
   ],
   "open_orders": [],
@@ -278,9 +331,9 @@
         }
       }
     ],
-    "cost_drag": "0.188257767277532",
+    "cost_drag": "0.308273958672369",
     "trades_closed": 0,
-    "pending_trades": 0,
+    "pending_trades": 4,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
