@@ -13,9 +13,9 @@
     "equity": "100",
     "benchmark_close": "759.97"
   },
-  "last_close_session": "2026-11-04",
-  "last_close_equity": "98.5890193972669",
-  "last_benchmark_close": "766.81",
+  "last_close_session": "2026-11-05",
+  "last_close_equity": "84.03137429247",
+  "last_benchmark_close": "733.0",
   "decided_sessions": [
     "2026-10-23",
     "2026-10-26",
@@ -25,7 +25,8 @@
     "2026-10-30",
     "2026-11-02",
     "2026-11-03",
-    "2026-11-04"
+    "2026-11-04",
+    "2026-11-05"
   ],
   "executed_sessions": [
     "2026-10-26",
@@ -223,7 +224,7 @@
         "flow": "0",
         "strategy": "",
         "reference_closes": {
-          "MTUM": "289.45"
+          "MTUM": "72.36780400205233453052847614"
         }
       },
       {
@@ -236,7 +237,7 @@
         "flow": "0",
         "strategy": "agents",
         "reference_closes": {
-          "MTUM": "294.56"
+          "MTUM": "73.64539763981528989225243714"
         }
       },
       {
@@ -249,7 +250,7 @@
         "flow": "0",
         "strategy": "agents",
         "reference_closes": {
-          "MTUM": "299.53"
+          "MTUM": "74.88798871216008209338122114"
         }
       },
       {
@@ -262,7 +263,7 @@
         "flow": "0",
         "strategy": "agents",
         "reference_closes": {
-          "MTUM": "303.5"
+          "MTUM": "75.88056146008942314740159789"
         }
       },
       {
@@ -275,7 +276,7 @@
         "flow": "0",
         "strategy": "agents",
         "reference_closes": {
-          "MTUM": "298.34"
+          "MTUM": "74.59046690610569522832221652"
         }
       },
       {
@@ -288,7 +289,7 @@
         "flow": "0",
         "strategy": "agents",
         "reference_closes": {
-          "MTUM": "284.1"
+          "MTUM": "71.03020596642967089349849740"
         }
       },
       {
@@ -301,7 +302,7 @@
         "flow": "0",
         "strategy": "agents",
         "reference_closes": {
-          "MTUM": "275.14"
+          "MTUM": "68.79004177966722861540716851"
         }
       },
       {
@@ -314,7 +315,7 @@
         "flow": "0",
         "strategy": "agents",
         "reference_closes": {
-          "MTUM": "278.33"
+          "MTUM": "69.58760023455251777468298761"
         }
       },
       {
@@ -327,13 +328,26 @@
         "flow": "0",
         "strategy": "mirror_trial15",
         "reference_closes": {
-          "MTUM": "272.86"
+          "MTUM": "68.22000000000000000000000000"
+        }
+      },
+      {
+        "session": "2026-11-05",
+        "mode": "paper",
+        "broker_equity": "84.03137429247",
+        "adjusted_equity": "83.723100333797631",
+        "benchmark_close": "733.0",
+        "trades_closed": 4,
+        "flow": "0",
+        "strategy": "mirror_trial15",
+        "reference_closes": {
+          "MTUM": "62.6"
         }
       }
     ],
     "cost_drag": "0.308273958672369",
     "trades_closed": 0,
-    "pending_trades": 4,
+    "pending_trades": 0,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
@@ -347,25 +361,29 @@
   "protective_stops": [],
   "stop_outs": [],
   "holdings_at_close": {
-    "CORZ": {
-      "qty": "1.506609937",
-      "close": "13.162"
+    "AAOI": {
+      "qty": "0.343167227",
+      "close": "52.336"
     },
-    "GLXY": {
-      "qty": "1.234129947",
-      "close": "16.068"
+    "CRWV": {
+      "qty": "0.399946732",
+      "close": "45.056"
     },
-    "PANW": {
-      "qty": "0.056750538",
-      "close": "349.424"
+    "DELL": {
+      "qty": "0.052757625",
+      "close": "341.562"
     },
-    "TXG": {
-      "qty": "0.293882269",
-      "close": "67.476"
+    "MU": {
+      "qty": "0.024662903",
+      "close": "730.652"
+    },
+    "NBIS": {
+      "qty": "0.14183169",
+      "close": "127.052"
     }
   },
   "last_reference_closes": {
-    "MTUM": "272.86"
+    "MTUM": "62.6"
   },
   "cap_raises": [],
   "cap_asks": [],
