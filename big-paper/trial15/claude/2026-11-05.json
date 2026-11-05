@@ -1,0 +1,97 @@
+{
+ "status": "read",
+ "note": "33 new, 0 failed",
+ "spent_usd": 0.0036967650000000003,
+ "by_symbol": {
+  "AAOI": {
+   "sentiment": 0.2,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "AXTI": {
+   "sentiment": 0.2,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "CRDO": {
+   "sentiment": 0.4,
+   "materiality": 0.35,
+   "items": 1.0
+  },
+  "CRWV": {
+   "sentiment": -0.13333333333333333,
+   "materiality": 0.20000000000000004,
+   "items": 3.0
+  },
+  "DELL": {
+   "sentiment": 0.3,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "INTC": {
+   "sentiment": -0.06666666666666667,
+   "materiality": 0.26666666666666666,
+   "items": 3.0
+  },
+  "IREN": {
+   "sentiment": -0.4,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "LITE": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "MRVL": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 2.0
+  },
+  "MU": {
+   "sentiment": -0.39999999999999997,
+   "materiality": 0.4666666666666666,
+   "items": 3.0
+  },
+  "NBIS": {
+   "sentiment": 0.07500000000000001,
+   "materiality": 0.125,
+   "items": 2.0
+  },
+  "NOW": {
+   "sentiment": 0.35,
+   "materiality": 0.25,
+   "items": 2.0
+  },
+  "ONDS": {
+   "sentiment": 0.5,
+   "materiality": 0.45,
+   "items": 2.0
+  },
+  "ORCL": {
+   "sentiment": 0.3,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "SMCI": {
+   "sentiment": 0.15,
+   "materiality": 0.22499999999999998,
+   "items": 2.0
+  },
+  "SNDK": {
+   "sentiment": 0.3,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "SNOW": {
+   "sentiment": 0.06666666666666668,
+   "materiality": 0.26666666666666666,
+   "items": 3.0
+  },
+  "WULF": {
+   "sentiment": 0.2333333333333333,
+   "materiality": 0.2833333333333333,
+   "items": 3.0
+  }
+ }
+}

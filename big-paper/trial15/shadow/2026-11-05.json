@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-05",
+ "version": "t15-learn-20261103",
+ "picks": [
+  "LITE",
+  "DELL",
+  "MRVL",
+  "SNDK",
+  "IREN"
+ ],
+ "sha256": "865e54519ac887ad7c422cd1fcbbcc3a4afd02770bb5573c675ffecca728996d",
+ "locked_at": "2026-11-05T14:04:03.167605+00:00"
+}
