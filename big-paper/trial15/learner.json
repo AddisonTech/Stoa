@@ -1,8 +1,8 @@
 {
- "version": "t15-learn-20261103",
- "sha256": "aabb8d180cb1e1e59aacbe4d9c4e4eb051515a5f8c90f605ae28d78eeb269b35",
- "rows": 1637804,
- "trained_through": "2026-11-03",
+ "version": "t15-learn-20261104",
+ "sha256": "b7db51488f1a9f5d087a2c6042f30ec2f6aa06c4da1c062c3b6910162d50bf77",
+ "rows": 1639386,
+ "trained_through": "2026-11-04",
  "features": [
   "sent",
   "surprise",

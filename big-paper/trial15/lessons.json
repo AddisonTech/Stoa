@@ -1,11 +1,12 @@
 {
  "reasons": {
   "bad_news": {
-   "count": 2,
+   "count": 3,
    "words": "bad news about it came out after the buy",
    "examples": [
     "2026-10-30 MU -1.96%",
-    "2026-10-30 CRM -0.80%"
+    "2026-10-30 CRM -0.80%",
+    "2026-11-04 HUT -14.02%"
    ],
    "rule": null,
    "rule_due": false
@@ -20,13 +21,14 @@
    "rule_due": false
   },
   "unexplained": {
-   "count": 4,
+   "count": 5,
    "words": "a loss bigger than its usual wobble, with no clear cause",
    "examples": [
     "2026-10-30 NBIS -7.93%",
     "2026-11-02 TEAM -4.37%",
     "2026-11-03 DELL -8.65%",
-    "2026-11-03 MU -4.58%"
+    "2026-11-03 MU -4.58%",
+    "2026-11-04 PANW -8.07%"
    ],
    "rule": null,
    "rule_due": false
@@ -42,15 +44,27 @@
    ],
    "rule": "skip_volatile",
    "rule_due": false
+  },
+  "chased_jump": {
+   "count": 3,
+   "words": "it had jumped more than 5% the day before and gave some back",
+   "examples": [
+    "2026-11-04 CORZ -9.19%",
+    "2026-11-04 TXG -8.85%",
+    "2026-11-04 GLXY -16.13%"
+   ],
+   "rule": "skip_jumps",
+   "rule_due": false
   }
  },
  "claude": {
-  "read": 9,
+  "read": 10,
   "right": 2
  },
  "reviewed_days": [
   "2026-10-30",
   "2026-11-02",
-  "2026-11-03"
+  "2026-11-03",
+  "2026-11-04"
  ]
 }
