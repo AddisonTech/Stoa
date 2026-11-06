@@ -37,7 +37,8 @@
     "2026-11-02",
     "2026-11-03",
     "2026-11-04",
-    "2026-11-05"
+    "2026-11-05",
+    "2026-11-06"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -56,30 +57,6 @@
   ],
   "pending_plan": null,
   "positions_meta": {
-    "NBIS": {
-      "entry_session": "2026-11-05",
-      "entry_price": "127.052",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
-    "DELL": {
-      "entry_session": "2026-11-05",
-      "entry_price": "341.562",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
-    "MU": {
-      "entry_session": "2026-11-05",
-      "entry_price": "730.652",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
     "CRWV": {
       "entry_session": "2026-11-05",
       "entry_price": "45.056",
@@ -88,9 +65,33 @@
       "ref_close": null,
       "stop_price": null
     },
-    "AAOI": {
-      "entry_session": "2026-11-05",
-      "entry_price": "52.336",
+    "INTC": {
+      "entry_session": "2026-11-06",
+      "entry_price": "56.556",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "GEV": {
+      "entry_session": "2026-11-06",
+      "entry_price": "803.648",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "SNOW": {
+      "entry_session": "2026-11-06",
+      "entry_price": "277.864",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "CAT": {
+      "entry_session": "2026-11-06",
+      "entry_price": "566.912",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
@@ -98,7 +99,7 @@
     }
   },
   "realized_by_year": {
-    "2026": "-8.032077917184"
+    "2026": "-7.266916672804"
   },
   "llm_spend_by_month": {
     "2026-10": "0.000917"
@@ -206,6 +207,50 @@
       "exit_price": "60.51",
       "fees": "0",
       "pnl": "-2.047183885854",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "AAOI",
+      "entry_session": "2026-11-05",
+      "exit_session": "2026-11-06",
+      "qty": "0.343167227",
+      "entry_price": "52.336",
+      "exit_price": "50.754",
+      "fees": "0",
+      "pnl": "-0.542890553114",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "DELL",
+      "entry_session": "2026-11-05",
+      "exit_session": "2026-11-06",
+      "qty": "0.052757625",
+      "entry_price": "341.562",
+      "exit_price": "348.946",
+      "fees": "0",
+      "pnl": "0.389562303000",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "MU",
+      "entry_session": "2026-11-05",
+      "exit_session": "2026-11-06",
+      "qty": "0.024662903",
+      "entry_price": "730.652",
+      "exit_price": "720.07",
+      "fees": "0",
+      "pnl": "-0.260982839546",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "NBIS",
+      "entry_session": "2026-11-05",
+      "exit_session": "2026-11-06",
+      "qty": "0.14183169",
+      "entry_price": "127.052",
+      "exit_price": "135.368",
+      "fees": "0",
+      "pnl": "1.17947233404",
       "reason": "hold_period"
     }
   ],
@@ -346,9 +391,9 @@
         }
       }
     ],
-    "cost_drag": "0.308273958672369",
+    "cost_drag": "0.421036538374488",
     "trades_closed": 0,
-    "pending_trades": 0,
+    "pending_trades": 4,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
