@@ -34,16 +34,17 @@
    "rule_due": false
   },
   "noise": {
-   "count": 4,
+   "count": 6,
    "words": "a normal day's wobble for a stock this jumpy",
    "examples": [
-    "2026-11-02 NOW -1.55%",
     "2026-11-03 INTC -5.73%",
     "2026-11-03 IREN -3.09%",
-    "2026-11-03 SNOW -2.59%"
+    "2026-11-03 SNOW -2.59%",
+    "2026-11-05 MU -0.21%",
+    "2026-11-05 AAOI -3.68%"
    ],
    "rule": "skip_volatile",
-   "rule_due": false
+   "rule_due": true
   },
   "chased_jump": {
    "count": 3,
@@ -58,13 +59,14 @@
   }
  },
  "claude": {
-  "read": 10,
-  "right": 2
+  "read": 15,
+  "right": 5
  },
  "reviewed_days": [
   "2026-10-30",
   "2026-11-02",
   "2026-11-03",
-  "2026-11-04"
+  "2026-11-04",
+  "2026-11-05"
  ]
 }

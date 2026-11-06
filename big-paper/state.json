@@ -9,9 +9,9 @@
   "principal_withdrawn": false,
   "milestone_alerted": false,
   "inception": null,
-  "last_close_session": "2026-11-05",
-  "last_close_equity": "80085.95",
-  "last_benchmark_close": "733.0",
+  "last_close_session": "2026-11-06",
+  "last_close_equity": "85315.83",
+  "last_benchmark_close": "735.29",
   "decided_sessions": [
     "2026-10-28",
     "2026-10-29",
@@ -19,7 +19,8 @@
     "2026-11-02",
     "2026-11-03",
     "2026-11-04",
-    "2026-11-05"
+    "2026-11-05",
+    "2026-11-06"
   ],
   "executed_sessions": [
     "2026-10-29",
