@@ -13,9 +13,9 @@
     "equity": "100",
     "benchmark_close": "759.97"
   },
-  "last_close_session": "2026-11-05",
-  "last_close_equity": "84.03137429247",
-  "last_benchmark_close": "733.0",
+  "last_close_session": "2026-11-06",
+  "last_close_equity": "92.27721915645",
+  "last_benchmark_close": "735.29",
   "decided_sessions": [
     "2026-10-23",
     "2026-10-26",
@@ -26,7 +26,8 @@
     "2026-11-02",
     "2026-11-03",
     "2026-11-04",
-    "2026-11-05"
+    "2026-11-05",
+    "2026-11-06"
   ],
   "executed_sessions": [
     "2026-10-26",
@@ -93,8 +94,8 @@
       "entry_session": "2026-11-06",
       "entry_price": "566.912",
       "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
+      "ref_session": "2026-11-06",
+      "ref_close": "558.63",
       "stop_price": null
     }
   },
@@ -389,11 +390,24 @@
         "reference_closes": {
           "MTUM": "62.6"
         }
+      },
+      {
+        "session": "2026-11-06",
+        "mode": "paper",
+        "broker_equity": "92.27721915645",
+        "adjusted_equity": "91.856182618075512",
+        "benchmark_close": "735.29",
+        "trades_closed": 4,
+        "flow": "0",
+        "strategy": "mirror_trial15",
+        "reference_closes": {
+          "MTUM": "63.76"
+        }
       }
     ],
     "cost_drag": "0.421036538374488",
     "trades_closed": 0,
-    "pending_trades": 4,
+    "pending_trades": 0,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
@@ -407,29 +421,29 @@
   "protective_stops": [],
   "stop_outs": [],
   "holdings_at_close": {
-    "AAOI": {
-      "qty": "0.343167227",
-      "close": "52.336"
+    "CAT": {
+      "qty": "0.031204137",
+      "close": "558.63"
     },
     "CRWV": {
       "qty": "0.399946732",
       "close": "45.056"
     },
-    "DELL": {
-      "qty": "0.052757625",
-      "close": "341.562"
+    "GEV": {
+      "qty": "0.022833379",
+      "close": "803.648"
     },
-    "MU": {
-      "qty": "0.024662903",
-      "close": "730.652"
+    "INTC": {
+      "qty": "0.324457175",
+      "close": "56.556"
     },
-    "NBIS": {
-      "qty": "0.14183169",
-      "close": "127.052"
+    "SNOW": {
+      "qty": "0.066039501",
+      "close": "277.864"
     }
   },
   "last_reference_closes": {
-    "MTUM": "62.6"
+    "MTUM": "63.76"
   },
   "cap_raises": [],
   "cap_asks": [],
