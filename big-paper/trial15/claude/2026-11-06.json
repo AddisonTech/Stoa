@@ -1,0 +1,102 @@
+{
+ "status": "read",
+ "note": "35 new, 0 failed",
+ "spent_usd": 0.004382104999999999,
+ "by_symbol": {
+  "BE": {
+   "sentiment": 0.4333333333333333,
+   "materiality": 0.5166666666666666,
+   "items": 3.0
+  },
+  "CAT": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "CRWD": {
+   "sentiment": -0.3,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "CRWV": {
+   "sentiment": -0.2,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "GEV": {
+   "sentiment": 0.6,
+   "materiality": 0.5,
+   "items": 1.0
+  },
+  "HOOD": {
+   "sentiment": 0.03333333333333333,
+   "materiality": 0.26666666666666666,
+   "items": 3.0
+  },
+  "INTC": {
+   "sentiment": 0.2,
+   "materiality": 0.25,
+   "items": 2.0
+  },
+  "MDB": {
+   "sentiment": 0.0,
+   "materiality": 0.15,
+   "items": 1.0
+  },
+  "MU": {
+   "sentiment": -0.05,
+   "materiality": 0.125,
+   "items": 4.0
+  },
+  "NBIS": {
+   "sentiment": -0.25,
+   "materiality": 0.3,
+   "items": 2.0
+  },
+  "ORCL": {
+   "sentiment": 0.024999999999999994,
+   "materiality": 0.4625,
+   "items": 4.0
+  },
+  "PANW": {
+   "sentiment": 0.2,
+   "materiality": 0.25,
+   "items": 2.0
+  },
+  "RDDT": {
+   "sentiment": 0.0,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "SHOP": {
+   "sentiment": 0.15000000000000002,
+   "materiality": 0.125,
+   "items": 2.0
+  },
+  "SMCI": {
+   "sentiment": 0.35,
+   "materiality": 0.4,
+   "items": 2.0
+  },
+  "SNDK": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "TSM": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "WDC": {
+   "sentiment": -0.1,
+   "materiality": 0.4,
+   "items": 2.0
+  },
+  "ZS": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  }
+ }
+}

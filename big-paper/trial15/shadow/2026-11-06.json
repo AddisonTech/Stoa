@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-06",
+ "version": "t15-learn-20261104",
+ "picks": [
+  "SNDK",
+  "MOD",
+  "ALAB",
+  "STRL",
+  "DDOG"
+ ],
+ "sha256": "d56cc34600fffcec0925d7e7be30afb93d16f76076116a73164e9916790a527c",
+ "locked_at": "2026-11-06T14:03:34.969623+00:00"
+}
