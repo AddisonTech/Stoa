@@ -1,0 +1,57 @@
+{
+ "status": "read",
+ "note": "23 new, 0 failed",
+ "spent_usd": 0.0024189650000000004,
+ "by_symbol": {
+  "CRWD": {
+   "sentiment": 0.0,
+   "materiality": 0.15000000000000002,
+   "items": 2.0
+  },
+  "FTNT": {
+   "sentiment": 0.0,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "HUT": {
+   "sentiment": 0.05,
+   "materiality": 0.1,
+   "items": 2.0
+  },
+  "INTC": {
+   "sentiment": 0.25,
+   "materiality": 0.25,
+   "items": 2.0
+  },
+  "OKLO": {
+   "sentiment": 0.05,
+   "materiality": 0.38749999999999996,
+   "items": 4.0
+  },
+  "OKTA": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "PANW": {
+   "sentiment": 0.15,
+   "materiality": 0.3,
+   "items": 2.0
+  },
+  "RDW": {
+   "sentiment": 0.175,
+   "materiality": 0.2125,
+   "items": 4.0
+  },
+  "SEI": {
+   "sentiment": 0.05,
+   "materiality": 0.1,
+   "items": 2.0
+  },
+  "SMR": {
+   "sentiment": -0.03333333333333333,
+   "materiality": 0.10000000000000002,
+   "items": 3.0
+  }
+ }
+}

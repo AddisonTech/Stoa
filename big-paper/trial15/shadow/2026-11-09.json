@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-09",
+ "version": "t15-learn-20261105",
+ "picks": [
+  "OKTA",
+  "FIS",
+  "CHTR",
+  "FTNT",
+  "QLYS"
+ ],
+ "sha256": "61343cf22660ffe0deaa37da891621f60a7255ae8a6c2768e821989a14c899c2",
+ "locked_at": "2026-11-09T14:03:29.986700+00:00"
+}
