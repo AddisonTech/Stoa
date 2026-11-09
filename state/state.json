@@ -39,7 +39,8 @@
     "2026-11-03",
     "2026-11-04",
     "2026-11-05",
-    "2026-11-06"
+    "2026-11-06",
+    "2026-11-09"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -59,49 +60,49 @@
   ],
   "pending_plan": null,
   "positions_meta": {
-    "CRWV": {
-      "entry_session": "2026-11-05",
-      "entry_price": "45.056",
+    "SITM": {
+      "entry_session": "2026-11-09",
+      "entry_price": "439.598",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "INTC": {
-      "entry_session": "2026-11-06",
-      "entry_price": "56.556",
+    "CIFR": {
+      "entry_session": "2026-11-09",
+      "entry_price": "6.39",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "GEV": {
-      "entry_session": "2026-11-06",
-      "entry_price": "803.648",
+    "QBTS": {
+      "entry_session": "2026-11-09",
+      "entry_price": "10.566",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "SNOW": {
-      "entry_session": "2026-11-06",
-      "entry_price": "277.864",
+    "LPTH": {
+      "entry_session": "2026-11-09",
+      "entry_price": "7.34",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "CAT": {
-      "entry_session": "2026-11-06",
-      "entry_price": "566.912",
+    "CDNL": {
+      "entry_session": "2026-11-09",
+      "entry_price": "14.896",
       "entry_atr": "0",
-      "ref_session": "2026-11-06",
-      "ref_close": "558.63",
+      "ref_session": null,
+      "ref_close": null,
       "stop_price": null
     }
   },
   "realized_by_year": {
-    "2026": "-7.266916672804"
+    "2026": "-4.561390140394"
   },
   "llm_spend_by_month": {
     "2026-10": "0.000917"
@@ -253,6 +254,61 @@
       "exit_price": "135.368",
       "fees": "0",
       "pnl": "1.17947233404",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "CAT",
+      "entry_session": "2026-11-06",
+      "exit_session": "2026-11-09",
+      "qty": "0.031204137",
+      "entry_price": "566.912",
+      "exit_price": "582.642",
+      "fees": "0",
+      "pnl": "0.490841075010",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "CRWV",
+      "entry_session": "2026-11-05",
+      "exit_session": "2026-11-09",
+      "qty": "0.399946732",
+      "entry_price": "45.056",
+      "exit_price": "47.716",
+      "fees": "0",
+      "pnl": "1.063858307120",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "GEV",
+      "entry_session": "2026-11-06",
+      "exit_session": "2026-11-09",
+      "qty": "0.022833379",
+      "entry_price": "803.648",
+      "exit_price": "816.12",
+      "fees": "0",
+      "pnl": "0.284777902888",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "INTC",
+      "entry_session": "2026-11-06",
+      "exit_session": "2026-11-09",
+      "qty": "0.324457175",
+      "entry_price": "56.556",
+      "exit_price": "57.222",
+      "fees": "0",
+      "pnl": "0.216088478550",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "SNOW",
+      "entry_session": "2026-11-06",
+      "exit_session": "2026-11-09",
+      "qty": "0.066039501",
+      "entry_price": "277.864",
+      "exit_price": "287.706",
+      "fees": "0",
+      "pnl": "0.649960768842",
       "reason": "hold_period"
     }
   ],
@@ -406,9 +462,9 @@
         }
       }
     ],
-    "cost_drag": "0.421036538374488",
+    "cost_drag": "0.564469301084917",
     "trades_closed": 0,
-    "pending_trades": 0,
+    "pending_trades": 5,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
