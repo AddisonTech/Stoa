@@ -13,9 +13,9 @@
     "equity": "100",
     "benchmark_close": "759.97"
   },
-  "last_close_session": "2026-11-09",
-  "last_close_equity": "101.52238164735",
-  "last_benchmark_close": "752.69",
+  "last_close_session": "2026-11-10",
+  "last_close_equity": "96.53146592467",
+  "last_benchmark_close": "749.92",
   "decided_sessions": [
     "2026-10-23",
     "2026-10-26",
@@ -28,7 +28,8 @@
     "2026-11-04",
     "2026-11-05",
     "2026-11-06",
-    "2026-11-09"
+    "2026-11-09",
+    "2026-11-10"
   ],
   "executed_sessions": [
     "2026-10-26",
@@ -490,11 +491,24 @@
         "reference_closes": {
           "MTUM": "66.87"
         }
+      },
+      {
+        "session": "2026-11-10",
+        "mode": "paper",
+        "broker_equity": "96.53146592467",
+        "adjusted_equity": "95.830039610754373179",
+        "benchmark_close": "749.92",
+        "trades_closed": 5,
+        "flow": "0",
+        "strategy": "mirror_trial15",
+        "reference_closes": {
+          "MTUM": "66.73"
+        }
       }
     ],
     "cost_drag": "0.701426313915626821",
     "trades_closed": 0,
-    "pending_trades": 5,
+    "pending_trades": 0,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
@@ -508,29 +522,25 @@
   "protective_stops": [],
   "stop_outs": [],
   "holdings_at_close": {
-    "CDNL": {
-      "qty": "1.248657357",
-      "close": "14.896"
+    "BH": {
+      "qty": "0.052149203",
+      "close": "371.626"
     },
-    "CIFR": {
-      "qty": "2.926447574",
-      "close": "6.39"
+    "CLSK": {
+      "qty": "2.85",
+      "close": "6.8"
     },
-    "LPTH": {
-      "qty": "2.547683923",
-      "close": "7.34"
+    "MOD": {
+      "qty": "0.183652254",
+      "close": "103.892"
     },
-    "QBTS": {
-      "qty": "1.769827749",
-      "close": "10.566"
-    },
-    "SITM": {
-      "qty": "0.042538865",
-      "close": "439.598"
+    "STRL": {
+      "qty": "0.066002329",
+      "close": "293.626"
     }
   },
   "last_reference_closes": {
-    "MTUM": "66.87"
+    "MTUM": "66.73"
   },
   "cap_raises": [],
   "cap_asks": [],
