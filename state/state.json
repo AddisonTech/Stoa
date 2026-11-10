@@ -41,7 +41,8 @@
     "2026-11-04",
     "2026-11-05",
     "2026-11-06",
-    "2026-11-09"
+    "2026-11-09",
+    "2026-11-10"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -62,41 +63,33 @@
   ],
   "pending_plan": null,
   "positions_meta": {
-    "SITM": {
-      "entry_session": "2026-11-09",
-      "entry_price": "439.598",
+    "BH": {
+      "entry_session": "2026-11-10",
+      "entry_price": "371.626",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "CIFR": {
-      "entry_session": "2026-11-09",
-      "entry_price": "6.39",
+    "STRL": {
+      "entry_session": "2026-11-10",
+      "entry_price": "293.626",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "QBTS": {
-      "entry_session": "2026-11-09",
-      "entry_price": "10.566",
+    "CLSK": {
+      "entry_session": "2026-11-10",
+      "entry_price": "6.8",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "LPTH": {
-      "entry_session": "2026-11-09",
-      "entry_price": "7.34",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
-    "CDNL": {
-      "entry_session": "2026-11-09",
-      "entry_price": "14.896",
+    "MOD": {
+      "entry_session": "2026-11-10",
+      "entry_price": "103.892",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
@@ -104,7 +97,7 @@
     }
   },
   "realized_by_year": {
-    "2026": "-4.561390140394"
+    "2026": "-1.267363975330358"
   },
   "llm_spend_by_month": {
     "2026-10": "0.000917"
@@ -115,39 +108,6 @@
   "withdrawn_since_milestone": "0",
   "principal_flow_pending": false,
   "recent_trades": [
-    {
-      "symbol": "AAPL",
-      "entry_session": "2026-10-26",
-      "exit_session": "2026-10-30",
-      "qty": "0.0523315",
-      "entry_price": "343.77",
-      "exit_price": "344.342",
-      "fees": "0",
-      "pnl": "0.0299336180",
-      "reason": "stopped"
-    },
-    {
-      "symbol": "CRM",
-      "entry_session": "2026-10-26",
-      "exit_session": "2026-10-30",
-      "qty": "0.080636052",
-      "entry_price": "247.904",
-      "exit_price": "232.93",
-      "fees": "0",
-      "pnl": "-1.207444242648",
-      "reason": "stopped"
-    },
-    {
-      "symbol": "KO",
-      "entry_session": "2026-10-26",
-      "exit_session": "2026-10-30",
-      "qty": "0.216628015",
-      "entry_price": "92.278",
-      "exit_price": "94.71",
-      "fees": "0",
-      "pnl": "0.526839332480",
-      "reason": "stopped"
-    },
     {
       "symbol": "LLY",
       "entry_session": "2026-10-26",
@@ -311,6 +271,61 @@
       "exit_price": "287.706",
       "fees": "0",
       "pnl": "0.649960768842",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "CDNL",
+      "entry_session": "2026-11-09",
+      "exit_session": "2026-11-10",
+      "qty": "1.248657357",
+      "entry_price": "14.896",
+      "exit_price": "14.78",
+      "fees": "0",
+      "pnl": "-0.144844253412",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "CIFR",
+      "entry_session": "2026-11-09",
+      "exit_session": "2026-11-10",
+      "qty": "2.926447574",
+      "entry_price": "6.39",
+      "exit_price": "6.606583",
+      "fees": "0",
+      "pnl": "0.633818794919642",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "LPTH",
+      "entry_session": "2026-11-09",
+      "exit_session": "2026-11-10",
+      "qty": "2.547683923",
+      "entry_price": "7.34",
+      "exit_price": "8.02",
+      "fees": "0",
+      "pnl": "1.73242506764",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "QBTS",
+      "entry_session": "2026-11-09",
+      "exit_session": "2026-11-10",
+      "qty": "1.769827749",
+      "entry_price": "10.566",
+      "exit_price": "10.73",
+      "fees": "0",
+      "pnl": "0.290251750836",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "SITM",
+      "entry_session": "2026-11-09",
+      "exit_session": "2026-11-10",
+      "qty": "0.042538865",
+      "entry_price": "439.598",
+      "exit_price": "457.99",
+      "fees": "0",
+      "pnl": "0.782374805080",
       "reason": "hold_period"
     }
   ],
@@ -477,9 +492,9 @@
         }
       }
     ],
-    "cost_drag": "0.564469301084917",
+    "cost_drag": "0.701426313915626821",
     "trades_closed": 0,
-    "pending_trades": 0,
+    "pending_trades": 5,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
