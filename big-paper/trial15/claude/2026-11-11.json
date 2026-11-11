@@ -1,0 +1,67 @@
+{
+ "status": "read",
+ "note": "23 new, 0 failed",
+ "spent_usd": 0.002676885,
+ "by_symbol": {
+  "BE": {
+   "sentiment": 0.0,
+   "materiality": 0.2,
+   "items": 2.0
+  },
+  "CIFR": {
+   "sentiment": 0.05,
+   "materiality": 0.1,
+   "items": 2.0
+  },
+  "CRDO": {
+   "sentiment": 0.1,
+   "materiality": 0.15,
+   "items": 1.0
+  },
+  "DELL": {
+   "sentiment": 0.0,
+   "materiality": 0.125,
+   "items": 2.0
+  },
+  "FLEX": {
+   "sentiment": 0.0,
+   "materiality": 0.15,
+   "items": 1.0
+  },
+  "FPS": {
+   "sentiment": 0.0,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "GLW": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "INTC": {
+   "sentiment": 0.2,
+   "materiality": 0.225,
+   "items": 4.0
+  },
+  "LITE": {
+   "sentiment": 0.03333333333333333,
+   "materiality": 0.11666666666666665,
+   "items": 3.0
+  },
+  "MU": {
+   "sentiment": 0.05,
+   "materiality": 0.2,
+   "items": 2.0
+  },
+  "NBIS": {
+   "sentiment": 0.15,
+   "materiality": 0.375,
+   "items": 2.0
+  },
+  "VRT": {
+   "sentiment": 0.15,
+   "materiality": 0.25,
+   "items": 2.0
+  }
+ }
+}
