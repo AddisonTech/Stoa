@@ -47,20 +47,22 @@
    "rule_due": true
   },
   "chased_jump": {
-   "count": 3,
+   "count": 6,
    "words": "it had jumped more than 5% the day before and gave some back",
    "examples": [
-    "2026-11-04 CORZ -9.19%",
     "2026-11-04 TXG -8.85%",
-    "2026-11-04 GLXY -16.13%"
+    "2026-11-04 GLXY -16.13%",
+    "2026-11-10 BH.A -6.67%",
+    "2026-11-10 BH -6.20%",
+    "2026-11-10 CLSK -0.60%"
    ],
    "rule": "skip_jumps",
-   "rule_due": false
+   "rule_due": true
   }
  },
  "claude": {
-  "read": 18,
-  "right": 7
+  "read": 19,
+  "right": 8
  },
  "reviewed_days": [
   "2026-10-30",
@@ -69,6 +71,7 @@
   "2026-11-04",
   "2026-11-05",
   "2026-11-06",
-  "2026-11-09"
+  "2026-11-09",
+  "2026-11-10"
  ]
 }
