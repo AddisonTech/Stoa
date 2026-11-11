@@ -33,7 +33,8 @@
     "2026-11-05",
     "2026-11-06",
     "2026-11-09",
-    "2026-11-10"
+    "2026-11-10",
+    "2026-11-11"
   ],
   "swept_sessions": [
     "2026-10-29",
@@ -48,215 +49,43 @@
     "2026-11-11"
   ],
   "override_sessions": [],
-  "pending_plan": {
-    "plan_id": "d2020d6c78",
-    "strategy": "trial15",
-    "mode": "paper",
-    "decided_session": "2026-11-10",
-    "execute_session": "2026-11-11",
-    "created_at": "2026-11-11T14:03:05.078894Z",
-    "orders": [
-      {
-        "symbol": "BH",
-        "side": "sell",
-        "notional": null,
-        "qty": "48.406058497",
-        "ref_price": "349.22",
-        "entry_atr": null,
-        "stop_price": null,
-        "reason": "hold_period",
-        "conviction": null,
-        "thesis": "held one session; not in the new top 5",
-        "client_order_id": "stoa-20261111-BH-sell-d2020d6c78",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "BH.A",
-        "side": "sell",
-        "notional": null,
-        "qty": "10",
-        "ref_price": "1688.84",
-        "entry_atr": null,
-        "stop_price": null,
-        "reason": "hold_period",
-        "conviction": null,
-        "thesis": "held one session; not in the new top 5",
-        "client_order_id": "stoa-20261111-BH.A-sell-d2020d6c78",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "CLSK",
-        "side": "sell",
-        "notional": null,
-        "qty": "2670.293943871",
-        "ref_price": "7.06",
-        "entry_atr": null,
-        "stop_price": null,
-        "reason": "hold_period",
-        "conviction": null,
-        "thesis": "held one session; not in the new top 5",
-        "client_order_id": "stoa-20261111-CLSK-sell-d2020d6c78",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "MOD",
-        "side": "sell",
-        "notional": null,
-        "qty": "156.553418597",
-        "ref_price": "109.7",
-        "entry_atr": null,
-        "stop_price": null,
-        "reason": "hold_period",
-        "conviction": null,
-        "thesis": "held one session; not in the new top 5",
-        "client_order_id": "stoa-20261111-MOD-sell-d2020d6c78",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "STRL",
-        "side": "sell",
-        "notional": null,
-        "qty": "61.589581205",
-        "ref_price": "312",
-        "entry_atr": null,
-        "stop_price": null,
-        "reason": "hold_period",
-        "conviction": null,
-        "thesis": "held one session; not in the new top 5",
-        "client_order_id": "stoa-20261111-STRL-sell-d2020d6c78",
-        "probability": null,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "DELL",
-        "side": "buy",
-        "notional": "17157.62",
-        "qty": null,
-        "ref_price": "360.3",
-        "entry_atr": null,
-        "stop_price": null,
-        "reason": "trial15_pick",
-        "conviction": null,
-        "thesis": "conviction 0.573, news tone +0.45, articles 2, surprise +0.1, filing tone +0.00, ripple +0.00, last day -3.4%",
-        "client_order_id": "stoa-20261111-DELL-buy-d2020d6c78",
-        "probability": 0.5728257145638281,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "MU",
-        "side": "buy",
-        "notional": "17157.62",
-        "qty": null,
-        "ref_price": "773.02",
-        "entry_atr": null,
-        "stop_price": null,
-        "reason": "trial15_pick",
-        "conviction": null,
-        "thesis": "conviction 0.569, news tone +0.38, articles 2, surprise +0.7, filing tone +0.00, ripple +0.00, last day -1.1%",
-        "client_order_id": "stoa-20261111-MU-buy-d2020d6c78",
-        "probability": 0.5687443761364891,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "IREN",
-        "side": "buy",
-        "notional": "17157.62",
-        "qty": null,
-        "ref_price": "21.26",
-        "entry_atr": null,
-        "stop_price": null,
-        "reason": "trial15_pick",
-        "conviction": null,
-        "thesis": "conviction 0.565, news tone +0.00, articles 0, surprise +0.0, filing tone -0.01, ripple +0.00, last day -7.8%",
-        "client_order_id": "stoa-20261111-IREN-buy-d2020d6c78",
-        "probability": 0.5651384090483123,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "AAOI",
-        "side": "buy",
-        "notional": "17157.62",
-        "qty": null,
-        "ref_price": "48.3",
-        "entry_atr": null,
-        "stop_price": null,
-        "reason": "trial15_pick",
-        "conviction": null,
-        "thesis": "conviction 0.553, news tone +0.00, articles 0, surprise +0.0, filing tone +0.93, ripple -0.13, last day -7.3%",
-        "client_order_id": "stoa-20261111-AAOI-buy-d2020d6c78",
-        "probability": 0.552758879976902,
-        "sector": null,
-        "max_weight": null
-      },
-      {
-        "symbol": "CRDO",
-        "side": "buy",
-        "notional": "17157.62",
-        "qty": null,
-        "ref_price": "129.8",
-        "entry_atr": null,
-        "stop_price": null,
-        "reason": "trial15_pick",
-        "conviction": null,
-        "thesis": "conviction 0.548, news tone +0.78, articles 1, surprise +1.0, filing tone +0.00, ripple +0.00, last day -2.3%",
-        "client_order_id": "stoa-20261111-CRDO-buy-d2020d6c78",
-        "probability": 0.5475004753421193,
-        "sector": null,
-        "max_weight": null
-      }
-    ],
-    "equity_at_decide": "87538.92",
-    "kill_switch": false,
-    "reserves": []
-  },
+  "pending_plan": null,
   "positions_meta": {
-    "BH.A": {
-      "entry_session": "2026-11-10",
-      "entry_price": "1780",
+    "DELL": {
+      "entry_session": "2026-11-11",
+      "entry_price": "361.515057",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "BH": {
-      "entry_session": "2026-11-10",
-      "entry_price": "373.69",
+    "MU": {
+      "entry_session": "2026-11-11",
+      "entry_price": "775.14",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "STRL": {
-      "entry_session": "2026-11-10",
-      "entry_price": "293.7",
+    "IREN": {
+      "entry_session": "2026-11-11",
+      "entry_price": "20.40094",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "CLSK": {
-      "entry_session": "2026-11-10",
-      "entry_price": "6.774108",
+    "AAOI": {
+      "entry_session": "2026-11-11",
+      "entry_price": "51.94",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "MOD": {
-      "entry_session": "2026-11-10",
-      "entry_price": "103.99",
+    "CRDO": {
+      "entry_session": "2026-11-11",
+      "entry_price": "137.32",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
@@ -264,7 +93,7 @@
     }
   },
   "realized_by_year": {
-    "2026": "-9326.840530848046004"
+    "2026": "-11276.468273620569709"
   },
   "llm_spend_by_month": {},
   "processed_activity_ids": [],
@@ -273,61 +102,6 @@
   "withdrawn_since_milestone": "0",
   "principal_flow_pending": false,
   "recent_trades": [
-    {
-      "symbol": "MU",
-      "entry_session": "2026-11-03",
-      "exit_session": "2026-11-04",
-      "qty": "21.660124252",
-      "entry_price": "869.2",
-      "exit_price": "846.401533",
-      "fees": "0",
-      "pnl": "-493.817627975121684",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "SNOW",
-      "entry_session": "2026-11-03",
-      "exit_session": "2026-11-04",
-      "qty": "64.472671232",
-      "entry_price": "292.01489",
-      "exit_price": "290.74",
-      "fees": "0",
-      "pnl": "-82.19556382696448",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "CORZ",
-      "entry_session": "2026-11-04",
-      "exit_session": "2026-11-05",
-      "qty": "1420.11229135",
-      "entry_price": "13.164846",
-      "exit_price": "11.88",
-      "fees": "0",
-      "pnl": "-1824.62559709188210",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "GLXY",
-      "entry_session": "2026-11-04",
-      "exit_session": "2026-11-05",
-      "qty": "1154.759728228",
-      "entry_price": "16.19",
-      "exit_price": "13.26",
-      "fees": "0",
-      "pnl": "-3383.44600370804",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "PANW",
-      "entry_session": "2026-11-04",
-      "exit_session": "2026-11-05",
-      "qty": "53.40014249",
-      "entry_price": "350.103185",
-      "exit_price": "316.03663",
-      "fees": "0",
-      "pnl": "-1819.15894454356444",
-      "reason": "hold_period"
-    },
     {
       "symbol": "TXG",
       "entry_session": "2026-11-04",
@@ -491,6 +265,61 @@
       "exit_price": "456.77",
       "fees": "0",
       "pnl": "580.493077123290408",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "BH",
+      "entry_session": "2026-11-10",
+      "exit_session": "2026-11-11",
+      "qty": "48.406058497",
+      "entry_price": "373.69",
+      "exit_price": "337.97",
+      "fees": "0",
+      "pnl": "-1729.06440951284",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "BH.A",
+      "entry_session": "2026-11-10",
+      "exit_session": "2026-11-11",
+      "qty": "10",
+      "entry_price": "1780",
+      "exit_price": "1673.8",
+      "fees": "0",
+      "pnl": "-1062.0",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "CLSK",
+      "entry_session": "2026-11-10",
+      "exit_session": "2026-11-11",
+      "qty": "2670.293943871",
+      "entry_price": "6.774108",
+      "exit_price": "6.809239",
+      "fees": "0",
+      "pnl": "93.847480657346295",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "MOD",
+      "entry_session": "2026-11-10",
+      "exit_session": "2026-11-11",
+      "qty": "156.553418597",
+      "entry_price": "103.99",
+      "exit_price": "105.5",
+      "fees": "0",
+      "pnl": "236.39566208147",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "STRL",
+      "entry_session": "2026-11-10",
+      "exit_session": "2026-11-11",
+      "qty": "61.589581205",
+      "entry_price": "293.7",
+      "exit_price": "302",
+      "fees": "0",
+      "pnl": "511.1935240015",
       "reason": "hold_period"
     }
   ],
