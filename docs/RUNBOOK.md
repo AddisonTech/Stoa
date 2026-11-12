@@ -416,7 +416,7 @@ Decided 2026-11-03 (docs/DECISIONS.md, "The $100 account mirrors trial 15"). `st
 
 **Live is refused.** With `STOA_MODE` set to live, every job refuses and alerts "paper only". Going live is a separate decision.
 
-**Dashboard.** The "$100 account: trial 15 mirror" card: equity, the return since the mirror began against SPY and against the big paper account (from the close of 2026-11-03), the running hit rate on the picks it held (trial 15's grades, 9:45 am to 9:45 am against SPY after costs, against the 75% target), and each day's picks, fills, sales and any reason for no orders.
+**Dashboard.** The "$100 account: trial 15 mirror" card: equity, the return since the mirror began against SPY and against the big paper account (from the close of 2026-11-03), the running hit rate on the picks it held (trial 15's grades, 9:45 am to 9:45 am against SPY after costs, against the 75% target), and each day's picks, fills, sales and any reason for no orders. The equity tile and "since the mirror began" are both the last 4 pm close (the tile names the date); each day's line is the 9:45 am equity, a different moment, so the two differ by that day's moves. Until 2026-11-12 the 5:15 pm job marked the picks at Alpaca's latest after-hours trade (the evening fetched closes for the watchlist only); it now marks every holding at its official close (docs/DECISIONS.md, "The $100 account's close equity").
 
 **Records.** `state/mirror/days.jsonl` on the state branch, one line a session. The registry entry `usd100:mirror_trial15` (kind `case_study`): no pass or fail line, nothing tuned from it.
 
@@ -425,6 +425,20 @@ Decided 2026-11-03 (docs/DECISIONS.md, "The $100 account mirrors trial 15"). `st
 **Rolling back.** `usd100.strategy: rules` brings the v1 rules back; `stop.usd100: true` stops the account (section 11a). Each is its own recorded decision.
 
 **Before any real cash account** (not built): this sells and rebuys every morning. In a cash account, money from a sale settles one business day later (T+1), so buying with it the same morning, then selling that stock the next morning, can count as a good faith violation. A margin account, or keeping half the money idle each day, would need checking first.
+
+## 13e. Trial 16: the contract announcements (research)
+
+Pre-registered 2026-11-12 (docs/DECISIONS.md, "Trial 16"). Code in `stoa/contracts/`, data in the git-ignored `data/contracts/`. Every step is resumable and logs to `data/contracts/logs/`. Run from the repository root with the project's Python:
+
+1. `python -m stoa.contracts pull`: every daily page from war.gov/News/Contracts since 2016 into `raw/articles/<id>.html`, one request a second, user agent `Mozilla/5.0 (compatible; StoaResearch/1.0)` (a bare name gets a 403; robots.txt allows the listing and the articles). Four refusals in a row stop it with status `blocked`: stop there and look, never work around it.
+2. `python -m stoa.contracts parse`: `awards.parquet`, one row per award, by rules (`stoa/contracts/parse.py`). No language model reads a historical page.
+3. `python -m stoa.contracts match`: `matched.parquet`, each awardee to a company and symbol as of its date (`stoa/contracts/tickers.py`).
+4. `python -m stoa.contracts targeted`: EDGAR full-text search for every unmatched or prefix-only awardee name, fetching the 10-K exhibit 21 and 22 lists that name it (`ex21_docs/`); then run `match` again. `python -m stoa.contracts ex21` pulls whole lists company by company (`ex21/`), most traded first; it is slow (the SEC answers about 1.5 requests a second) and optional.
+5. `python -m stoa.contracts facts`: XBRL company facts for matched companies, 1 a second.
+6. `python -m stoa.contracts panel`: `panel.parquet`, one row per company and announcement date, with features and labels.
+7. `python -m stoa.contracts preregister` (once; registry on the state branch with `STOA__STATE__SHARED_DIR=state-branch/shared`), then `python -m stoa.contracts trial`: the gates, the tuning on 2016 to 2022 and the one test, into `results/<stamp>/report.json`. A failed gate exits 3 and says which.
+
+SEC requests share one budget: keep the sum of running SEC pulls under 8 a second. The shared harness rerun for the gate lives in `data/contracts/harness_rerun/`.
 
 ## 14. Changing settings
 

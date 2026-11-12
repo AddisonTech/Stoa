@@ -395,6 +395,49 @@ def test_decide_in_mirror_mode_plans_nothing_and_says_what_comes(
     assert d["orders"] == [] and "evening plans nothing" in d["note"]
 
 
+def test_the_close_marks_picks_off_the_watchlist_at_the_official_close(
+    tmp_path: Path, bars: Bars
+) -> None:
+    """2026-11-11: the dashboard showed $100.22 for the $100 account, marked at Alpaca's 5:15 pm
+    after-hours prints, because the evening fetched closes for the watchlist only and every
+    mirror pick is off it. By the official 4 pm closes the account was worth $100.41. The 5:15
+    pm equity, the holdings at close and the dashboard tile must all use the official close."""
+    from tests.test_jobs import prices, runtime
+
+    s = mirror_settings(tmp_path)
+    pick = "ZZZT"  # a trial 15 pick that is not on the watchlist
+    assert pick not in s.watchlist
+    extra = dict(bars)
+    extra[pick] = bars["XOM"].copy()  # its own daily bars: the official close comes from here
+    close = prices(extra, DECIDE_DAY, "close")[pick]
+    after_hours = close * D("0.93")  # the broker's latest trade at 5:15 pm, 7% below the close
+    qty = D("0.5")
+    broker = SimBroker(
+        Portfolio(
+            cash=D("40"), positions={pick: Lot(qty=qty, avg_cost=close, entry_session=DECIDE_DAY)}
+        ),
+        s.costs,
+        Universe.assume_all_fractionable(s.watchlist, "SPY"),
+    )
+    broker.begin_session(DECIDE_DAY, {**prices(bars, DECIDE_DAY, "close"), pick: after_hours})
+    store = StateStore(s.state.dir)
+    state = store.load()
+    state.positions_meta = {
+        pick: PositionMeta(entry_session=DECIDE_DAY, entry_price=close * D("1.01"), entry_atr=D(0))
+    }
+    store.save(state)
+    rt, _ = runtime(s, extra, PAPER, DECIDE_AT, broker)
+    assert jobs.decide(rt).status == "decided"
+    state = StateStore(s.state.dir).load()
+    official = D("40") + qty * close
+    assert state.last_close_equity == official  # not 40 + 0.5 x the after-hours print
+    assert state.track.days[-1].broker_equity == official
+    assert state.holdings_at_close[pick].close == close  # not the entry price
+    m = dashboard.collect(s, tmp_path)["mirror"]
+    assert m["equity"] == float(official) and m["equity_session"] == DECIDE_DAY.isoformat()
+    assert f"Equity at the {DECIDE_DAY.isoformat()} close" in dashboard.render_mirror({"mirror": m})
+
+
 def test_the_9am_sweep_is_quiet_in_mirror_mode(tmp_path: Path, bars: Bars) -> None:
     from tests.test_jobs import runtime, sim
 

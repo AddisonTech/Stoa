@@ -428,6 +428,7 @@ def mirror_card(settings: Settings, state: State) -> dict[str, Any] | None:
         "curve": curve,
         "returns": returns,
         "equity": float(track[-1].broker_equity) if track else None,
+        "equity_session": track[-1].session.isoformat() if track else None,
     }
 
 
@@ -1116,8 +1117,10 @@ def render_mirror(data: dict[str, Any]) -> str:
     r = m.get("returns") or {}
     t = m.get("tally") or {}
     hit = f"{t['hit_rate']:.0%} of {t['picks']}" if t.get("picks") else "none graded yet"
+    # The tile and the percent are both the last 4 pm close; each day's line below is 9:45 am.
+    when = m.get("equity_session")
     tiles = [
-        ("Equity", _money(m.get("equity"))),
+        (f"Equity at the {when} close" if when else "Equity", _money(m.get("equity"))),
         ("Since the mirror began", _pct(r.get("mirror"))),
         ("Versus SPY", _pct(_gap(r.get("mirror"), r.get("spy")))),
         ("Versus big paper", _pct(_gap(r.get("mirror"), r.get("big")))),

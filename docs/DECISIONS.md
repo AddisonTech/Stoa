@@ -690,3 +690,90 @@ Decided 2026-11-03 by the owner: the $100 account buys every day so it has a cas
 - **A paper case study, not a trial.** Registered as `usd100:mirror_trial15` (kind `case_study`, entry a36310d4b433, spec hash 2e5e7e6002477ea9, state branch commit c83cc61; no returns, so it never counts in the trial penalty). It has no pass or fail line and nothing is tuned from it. The dashboard grades the picks it actually bought by trial 15's own rule (9:45 am to 9:45 am, against SPY, after costs) and shows its equity against SPY and against the big paper account.
 - **Unchanged.** Trial 15, the big paper account, its keys, its picks, the learner, the feed, the shadow scoreboard settings. The v1 rules, their code and records stay in place and do not run in this mode; `usd100.strategy: rules` would bring them back, as its own decision.
 - **First orders:** 9:45 am New York time on Wednesday 2026-11-04.
+
+## Trial 16: the daily contract announcements
+
+Decided 2026-11-12 by the owner: test whether a big Department of War contract award to a small public company, posted at 5 pm after the close, moves the stock the next day before the market prices it in. Prove or kill it with the honest grading harness; touch trial 15 only if it passes.
+
+**Pre-registration** (registry `trial16:preregistration`, entry 19f14fb6483d, spec hash `0e9dbd07fae2fe16`, `stoa/contracts/trial16.py`, `spec()`; state branch 3ca05ae, written at 11:05 am New York time, before any 2023 to 2026 result was computed):
+
+- **Universe.** Awards typed new, IDIQ (single award, its announced ceiling) or order, one awardee, matched to a public company that traded on the entry day, with a market value at the prior close. One row per company and announcement date, values summed.
+- **Excluded.** Multiple-award contracts: the ceiling caps all the awardees' orders together and the split is settled by later competition, so dividing it equally would invent award sizes. Counted, not traded. Modifications and option exercises: their own group, reported beside the trial, never mixed in.
+- **Known at** 5 pm New York time on the announcement date (the pages carry no time of their own). Entry at the open of the first session after the post; primary exit at that session's close; secondary holds to the close 1 and 5 sessions later (reported, not graded). SPY over the same span. Trial 15's costs: a round trip of slippage by 20 session dollar volume plus the 0.3 bps fee. Every SEC fact filed before the announcement date.
+- **Signal.** Award value over market value at the prior close; a row trades at or above T. T chosen on 2016 to 2022 only from 0.1%, 0.25%, 0.5%, 1%, 2%, 5%: the best average net excess with at least 100 trades. Each grid point logged as a trial.
+- **Test.** 2023-01-01 to 2026-06-30, once, T frozen. The holdout from 2026-07-01 stays sealed.
+- **Pass.** Average net excess above zero, hit rate above 54%, deflated Sharpe at least 0.95 (every registry trial counted), at least 30 trades (else STARVED). Gate first: the shared known-answer harness and this grader's own three known-answer legs.
+- **If it passes,** wire it into trial 15's 9:00 am picks. **If it fails,** record the numbers and wire nothing.
+
+**The data, built for it** (all in the git-ignored `data/contracts/`; RUNBOOK section 13e):
+
+- **Archive.** 2,674 daily pages, 2016-01-04 to 2026-11-10, from war.gov only, one request a second, 2,946 requests, never refused. A bare user agent got a 403; the crawler convention `Mozilla/5.0 (compatible; StoaResearch/1.0)` names itself and was let in, and robots.txt allows the listing and the articles. 68 trading days have no page: federal holidays the market kept open, the January 2016 blizzard, inaugurations and the 2018 and 2019 shutdowns.
+- **Parse, by rules only.** 52,879 award rows from 2,670 pages (two days had no contracts, one page was only an update, one was not a contracts page). New money 21,715 (12,672 definitive contracts, 6,383 single-award IDIQs, 2,660 orders), multiple awards 16,088, modifications 10,230 and option exercises 4,846. No local model was needed to break ties; no hosted model read a historical page.
+- **Rows by year and type:**
+
+| Year | New | IDIQ | Order | Multiple award | Modification | Option | All |
+|---|---|---|---|---|---|---|---|
+| 2016 | 1,104 | 513 | 255 | 1,170 | 973 | 459 | 4,474 |
+| 2017 | 1,117 | 555 | 257 | 1,298 | 982 | 438 | 4,648 |
+| 2018 | 1,302 | 610 | 308 | 1,633 | 1,003 | 471 | 5,327 |
+| 2019 | 1,340 | 659 | 274 | 1,192 | 989 | 485 | 4,939 |
+| 2020 | 1,316 | 696 | 280 | 1,646 | 1,011 | 505 | 5,454 |
+| 2021 | 1,109 | 641 | 233 | 1,811 | 839 | 559 | 5,192 |
+| 2022 | 1,038 | 510 | 251 | 1,369 | 953 | 526 | 4,647 |
+| 2023 | 1,197 | 470 | 199 | 1,236 | 1,016 | 445 | 4,563 |
+| 2024 | 1,188 | 524 | 212 | 1,583 | 927 | 408 | 4,842 |
+| 2025 | 987 | 547 | 182 | 1,460 | 858 | 316 | 4,350 |
+| 2026 (to Nov. 10) | 974 | 658 | 209 | 1,690 | 678 | 234 | 4,443 |
+
+- **Hand checks of the parser against the page, 3 rounds of 30 random rows.** Round 1: company, city, state, value, contract number and small-business mark right on all 30; 3 type labels and 1 awardee count wrong. Round 2: 29 of 30 right on place and value (a fuel list with an amount per awardee garbled one name); 4 type labels wrong, 3 of them putting a new task order or an undefinitized contract among the modifications. Round 3, on the fixed parser: 26 of 30 fully right; 2 type labels, 1 solicitation number taken for the contract number, and 1 contract number the page itself misprints. Each rule was fixed and tested (`tests/test_contracts.py::test_hand_check_fixes_of_2026_11_12`); rounds 2 and 3 now read 59 of 60 right, the last one the page's misprint.
+- **Tickers, point in time.** 13,205 rows (25.0%) map to 341 companies: new money 25.0%, modifications 41.6%, multiple awards 9.4%. Dropped: 39,005 unmatched (private, foreign, or a company with no prices on disk), 488 whose company was not filing reports then, 168 with no bar on the entry day, 13 ambiguous. Small-business awardees almost never match (1.4%). Names come from EDGAR's own name history; subsidiaries from 10-K exhibits 21 and 22: 4,685 lists found by EDGAR full-text search for the 8,973 names not placed or placed only by a shortened name, plus every list of the 429 most traded companies. A shortened name stops at two words: one word found namesakes (Boeing's Tapestry Solutions and Tapestry, Inc.; Universal, Cherokee, Rafael).
+- **Hand check of 50 random matches:** 49 right, 1 wrong (2%: "Rogers, Lovelock & Fritz Inc.", architects, to Rogers Corp. by the word before the comma; the rule was fixed). Also right: Metro Machine to General Dynamics, U.S. Oil and Refining to Par Pacific, L3 Technologies after 2019 to L3Harris, Rockwell Collins in 2021 to RTX. A further 20 random small-company matches were all right.
+- **Known gap: delisted companies with no prices on disk** stay out, though they were public: L3 Technologies, Rockwell Collins (before 2018), Orbital ATK, Aerojet Rocketdyne, Kaman, Cubic (before 2021), Great Lakes Dredge & Dock. Delisted companies with prices on disk stay in (Raytheon Co., Engility, ManTech, Esterline).
+- **Market value from adjusted bars.** The daily bars are adjusted for later splits and dividends, and SEC share counts are as filed, so price times shares understated companies that later split (a bias toward future winners). Fixed before the test, from SEC data on disk: splits from the SEC's own restated share counts, dividends from reported dividends per share (`split_factor`, `dividend_adjustment`). Checked: Tetra Tech $162 in December 2021 (not $32), Apple $173 in June 2019, Nvidia $227 in March 2023, Leidos $45 in February 2016. Spin-offs are not undone (AT&T before 2022 reads about 20% low; a large company either way).
+
+**Result, 2026-11-12: FAIL** (registry `trial16:contracts:test`, entry 15a5f6d06990; tuning entries `trial16:tune:T=...`; summary on the state branch, `shared/results/trial16-20261112/summary.json`, commit eed66dd).
+
+Gates passed. The shared harness rerun matched the run released on 2026-10-27 to the last digit on the index leg (the same Sharpe rule failing as then, its return within costs of the known answer) and to about nine decimals on the cheater and random legs. This grader's own legs were honest on both windows: SPY as every pick lost exactly its costs, the cheater passed every check, random stock days landed within 3 standard errors of the average stock day.
+
+Tuning, 2016 to 2022, open to close against SPY after costs. Every threshold lost, and bigger awards relative to the company lost more:
+
+| T (award / market value) | Trades | Beat SPY | Average a trade |
+|---|---|---|---|
+| 0.1% (chosen) | 1,722 | 41.3% | -0.23% |
+| 0.25% | 1,198 | 40.2% | -0.27% |
+| 0.5% | 822 | 38.7% | -0.34% |
+| 1% | 529 | 37.6% | -0.42% |
+| 2% | 341 | 34.3% | -0.54% |
+| 5% | 183 | 34.4% | -0.61% |
+
+Test, 2023-01-01 to 2026-06-30, T = 0.1%: 680 trades on 441 days. **42.2% beat SPY after costs (needs above 54%); average -0.08% a trade (needs above zero); deflated Sharpe 0.000 over 36 trials (needs 0.95).** Before costs the stocks rose +0.20% open to close against SPY's +0.05%; the round trip cost about 0.23%. Held 1 session longer: 44.7%, +0.02%; held 5: 47.5%, +0.21% (not graded). By year: 2023 42.7% (-0.17%), 2024 34.4% (-0.30%), 2025 45.0% (-0.11%), first half of 2026 50.9% (+0.52%).
+
+**How much moves before Stoa can buy.** For the 677 test trades with minute bars, the stock's average move from the 4 pm close before the post to the next close was +0.35%: +0.14% in the overnight gap (41%) and +0.05% from 9:30 to 9:45 am, so 54% is done by 9:45 am. Over every new award in the window, 58% is done by 9:45 am. Bought at 9:45 am instead of the open: 40.2% beat SPY, -0.11% a trade.
+
+**By bucket, every eligible row in the test window (not only those over T):**
+
+| | Trades | Beat SPY | Average |
+|---|---|---|---|
+| New awards, all | 1,298 | 42.5% | -0.15% |
+| Award under 0.1% of market value | 618 | 42.9% | -0.23% |
+| 0.1% to 0.5% | 336 | 43.2% | -0.09% |
+| 0.5% to 2% | 213 | 40.4% | -0.07% |
+| 2% to 5% | 66 | 36.4% | -0.50% |
+| 5% or more | 65 | 49.2% | +0.37% |
+| Small companies (under $2B) | 67 | 37.3% | -0.22% |
+| Mid ($2B to $10B) | 208 | 39.9% | -0.08% |
+| Large (over $10B) | 1,023 | 43.4% | -0.16% |
+| Modifications and options, all | 1,470 | 42.2% | -0.19% |
+
+The only positive bucket, awards of 5% or more of the company, was the worst of the tuning grid in 2016 to 2022 (-0.61%) and beat SPY less than half the time here: noise, not a lead. Small companies rose +0.53% before costs on average in the test window but paid more than that to trade.
+
+**In plain words.** The announcements are public and the move, such as it is, mostly happens overnight and in the first minutes; what is left after 9:30 or 9:45 am does not pay a small company's trading costs. Nothing is wired into trial 15: no nightly scrape, no feed input, no dashboard card. The code and the data stay for reuse; trying again with changes is a new trial.
+
+## The $100 account's close equity
+
+Found 2026-11-12. The dashboard showed $100.22 for the $100 account, the 2026-11-11 decision line showed $98.52 at 9:45 am, and "-1.0% since the mirror began" seemed to match neither.
+
+- **Which number was wrong: the $100.22.** The 9:45 am lines are Alpaca's live equity at the run and agree, day after day, with the account rebuilt from its own fills (within a few cents). The close equity is written by the 5:15 pm DECIDE, which marks each holding at the session's official close, but it fetched closes only for the watchlist; every mirror pick is off the watchlist, so every holding fell through to Alpaca's latest trade at 5:15 pm, an after-hours print. Marked at the official 4 pm closes, the account was worth about $100.41 on 2026-11-11 (cash $21.23 plus four picks), not $100.22; on 2026-11-05 the gap was largest, $84.03 recorded against $85.44.
+- **The percent was not a third number.** "Since the mirror began" is that same close equity against the close of 2026-11-03 ($101.27, all cash): 100.22 / 101.27 - 1 = -1.0%. It inherited the after-hours mark; by official closes it was -0.85%. The 9:45 am line is a different moment of the next day, so it never matches the close.
+- **Fix.** DECIDE fetches the session's official close for every held symbol not on the watchlist (`jobs.held_closes`) and marks the close equity, the high-water mark and `holdings_at_close` with it (before, a holding with no bar was also written into `holdings_at_close` at its entry price). A symbol with no bar still falls back to the broker's mark. The dashboard tile now says which close it is ("Equity at the 2026-11-11 close"). Test: `tests/test_mirror.py::test_the_close_marks_picks_off_the_watchlist_at_the_official_close`.
+- **History is not rewritten.** The track days 2026-11-04 to 2026-11-11 on the state branch keep the after-hours marks they were recorded with; days from 2026-11-12 on use official closes. Rebuilt from fills at official closes: 11-04 $98.01, 11-05 $85.44, 11-06 $92.09, 11-09 $101.11, 11-10 $96.46, 11-11 $100.41 (Yahoo daily closes, read once for this check).

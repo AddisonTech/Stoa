@@ -390,6 +390,24 @@ def fetch_bars(rt: Runtime, session: date, held: set[str]) -> tuple[Bars, list[s
     return fresh_subset(bars, symbols, session, required, s.data.min_fresh_fraction)
 
 
+def held_closes(rt: Runtime, session: date, symbols: set[str]) -> dict[str, Decimal]:
+    """The session's official close for held symbols that are not on the watchlist.
+
+    The mirror holds trial 15's picks, which are rarely on the watchlist, so ``fetch_bars``
+    has no close for them; without this the 5:15 pm equity would be marked at the broker's
+    latest trade, an after-hours print. Never fatal: a symbol with no bar keeps that mark.
+    """
+    if not symbols:
+        return {}
+    provider = rt.provider or make_provider(rt.settings, rt.secrets)
+    try:
+        got = provider.fetch(sorted(symbols), session - timedelta(days=7), session)
+    except Exception as exc:
+        log.warning("closes for held %s unavailable: %s", sorted(symbols), type(exc).__name__)
+        return {}
+    return _prices(got, session, "close")
+
+
 def fetch_references(rt: Runtime, session: date, bars: Bars) -> Bars:
     """Bars for the reference funds (MTUM), for the record only. Never traded, never fatal."""
     s = rt.settings
@@ -516,6 +534,7 @@ class Book:
     settled: ExecutionReport | None = None
     unmanaged: list[str] = field(default_factory=list)
     alerts: list[alerts.Alert] = field(default_factory=list)
+    marks: dict[str, Decimal] = field(default_factory=dict)  # the closes equity was marked at
 
 
 def _book_signal(rt: Runtime, state: State, bars: Bars, session: date) -> Book:
@@ -577,6 +596,7 @@ def _book_broker(
     if account.trading_blocked:
         raise Refusal(f"Alpaca says trading is blocked on this account (status {account.status})")
     positions = broker.positions()
+    closes = {**closes, **held_closes(rt, session, set(positions) - set(closes))}
     stop_alerts: list[alerts.Alert] = []
     if isinstance(broker, stops.StopBroker):
         rec = stops.reconcile(broker, state, positions, session, s.costs, s.mode)
@@ -616,6 +636,7 @@ def _book_broker(
         universe=universe,
         unmanaged=sorted(set(positions) - set(managed)),
         alerts=stop_alerts,
+        marks=closes,
     )
     return book, notes
 
@@ -846,7 +867,7 @@ def _decide(
             decision, orders=tuple(o for o in decision.orders if o.side is Side.SELL)
         )
     stops.raise_stops(state, book.positions, features, s.exits)
-    closes = _prices(bars, session, "close")
+    closes = {**_prices(bars, session, "close"), **book.marks}
     state.holdings_at_close = {
         sym: HeldAtClose(qty=h.qty, close=closes.get(sym, h.avg_entry_price))
         for sym, h in book.positions.items()
@@ -964,7 +985,7 @@ def _decide_mirror(
         created_at=now,
         equity=book.equity,
     )
-    closes = _prices(bars, session, "close")
+    closes = {**_prices(bars, session, "close"), **book.marks}
     state.holdings_at_close = {
         sym: HeldAtClose(qty=h.qty, close=closes.get(sym, h.avg_entry_price))
         for sym, h in book.positions.items()
