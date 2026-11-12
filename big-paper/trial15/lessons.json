@@ -12,10 +12,12 @@
    "rule_due": false
   },
   "no_news": {
-   "count": 1,
+   "count": 3,
    "words": "there was no news behind it that day",
    "examples": [
-    "2026-10-30 CRWV -5.34%"
+    "2026-10-30 CRWV -5.34%",
+    "2026-11-11 IREN -7.49%",
+    "2026-11-11 AAOI -0.68%"
    ],
    "rule": "need_news",
    "rule_due": false
@@ -34,14 +36,14 @@
    "rule_due": false
   },
   "noise": {
-   "count": 6,
+   "count": 7,
    "words": "a normal day's wobble for a stock this jumpy",
    "examples": [
-    "2026-11-03 INTC -5.73%",
     "2026-11-03 IREN -3.09%",
     "2026-11-03 SNOW -2.59%",
     "2026-11-05 MU -0.21%",
-    "2026-11-05 AAOI -3.68%"
+    "2026-11-05 AAOI -3.68%",
+    "2026-11-11 DELL -0.99%"
    ],
    "rule": "skip_volatile",
    "rule_due": true
@@ -61,8 +63,8 @@
   }
  },
  "claude": {
-  "read": 19,
-  "right": 8
+  "read": 21,
+  "right": 10
  },
  "reviewed_days": [
   "2026-10-30",
@@ -72,6 +74,7 @@
   "2026-11-05",
   "2026-11-06",
   "2026-11-09",
-  "2026-11-10"
+  "2026-11-10",
+  "2026-11-11"
  ]
 }
