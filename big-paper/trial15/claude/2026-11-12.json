@@ -1,0 +1,67 @@
+{
+ "status": "read",
+ "note": "25 new, 0 failed",
+ "spent_usd": 0.003870545,
+ "by_symbol": {
+  "AG": {
+   "sentiment": 0.45,
+   "materiality": 0.4,
+   "items": 2.0
+  },
+  "ANF": {
+   "sentiment": 0.1,
+   "materiality": 0.125,
+   "items": 2.0
+  },
+  "HALO": {
+   "sentiment": -0.15000000000000002,
+   "materiality": 0.2,
+   "items": 2.0
+  },
+  "HIMS": {
+   "sentiment": -0.55,
+   "materiality": 0.6499999999999999,
+   "items": 2.0
+  },
+  "IBRX": {
+   "sentiment": 0.1,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "LGN": {
+   "sentiment": 0.6,
+   "materiality": 0.6666666666666666,
+   "items": 3.0
+  },
+  "MSTR": {
+   "sentiment": -0.4000000000000001,
+   "materiality": 0.43333333333333335,
+   "items": 3.0
+  },
+  "PAYS": {
+   "sentiment": -0.13333333333333333,
+   "materiality": 0.18333333333333335,
+   "items": 3.0
+  },
+  "PBR": {
+   "sentiment": 0.0,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "PBR.A": {
+   "sentiment": 0.1,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "SNDK": {
+   "sentiment": 0.3,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "TWST": {
+   "sentiment": 0.4,
+   "materiality": 0.5375,
+   "items": 4.0
+  }
+ }
+}

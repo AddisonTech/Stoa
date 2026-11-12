@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-12",
+ "version": "t15-learn-20261110",
+ "picks": [
+  "PAYS",
+  "FNV",
+  "TEM",
+  "ARMK",
+  "HTFL"
+ ],
+ "sha256": "a2f0dd572e8b8dee81111412b9fe78848f4dce2878166118c782bec05149827d",
+ "locked_at": "2026-11-12T14:03:52.965070+00:00"
+}
