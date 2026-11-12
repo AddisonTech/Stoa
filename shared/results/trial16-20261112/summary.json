@@ -1,0 +1,610 @@
+{
+ "spec_hash": "0e9dbd07fae2fe16",
+ "shared_harness": {
+  "passed": true,
+  "index_return_gap": 0.002775056925701902,
+  "cheater": true,
+  "random": true
+ },
+ "harness_train": {
+  "spy": {
+   "passed": true,
+   "expected": "every trade nets minus its own costs exactly (-0.1143% on average); hit rate 0",
+   "actual": {
+    "trades": 1358,
+    "hit_rate": 0.0,
+    "avg_net": -0.00114340206185567,
+    "avg_ret": 0.0002481292515427152,
+    "avg_spy": 0.0002481292515427152,
+    "sharpe_daily": -0.7329537800915515,
+    "sessions_with_trades": 1358,
+    "largest_gap": 0.0
+   }
+  },
+  "cheater": {
+   "passed": true,
+   "expected": "every check passes",
+   "actual": {
+    "trades": 1357,
+    "hit_rate": 1.0,
+    "avg_net": 0.010049976358592384,
+    "avg_ret": 0.011144193174848736,
+    "avg_spy": -0.0005276019996492742,
+    "sharpe_daily": 0.4258338231956986,
+    "sessions_with_trades": 824,
+    "dsr": 0.9999874548186233
+   },
+   "checks": [
+    {
+     "name": "edge",
+     "passed": true,
+     "detail": "average net excess +1.0050%"
+    },
+    {
+     "name": "hit_rate",
+     "passed": true,
+     "detail": "100.0% of trades beat SPY after costs (need above 54%)"
+    },
+    {
+     "name": "deflated_sharpe",
+     "passed": true,
+     "detail": "DSR 1.000 (need 0.95)"
+    },
+    {
+     "name": "trade_count",
+     "passed": true,
+     "detail": "1357 trades (need 30)"
+    }
+   ]
+  },
+  "random": {
+   "passed": true,
+   "expected": "mean trade -0.4432% (every universe stock day), within 3 standard errors",
+   "actual": {
+    "mean": -0.0047369554589606734,
+    "standard_error": 0.00018189167978077073,
+    "trades": 13580
+   },
+   "seeds": [
+    {
+     "seed": 1,
+     "trades": 2716,
+     "hit_rate": 0.3796023564064801,
+     "avg_net": -0.00484080870089166,
+     "avg_ret": -0.0002425094721569587,
+     "avg_spy": 0.0002481292515427152,
+     "sharpe_daily": -0.26752419347207895,
+     "sessions_with_trades": 1358
+    },
+    {
+     "seed": 2,
+     "trades": 2716,
+     "hit_rate": 0.38181148748159055,
+     "avg_net": -0.004491055408794658,
+     "avg_ret": 6.597758292176412e-05,
+     "avg_spy": 0.0002481292515427152,
+     "sharpe_daily": -0.23091717773124726,
+     "sessions_with_trades": 1358
+    },
+    {
+     "seed": 3,
+     "trades": 2716,
+     "hit_rate": 0.3796023564064801,
+     "avg_net": -0.00494656689766393,
+     "avg_ret": -0.0005087204861132888,
+     "avg_spy": 0.0002481292515427152,
+     "sharpe_daily": -0.2929489715956935,
+     "sessions_with_trades": 1358
+    },
+    {
+     "seed": 4,
+     "trades": 2716,
+     "hit_rate": 0.3792341678939617,
+     "avg_net": -0.004123471155696009,
+     "avg_ret": 0.0003728852961675717,
+     "avg_spy": 0.0002481292515427152,
+     "sharpe_daily": -0.2535818383201735,
+     "sessions_with_trades": 1358
+    },
+    {
+     "seed": 5,
+     "trades": 2716,
+     "hit_rate": 0.36745213549337263,
+     "avg_net": -0.00528287513175711,
+     "avg_ret": -0.0004905488426571008,
+     "avg_spy": 0.0002481292515427152,
+     "sharpe_daily": -0.29976477952591435,
+     "sessions_with_trades": 1358
+    }
+   ]
+  },
+  "verdict": "honest"
+ },
+ "tune": {
+  "grid": [
+   {
+    "T": 0.001,
+    "trades": 1722,
+    "hit_rate": 0.413472706155633,
+    "avg_net": -0.002302587714520339,
+    "avg_ret": 0.0001831029737584288,
+    "avg_spy": -3.40644314746394e-05,
+    "sharpe_daily": -0.10051842253676184,
+    "sessions_with_trades": 994
+   },
+   {
+    "T": 0.0025,
+    "trades": 1198,
+    "hit_rate": 0.4015025041736227,
+    "avg_net": -0.0026950310146341165,
+    "avg_ret": 0.00019600067601248437,
+    "avg_spy": -5.888180763445566e-05,
+    "sharpe_daily": -0.10034855808154243,
+    "sessions_with_trades": 783
+   },
+   {
+    "T": 0.005,
+    "trades": 822,
+    "hit_rate": 0.38686131386861317,
+    "avg_net": -0.0033775333389813814,
+    "avg_ret": -9.202936102057728e-05,
+    "avg_spy": -0.0001027615816631028,
+    "sharpe_daily": -0.09658905189373293,
+    "sessions_with_trades": 598
+   },
+   {
+    "T": 0.01,
+    "trades": 529,
+    "hit_rate": 0.3761814744801512,
+    "avg_net": -0.004190018759368,
+    "avg_ret": -0.000385307095323333,
+    "avg_spy": -0.00020122863705627797,
+    "sharpe_daily": -0.10225664253846611,
+    "sessions_with_trades": 431
+   },
+   {
+    "T": 0.02,
+    "trades": 341,
+    "hit_rate": 0.34310850439882695,
+    "avg_net": -0.0054315372105999985,
+    "avg_ret": -0.0006966337411424317,
+    "avg_spy": -9.807887476091471e-05,
+    "sharpe_daily": -0.1029953756244238,
+    "sessions_with_trades": 294
+   },
+   {
+    "T": 0.05,
+    "trades": 183,
+    "hit_rate": 0.3442622950819672,
+    "avg_net": -0.006092920001784471,
+    "avg_ret": -0.0001514589379535699,
+    "avg_spy": 6.844425470154151e-05,
+    "sharpe_daily": -0.08355744625841416,
+    "sessions_with_trades": 167
+   }
+  ],
+  "chosen": 0.001,
+  "rows": 3210
+ },
+ "harness_test": {
+  "spy": {
+   "passed": true,
+   "expected": "every trade nets minus its own costs exactly (-0.1030% on average); hit rate 0",
+   "actual": {
+    "trades": 630,
+    "hit_rate": 0.0,
+    "avg_net": -0.0010299999999999999,
+    "avg_ret": 0.0003584222258671871,
+    "avg_spy": 0.0003584222258671871,
+    "sharpe_daily": -1.6026508652599183,
+    "sessions_with_trades": 630,
+    "largest_gap": 0.0
+   }
+  },
+  "cheater": {
+   "passed": true,
+   "expected": "every check passes",
+   "actual": {
+    "trades": 552,
+    "hit_rate": 1.0,
+    "avg_net": 0.011128383599702252,
+    "avg_ret": 0.012054582681680474,
+    "avg_spy": -0.0006553253081428817,
+    "sharpe_daily": 0.4920286866382774,
+    "sessions_with_trades": 360,
+    "dsr": 1.0
+   },
+   "checks": [
+    {
+     "name": "edge",
+     "passed": true,
+     "detail": "average net excess +1.1128%"
+    },
+    {
+     "name": "hit_rate",
+     "passed": true,
+     "detail": "100.0% of trades beat SPY after costs (need above 54%)"
+    },
+    {
+     "name": "deflated_sharpe",
+     "passed": true,
+     "detail": "DSR 1.000 (need 0.95)"
+    },
+    {
+     "name": "trade_count",
+     "passed": true,
+     "detail": "552 trades (need 30)"
+    }
+   ]
+  },
+  "random": {
+   "passed": true,
+   "expected": "mean trade -0.3800% (every universe stock day), within 3 standard errors",
+   "actual": {
+    "mean": -0.0036381306609344238,
+    "standard_error": 0.0003116934210286959,
+    "trades": 6300
+   },
+   "seeds": [
+    {
+     "seed": 1,
+     "trades": 1260,
+     "hit_rate": 0.3984126984126984,
+     "avg_net": -0.004250091810635795,
+     "avg_ret": -0.00016948414629126992,
+     "avg_spy": 0.0003584222258671871,
+     "sharpe_daily": -0.2128861430041513,
+     "sessions_with_trades": 630
+    },
+    {
+     "seed": 2,
+     "trades": 1260,
+     "hit_rate": 0.4111111111111111,
+     "avg_net": -0.003740101883761538,
+     "avg_ret": 0.00031001465095170877,
+     "avg_spy": 0.0003584222258671871,
+     "sharpe_daily": -0.18021297487373442,
+     "sessions_with_trades": 630
+    },
+    {
+     "seed": 3,
+     "trades": 1260,
+     "hit_rate": 0.4357142857142857,
+     "avg_net": -0.0030277416304478693,
+     "avg_ret": 0.0010539217534507937,
+     "avg_spy": 0.0003584222258671871,
+     "sharpe_daily": -0.13424687814685962,
+     "sessions_with_trades": 630
+    },
+    {
+     "seed": 4,
+     "trades": 1260,
+     "hit_rate": 0.4261904761904762,
+     "avg_net": -0.0035002720530293565,
+     "avg_ret": 0.0005020331334635902,
+     "avg_spy": 0.0003584222258671871,
+     "sharpe_daily": -0.15698502838192313,
+     "sessions_with_trades": 630
+    },
+    {
+     "seed": 5,
+     "trades": 1260,
+     "hit_rate": 0.41825396825396827,
+     "avg_net": -0.0036724459267975613,
+     "avg_ret": 0.0005225079208497681,
+     "avg_spy": 0.0003584222258671871,
+     "sharpe_daily": -0.18041503910216736,
+     "sessions_with_trades": 630
+    }
+   ]
+  },
+  "verdict": "honest"
+ },
+ "test": {
+  "T": 0.001,
+  "verdict": "FAIL",
+  "grade": {
+   "trades": 680,
+   "hit_rate": 0.42205882352941176,
+   "avg_net": -0.0007730972909022564,
+   "avg_ret": 0.001960533761924586,
+   "avg_spy": 0.00047174161561539793,
+   "sharpe_daily": -0.052171283569778376,
+   "sessions_with_trades": 441
+  },
+  "dsr": {
+   "sharpe_daily": -0.052171283569778376,
+   "sharpe_annual": -0.8281934514279821,
+   "period": 1.0,
+   "observations": 875.0,
+   "trials": 36.0,
+   "trial_sharpe_variance": 0.0051867400409154754,
+   "sr0_daily": 0.1546631578291794,
+   "dsr": 4.3547160229798187e-10,
+   "psr": 0.060983208642916,
+   "pbo": NaN
+  },
+  "checks": [
+   {
+    "name": "edge",
+    "passed": false,
+    "detail": "average net excess -0.0773%"
+   },
+   {
+    "name": "hit_rate",
+    "passed": false,
+    "detail": "42.2% of trades beat SPY after costs (need above 54%)"
+   },
+   {
+    "name": "deflated_sharpe",
+    "passed": false,
+    "detail": "DSR 0.000 (need 0.95)"
+   },
+   {
+    "name": "trade_count",
+    "passed": true,
+    "detail": "680 trades (need 30)"
+   }
+  ],
+  "secondary": {
+   "hold_1": {
+    "trades": 680,
+    "hit_rate": 0.4470588235294118,
+    "avg_net": 0.0002038437654499609,
+    "avg_ret": 0.003514394638334518,
+    "avg_spy": 0.001048661435673113,
+    "sharpe_daily": 0.014099891596813161,
+    "sessions_with_trades": 441
+   },
+   "hold_5": {
+    "trades": 680,
+    "hit_rate": 0.475,
+    "avg_net": 0.002116678852418753,
+    "avg_ret": 0.00752454024119998,
+    "avg_spy": 0.003145971951569781,
+    "sharpe_daily": 0.0342492052923978,
+    "sessions_with_trades": 441
+   }
+  },
+  "years": {
+   "2023": {
+    "trades": 213,
+    "hit_rate": 0.4272300469483568,
+    "avg_net": -0.0016560759044311083,
+    "avg_ret": 0.0021959947997550826,
+    "avg_spy": 0.00103693601335415,
+    "sharpe_daily": -0.12188157531736882,
+    "sessions_with_trades": 132
+   },
+   "2024": {
+    "trades": 195,
+    "hit_rate": 0.3435897435897436,
+    "avg_net": -0.003019304132768375,
+    "avg_ret": -0.0013015626566907235,
+    "avg_spy": -0.0006387078549822795,
+    "sharpe_daily": -0.1531392463590552,
+    "sessions_with_trades": 131
+   },
+   "2025": {
+    "trades": 160,
+    "hit_rate": 0.45,
+    "avg_net": -0.0010575166245921953,
+    "avg_ret": 0.0017919198243195335,
+    "avg_spy": 0.0010543360123400688,
+    "sharpe_daily": -0.07002462724466177,
+    "sessions_with_trades": 105
+   },
+   "2026": {
+    "trades": 112,
+    "hit_rate": 0.5089285714285714,
+    "avg_net": 0.005223258711204249,
+    "avg_ret": 0.007433157249325459,
+    "avg_spy": 0.0004979571207247331,
+    "sharpe_daily": 0.14681724300198745,
+    "sessions_with_trades": 73
+   }
+  },
+  "registry_id": "15a5f6d06990"
+ },
+ "gaps_selected": {
+  "trades_with_minutes": 677,
+  "mean_close_to_close": 0.0035194940904646273,
+  "mean_overnight_gap": 0.001441441270193466,
+  "mean_open_to_945": 0.00045038567792000386,
+  "mean_945_to_close": 0.001611260450812751,
+  "share_before_945": 0.5364924095372361,
+  "share_overnight": 0.409559224463188,
+  "median_overnight_gap": 0.0009759759759762066,
+  "entry_945_avg_net": -0.0011376869893228835,
+  "entry_945_hit_rate": 0.4017725258493353
+ },
+ "gaps_all_new": {
+  "trades_with_minutes": 1295,
+  "mean_close_to_close": 0.0017967034036460545,
+  "mean_overnight_gap": 0.0010547937915221842,
+  "mean_open_to_945": -5.412779361875042e-06,
+  "mean_945_to_close": 0.0007337646714999018,
+  "share_before_945": 0.5839101132378045,
+  "share_overnight": 0.5870717389312496,
+  "median_overnight_gap": 0.0004780368619536901,
+  "entry_945_avg_net": -0.0013923080291612917,
+  "entry_945_hit_rate": 0.4115830115830116
+ },
+ "breakdown_test": {
+  "new": {
+   "all": {
+    "trades": 1298,
+    "hit_rate": 0.4252696456086287,
+    "avg_net": -0.0014768303029429415,
+    "avg_ret": 0.0006779028674687458,
+    "avg_spy": 0.0004519414358704196,
+    "sharpe_daily": -0.09811436122612294,
+    "sessions_with_trades": 630
+   },
+   "size": {
+    "0.1-0.5%": {
+     "trades": 336,
+     "hit_rate": 0.43154761904761907,
+     "avg_net": -0.0008558510489274886,
+     "avg_ret": 0.000979989447618162,
+     "avg_spy": 0.00022968278855199214,
+     "sharpe_daily": -0.02491904080821452,
+     "sessions_with_trades": 265
+    },
+    "0.5-2%": {
+     "trades": 213,
+     "hit_rate": 0.40375586854460094,
+     "avg_net": -0.0006856984282683612,
+     "avg_ret": 0.0017612951945679052,
+     "avg_spy": 0.0004984565314960378,
+     "sharpe_daily": -0.03363738548048903,
+     "sessions_with_trades": 183
+    },
+    "2-5%": {
+     "trades": 66,
+     "hit_rate": 0.36363636363636365,
+     "avg_net": -0.004998616544028619,
+     "avg_ret": -8.417432121610505e-05,
+     "avg_spy": 0.0016766561801939408,
+     "sharpe_daily": -0.0698827536252246,
+     "sessions_with_trades": 63
+    },
+    "<0.1%": {
+     "trades": 618,
+     "hit_rate": 0.42880258899676377,
+     "avg_net": -0.0022511643614990355,
+     "avg_ret": -0.0007334062073370328,
+     "avg_spy": 0.00043015483032578326,
+     "sharpe_daily": -0.11620110932881046,
+     "sessions_with_trades": 414
+    },
+    ">=5%": {
+     "trades": 65,
+     "hit_rate": 0.49230769230769234,
+     "avg_net": 0.0036588038731254074,
+     "avg_ret": 0.009758248191789462,
+     "avg_spy": 0.0004120051163622317,
+     "sharpe_daily": 0.01798920246763267,
+     "sessions_with_trades": 62
+    }
+   },
+   "cap": {
+    "large": {
+     "trades": 1023,
+     "hit_rate": 0.4340175953079179,
+     "avg_net": -0.0015768607555931352,
+     "avg_ret": -2.9644390620807296e-05,
+     "avg_spy": 0.0004231343230145848,
+     "sharpe_daily": -0.11014029908642461,
+     "sessions_with_trades": 571
+    },
+    "mid": {
+     "trades": 208,
+     "hit_rate": 0.39903846153846156,
+     "avg_net": -0.0007462385021460526,
+     "avg_ret": 0.0026558037174733797,
+     "avg_spy": 0.0007898462003404318,
+     "sharpe_daily": -0.015430979911799026,
+     "sessions_with_trades": 176
+    },
+    "small": {
+     "trades": 67,
+     "hit_rate": 0.373134328358209,
+     "avg_net": -0.0022176055492803283,
+     "avg_ret": 0.005340850154403805,
+     "avg_spy": -0.00015723042320784183,
+     "sharpe_daily": -0.030212229068800625,
+     "sessions_with_trades": 63
+    }
+   }
+  },
+  "mod": {
+   "all": {
+    "trades": 1470,
+    "hit_rate": 0.4217687074829932,
+    "avg_net": -0.0018591804980094338,
+    "avg_ret": -2.8711996236127918e-05,
+    "avg_spy": 0.00041090095780999404,
+    "sharpe_daily": -0.17289896506805025,
+    "sessions_with_trades": 682
+   },
+   "size": {
+    "0.1-0.5%": {
+     "trades": 387,
+     "hit_rate": 0.42118863049095606,
+     "avg_net": -0.0016747601088458641,
+     "avg_ret": 0.00014321721180539403,
+     "avg_spy": 0.0002862265900149569,
+     "sharpe_daily": -0.08593795307438802,
+     "sessions_with_trades": 293
+    },
+    "0.5-2%": {
+     "trades": 187,
+     "hit_rate": 0.44919786096256686,
+     "avg_net": 0.0003039831548021481,
+     "avg_ret": 0.0029265372833040377,
+     "avg_spy": 0.000572376386091332,
+     "sharpe_daily": -0.009868436097864669,
+     "sessions_with_trades": 162
+    },
+    "2-5%": {
+     "trades": 54,
+     "hit_rate": 0.37037037037037035,
+     "avg_net": -0.004642050430183239,
+     "avg_ret": -0.0028512290324420636,
+     "avg_spy": -0.00043704431366498866,
+     "sharpe_daily": -0.06629209557134805,
+     "sessions_with_trades": 52
+    },
+    "<0.1%": {
+     "trades": 808,
+     "hit_rate": 0.4245049504950495,
+     "avg_net": -0.002086823527447772,
+     "avg_ret": -0.0005315718673795855,
+     "avg_spy": 0.0004624598141524622,
+     "sharpe_daily": -0.15603308950179143,
+     "sessions_with_trades": 524
+    },
+    ">=5%": {
+     "trades": 34,
+     "hit_rate": 0.29411764705882354,
+     "avg_net": -0.006025996661494866,
+     "avg_ret": -0.0018064038476198262,
+     "avg_spy": 0.0010633293102512871,
+     "sharpe_daily": -0.08187240533620342,
+     "sessions_with_trades": 24
+    }
+   },
+   "cap": {
+    "large": {
+     "trades": 1221,
+     "hit_rate": 0.4283374283374283,
+     "avg_net": -0.001762242680837822,
+     "avg_ret": -0.0002097755323272981,
+     "avg_spy": 0.00043219013902085445,
+     "sharpe_daily": -0.17616690661481932,
+     "sessions_with_trades": 646
+    },
+    "mid": {
+     "trades": 214,
+     "hit_rate": 0.40654205607476634,
+     "avg_net": -0.0012023422972645638,
+     "avg_ret": 0.0012916718039833934,
+     "avg_spy": 0.00013825799596927475,
+     "sharpe_daily": -0.0413061400299589,
+     "sessions_with_trades": 187
+    },
+    "small": {
+     "trades": 35,
+     "hit_rate": 0.2857142857142857,
+     "avg_net": -0.00925702191875058,
+     "avg_ret": -0.00178538501565495,
+     "avg_spy": 0.001335229631394376,
+     "sharpe_daily": -0.0957248729876249,
+     "sessions_with_trades": 34
+    }
+   }
+  }
+ },
+ "note": "Trial 16 summary: aggregates only; award rows and raw pages stay in the git-ignored data/contracts on the Dell."
+}
