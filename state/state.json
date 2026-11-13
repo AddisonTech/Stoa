@@ -13,9 +13,9 @@
     "equity": "100",
     "benchmark_close": "759.97"
   },
-  "last_close_session": "2026-11-12",
-  "last_close_equity": "96.77190651779",
-  "last_benchmark_close": "757.12",
+  "last_close_session": "2026-11-13",
+  "last_close_equity": "96.43864735687",
+  "last_benchmark_close": "754.37",
   "decided_sessions": [
     "2026-10-23",
     "2026-10-26",
@@ -31,7 +31,8 @@
     "2026-11-09",
     "2026-11-10",
     "2026-11-11",
-    "2026-11-12"
+    "2026-11-12",
+    "2026-11-13"
   ],
   "executed_sessions": [
     "2026-10-26",
@@ -546,11 +547,24 @@
         "reference_closes": {
           "MTUM": "69.36"
         }
+      },
+      {
+        "session": "2026-11-13",
+        "mode": "paper",
+        "broker_equity": "96.43864735687",
+        "adjusted_equity": "95.408796012836820179",
+        "benchmark_close": "754.37",
+        "trades_closed": 3,
+        "flow": "0",
+        "strategy": "mirror_trial15",
+        "reference_closes": {
+          "MTUM": "67.98"
+        }
       }
     ],
     "cost_drag": "1.029851344033179821",
     "trades_closed": 0,
-    "pending_trades": 3,
+    "pending_trades": 0,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
@@ -564,25 +578,29 @@
   "protective_stops": [],
   "stop_outs": [],
   "holdings_at_close": {
-    "AAOI": {
-      "qty": "0.359285956",
-      "close": "52.85"
+    "AXON": {
+      "qty": "0.061323539",
+      "close": "315.43"
     },
-    "BLDR": {
-      "qty": "0.30257763",
-      "close": "60.12"
+    "BABA": {
+      "qty": "0.197569994",
+      "close": "94.38"
+    },
+    "HALO": {
+      "qty": "0.187573976",
+      "close": "100.27"
+    },
+    "HIMS": {
+      "qty": "0.961340736",
+      "close": "19.73"
     },
     "MSTR": {
       "qty": "0.167652859",
-      "close": "114.41"
-    },
-    "ZS": {
-      "qty": "0.10046327",
-      "close": "193.22"
+      "close": "111.62"
     }
   },
   "last_reference_closes": {
-    "MTUM": "69.36"
+    "MTUM": "67.98"
   },
   "cap_raises": [],
   "cap_asks": [],
