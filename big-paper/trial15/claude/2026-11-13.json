@@ -1,0 +1,72 @@
+{
+ "status": "read",
+ "note": "21 new, 0 failed",
+ "spent_usd": 0.0025395249999999995,
+ "by_symbol": {
+  "APP": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "AXON": {
+   "sentiment": 0.3666666666666667,
+   "materiality": 0.3333333333333333,
+   "items": 3.0
+  },
+  "BABA": {
+   "sentiment": 0.5,
+   "materiality": 0.35,
+   "items": 1.0
+  },
+  "CRCL": {
+   "sentiment": 0.025,
+   "materiality": 0.125,
+   "items": 2.0
+  },
+  "FIS": {
+   "sentiment": 0.0,
+   "materiality": 0.15,
+   "items": 1.0
+  },
+  "MSTR": {
+   "sentiment": -0.1,
+   "materiality": 0.175,
+   "items": 2.0
+  },
+  "NFLX": {
+   "sentiment": 0.0,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "NOW": {
+   "sentiment": 0.25,
+   "materiality": 0.275,
+   "items": 2.0
+  },
+  "NXT": {
+   "sentiment": 0.15000000000000002,
+   "materiality": 0.15000000000000002,
+   "items": 2.0
+  },
+  "ORCL": {
+   "sentiment": -0.03333333333333333,
+   "materiality": 0.13333333333333333,
+   "items": 3.0
+  },
+  "QBTS": {
+   "sentiment": 0.4,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "RUN": {
+   "sentiment": 0.4,
+   "materiality": 0.15,
+   "items": 1.0
+  },
+  "WGS": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  }
+ }
+}

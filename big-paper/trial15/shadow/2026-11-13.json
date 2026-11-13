@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-13",
+ "version": "t15-learn-20261111",
+ "picks": [
+  "TEM",
+  "CTVA",
+  "VSXY",
+  "QLYS",
+  "HIMS"
+ ],
+ "sha256": "993f99b4940d2e52f3bc4e52b7edbec42f7525cfc92d1a79137c84edf7bbdf44",
+ "locked_at": "2026-11-13T14:03:38.278939+00:00"
+}
