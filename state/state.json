@@ -47,7 +47,8 @@
     "2026-11-09",
     "2026-11-10",
     "2026-11-11",
-    "2026-11-12"
+    "2026-11-12",
+    "2026-11-13"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -71,22 +72,6 @@
   ],
   "pending_plan": null,
   "positions_meta": {
-    "AAOI": {
-      "entry_session": "2026-11-12",
-      "entry_price": "52.994",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
-    "ZS": {
-      "entry_session": "2026-11-12",
-      "entry_price": "189.522",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
     "MSTR": {
       "entry_session": "2026-11-12",
       "entry_price": "113.568",
@@ -95,9 +80,33 @@
       "ref_close": null,
       "stop_price": null
     },
-    "BLDR": {
-      "entry_session": "2026-11-12",
-      "entry_price": "62.926",
+    "HIMS": {
+      "entry_session": "2026-11-13",
+      "entry_price": "19.452",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "BABA": {
+      "entry_session": "2026-11-13",
+      "entry_price": "94.65",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "AXON": {
+      "entry_session": "2026-11-13",
+      "entry_price": "304.94",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "HALO": {
+      "entry_session": "2026-11-13",
+      "entry_price": "99.694",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
@@ -105,7 +114,7 @@
     }
   },
   "realized_by_year": {
-    "2026": "-2.688022725820358"
+    "2026": "-4.037300938364358"
   },
   "llm_spend_by_month": {
     "2026-10": "0.000917"
@@ -116,39 +125,6 @@
   "withdrawn_since_milestone": "0",
   "principal_flow_pending": false,
   "recent_trades": [
-    {
-      "symbol": "MU",
-      "entry_session": "2026-11-05",
-      "exit_session": "2026-11-06",
-      "qty": "0.024662903",
-      "entry_price": "730.652",
-      "exit_price": "720.07",
-      "fees": "0",
-      "pnl": "-0.260982839546",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "NBIS",
-      "entry_session": "2026-11-05",
-      "exit_session": "2026-11-06",
-      "qty": "0.14183169",
-      "entry_price": "127.052",
-      "exit_price": "135.368",
-      "fees": "0",
-      "pnl": "1.17947233404",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "CAT",
-      "entry_session": "2026-11-06",
-      "exit_session": "2026-11-09",
-      "qty": "0.031204137",
-      "entry_price": "566.912",
-      "exit_price": "582.642",
-      "fees": "0",
-      "pnl": "0.490841075010",
-      "reason": "hold_period"
-    },
     {
       "symbol": "CRWV",
       "entry_session": "2026-11-05",
@@ -334,6 +310,39 @@
       "exit_price": "786.002",
       "fees": "0",
       "pnl": "0.160802789490",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "AAOI",
+      "entry_session": "2026-11-12",
+      "exit_session": "2026-11-13",
+      "qty": "0.359285956",
+      "entry_price": "52.994",
+      "exit_price": "50.54",
+      "fees": "0",
+      "pnl": "-0.881687736024",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "BLDR",
+      "entry_session": "2026-11-12",
+      "exit_session": "2026-11-13",
+      "qty": "0.30257763",
+      "entry_price": "62.926",
+      "exit_price": "60.698",
+      "fees": "0",
+      "pnl": "-0.67414295964",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "ZS",
+      "entry_session": "2026-11-12",
+      "exit_session": "2026-11-13",
+      "qty": "0.10046327",
+      "entry_price": "189.522",
+      "exit_price": "191.578",
+      "fees": "0",
+      "pnl": "0.20655248312",
       "reason": "hold_period"
     }
   ],
@@ -539,9 +548,9 @@
         }
       }
     ],
-    "cost_drag": "0.934565983324771821",
+    "cost_drag": "1.029851344033179821",
     "trades_closed": 0,
-    "pending_trades": 0,
+    "pending_trades": 3,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
