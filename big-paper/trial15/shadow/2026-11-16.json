@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-16",
+ "version": "t15-learn-20261112",
+ "picks": [
+  "DELL",
+  "TEM",
+  "RGTI",
+  "MTSI",
+  "HNGE"
+ ],
+ "sha256": "c0cefe627de689f91de74e01c5d638d6a4b6498c4660e4576f0cadac704abf51",
+ "locked_at": "2026-11-16T14:04:21.827842+00:00"
+}
