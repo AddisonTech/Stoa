@@ -49,7 +49,8 @@
     "2026-11-10",
     "2026-11-11",
     "2026-11-12",
-    "2026-11-13"
+    "2026-11-13",
+    "2026-11-16"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -82,33 +83,33 @@
       "ref_close": null,
       "stop_price": null
     },
-    "HIMS": {
-      "entry_session": "2026-11-13",
-      "entry_price": "19.452",
+    "RGTI": {
+      "entry_session": "2026-11-16",
+      "entry_price": "9.338",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "BABA": {
-      "entry_session": "2026-11-13",
-      "entry_price": "94.65",
+    "CRWV": {
+      "entry_session": "2026-11-16",
+      "entry_price": "51.618",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "AXON": {
-      "entry_session": "2026-11-13",
-      "entry_price": "304.94",
+    "IONQ": {
+      "entry_session": "2026-11-16",
+      "entry_price": "27.314",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
     },
-    "HALO": {
-      "entry_session": "2026-11-13",
-      "entry_price": "99.694",
+    "MU": {
+      "entry_session": "2026-11-16",
+      "entry_price": "735.816",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
@@ -116,7 +117,7 @@
     }
   },
   "realized_by_year": {
-    "2026": "-4.037300938364358"
+    "2026": "-4.278177062046358"
   },
   "llm_spend_by_month": {
     "2026-10": "0.000917"
@@ -127,50 +128,6 @@
   "withdrawn_since_milestone": "0",
   "principal_flow_pending": false,
   "recent_trades": [
-    {
-      "symbol": "CRWV",
-      "entry_session": "2026-11-05",
-      "exit_session": "2026-11-09",
-      "qty": "0.399946732",
-      "entry_price": "45.056",
-      "exit_price": "47.716",
-      "fees": "0",
-      "pnl": "1.063858307120",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "GEV",
-      "entry_session": "2026-11-06",
-      "exit_session": "2026-11-09",
-      "qty": "0.022833379",
-      "entry_price": "803.648",
-      "exit_price": "816.12",
-      "fees": "0",
-      "pnl": "0.284777902888",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "INTC",
-      "entry_session": "2026-11-06",
-      "exit_session": "2026-11-09",
-      "qty": "0.324457175",
-      "entry_price": "56.556",
-      "exit_price": "57.222",
-      "fees": "0",
-      "pnl": "0.216088478550",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "SNOW",
-      "entry_session": "2026-11-06",
-      "exit_session": "2026-11-09",
-      "qty": "0.066039501",
-      "entry_price": "277.864",
-      "exit_price": "287.706",
-      "fees": "0",
-      "pnl": "0.649960768842",
-      "reason": "hold_period"
-    },
     {
       "symbol": "CDNL",
       "entry_session": "2026-11-09",
@@ -345,6 +302,50 @@
       "exit_price": "191.578",
       "fees": "0",
       "pnl": "0.20655248312",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "AXON",
+      "entry_session": "2026-11-13",
+      "exit_session": "2026-11-16",
+      "qty": "0.061323539",
+      "entry_price": "304.94",
+      "exit_price": "314.926",
+      "fees": "0",
+      "pnl": "0.612376860454",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "BABA",
+      "entry_session": "2026-11-13",
+      "exit_session": "2026-11-16",
+      "qty": "0.197569994",
+      "entry_price": "94.65",
+      "exit_price": "91.726",
+      "fees": "0",
+      "pnl": "-0.577694662456",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "HALO",
+      "entry_session": "2026-11-13",
+      "exit_session": "2026-11-16",
+      "qty": "0.187573976",
+      "entry_price": "99.694",
+      "exit_price": "100.808",
+      "fees": "0",
+      "pnl": "0.208957409264",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "HIMS",
+      "entry_session": "2026-11-13",
+      "exit_session": "2026-11-16",
+      "qty": "0.961340736",
+      "entry_price": "19.452",
+      "exit_price": "18.948",
+      "fees": "0",
+      "pnl": "-0.484515730944",
       "reason": "hold_period"
     }
   ],
@@ -563,9 +564,9 @@
         }
       }
     ],
-    "cost_drag": "1.029851344033179821",
+    "cost_drag": "1.144030905759594821",
     "trades_closed": 0,
-    "pending_trades": 0,
+    "pending_trades": 4,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
