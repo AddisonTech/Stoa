@@ -440,6 +440,20 @@ Pre-registered 2026-11-12 (docs/DECISIONS.md, "Trial 16"). Code in `stoa/contrac
 
 SEC requests share one budget: keep the sum of running SEC pulls under 8 a second. The shared harness rerun for the gate lives in `data/contracts/harness_rerun/`.
 
+## 13f. Trial 17: what companies change in their filings (research)
+
+Pre-registered 2026-11-16 (docs/DECISIONS.md, "Trial 17"). Code in `stoa/filings/`, data in the git-ignored `data/filings/`. Keys and the EDGAR contact come from the git-ignored `.env` (`STOA_SEC_USER_AGENT`, and `ALPACA_PAPER_KEY_ID` / `ALPACA_PAPER_SECRET` for bars); `stoa/envfile.py` reads it and never prints a value. Every step is resumable and logs to `data/filings/logs/`.
+
+1. `python -m stoa.filings pull`: every original 10-K and 10-Q since 2014 for the wide universe's filers, primary document, with its EDGAR acceptance time, into `raw/<cik>.parquet` (zstd). At most 7 requests started a second; 20 "slow down" answers (403 or 429) stop it so a person can look. Liquid filers first.
+2. `python -m stoa.extend daily 2026-11-13` brings the wide daily bars up to a close (an adjustment between the stored end and the new bars refetches that symbol's whole history); `python -m stoa.extend minute` pulls the commodity funds' minute bars. Both stand aside in the live windows.
+3. `python -m stoa.filings parse`: text and the risk factor, MD&A and legal proceedings sections (`text/`).
+4. `python -m stoa.filings scores`: year-on-year cosine, Jaccard and length change (`scores.parquet`).
+5. `python -m stoa.filings tickers`: each filing to its symbol, point in time (`filing_symbols.parquet`).
+6. `python -m stoa.filings preregister a` (once, registry on the state branch), then `python -m stoa.filings trial a`. The look-ahead harness (`stoa/filings/known.py`, also `tests/test_trial17.py`) runs first; a failed gate exits 3 and says which.
+7. `python -m stoa.filings trial todo`, then `python -m stoa.filings tag data/filings/results/tag_todo.parquet` (the local model on the GPU; quintile 5 first), then `preregister b` and `trial b`.
+
+Claude never reads a historical filing. Check the parser and the reader by counts, lengths and the made-up passages in `stoa/filings/tagcheck.py`, never by printing filing text.
+
 ## 14. Changing settings
 
 Every limit is in `config/default.yaml`. Change it in a commit, or override one value with a repository variable passed as an environment variable named `STOA__SECTION__KEY` (for example `STOA__RISK__MAX_POSITIONS=4`). Changing settings after the holdout is sealed makes `stoa holdout score` refuse, on purpose.
