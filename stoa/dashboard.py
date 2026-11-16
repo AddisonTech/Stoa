@@ -1241,6 +1241,29 @@ def render_big_paper(data: dict[str, Any]) -> str:
     )
 
 
+def render_trial_log() -> str:
+    """Every trial so far, with its verdict and one plain line (stoa/trial_log.py)."""
+    from stoa.trial_log import rows
+
+    labels = ("Trial", "What it tested", "Graded", "Verdict", "Result")
+    body = ""
+    for t in rows():
+        cells = (t.number, t.name, t.graded or "", t.verdict, t.result)
+        body += (
+            "<tr>"
+            + "".join(
+                f'<td data-label="{_e(k)}">{_e(v)}</td>' for k, v in zip(labels, cells, strict=True)
+            )
+            + "</tr>"
+        )
+    head = "".join(f"<th>{_e(k)}</th>" for k in labels)
+    return (
+        f'<table class="stack"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>'
+        '<p class="muted small">Every trial counts against the next one: the deflated Sharpe '
+        "is penalized for each try in the registry. Details in docs/DECISIONS.md.</p>"
+    )
+
+
 def render_exam(data: dict[str, Any]) -> str:
     x = data["exam"]
     holdout_text = (
@@ -1569,6 +1592,7 @@ def render(data: dict[str, Any]) -> str:
         f'<section class="card"><h2>Last {DECISIONS_SHOWN} decisions</h2>'
         f"{render_decisions(data)}</section>"
         f'<section class="card"><h2>Model calibration</h2>{render_calibration(data)}</section>'
+        f'<section class="card"><h2>Trial log</h2>{render_trial_log()}</section>'
         f"<footer>Read only: nothing is traded from this page. Built "
         f"{_when(data['generated_at'])} by Stoa {_e(data['version'])} from committed state. "
         '<a href="https://github.com/AddisonTech/Stoa">Source</a></footer>'
