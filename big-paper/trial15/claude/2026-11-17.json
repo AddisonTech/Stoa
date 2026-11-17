@@ -1,0 +1,72 @@
+{
+ "status": "read",
+ "note": "21 new, 0 failed",
+ "spent_usd": 0.002744825000000001,
+ "by_symbol": {
+  "APLD": {
+   "sentiment": 0.5,
+   "materiality": 0.55,
+   "items": 1.0
+  },
+  "BMNR": {
+   "sentiment": 0.2,
+   "materiality": 0.275,
+   "items": 2.0
+  },
+  "DELL": {
+   "sentiment": 0.10000000000000002,
+   "materiality": 0.18333333333333335,
+   "items": 3.0
+  },
+  "HOOD": {
+   "sentiment": -0.1,
+   "materiality": 0.2,
+   "items": 2.0
+  },
+  "INTC": {
+   "sentiment": -0.1,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "IONQ": {
+   "sentiment": 0.3,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "KTOS": {
+   "sentiment": -0.1,
+   "materiality": 0.25,
+   "items": 1.0
+  },
+  "MRNA": {
+   "sentiment": -0.03333333333333333,
+   "materiality": 0.13333333333333333,
+   "items": 3.0
+  },
+  "MRVL": {
+   "sentiment": 0.3,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "NBIS": {
+   "sentiment": 0.03333333333333333,
+   "materiality": 0.20000000000000004,
+   "items": 3.0
+  },
+  "SMCI": {
+   "sentiment": 0.1,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "TXG": {
+   "sentiment": 0.4,
+   "materiality": 0.35,
+   "items": 1.0
+  },
+  "VRT": {
+   "sentiment": 0.4,
+   "materiality": 0.4,
+   "items": 1.0
+  }
+ }
+}

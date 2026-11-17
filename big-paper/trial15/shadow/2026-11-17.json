@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-17",
+ "version": "t15-learn-20261112",
+ "picks": [
+  "TEM",
+  "QBTS",
+  "HOOD",
+  "TWST",
+  "QLYS"
+ ],
+ "sha256": "e4a16fcbe120e5884e4680d763b56bc099a069e4219b3e8d9abc6261825eaef5",
+ "locked_at": "2026-11-17T14:03:31.184533+00:00"
+}
