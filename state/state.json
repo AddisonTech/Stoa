@@ -53,7 +53,8 @@
     "2026-11-12",
     "2026-11-13",
     "2026-11-16",
-    "2026-11-17"
+    "2026-11-17",
+    "2026-11-18"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -96,14 +97,6 @@
       "ref_close": null,
       "stop_price": null
     },
-    "NBIS": {
-      "entry_session": "2026-11-17",
-      "entry_price": "109.918",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
     "HOOD": {
       "entry_session": "2026-11-17",
       "entry_price": "71.236",
@@ -119,10 +112,18 @@
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
+    },
+    "QXO": {
+      "entry_session": "2026-11-18",
+      "entry_price": "11.396",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
     }
   },
   "realized_by_year": {
-    "2026": "-6.752685150204358"
+    "2026": "-7.982574515430358"
   },
   "llm_spend_by_month": {
     "2026-10": "0.000917"
@@ -133,17 +134,6 @@
   "withdrawn_since_milestone": "0",
   "principal_flow_pending": false,
   "recent_trades": [
-    {
-      "symbol": "QBTS",
-      "entry_session": "2026-11-09",
-      "exit_session": "2026-11-10",
-      "qty": "1.769827749",
-      "entry_price": "10.566",
-      "exit_price": "10.73",
-      "fees": "0",
-      "pnl": "0.290251750836",
-      "reason": "hold_period"
-    },
     {
       "symbol": "SITM",
       "entry_session": "2026-11-09",
@@ -351,6 +341,17 @@
       "exit_price": "8.73",
       "fees": "0",
       "pnl": "-1.201285071520",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "NBIS",
+      "entry_session": "2026-11-17",
+      "exit_session": "2026-11-18",
+      "qty": "0.160938153",
+      "entry_price": "109.918",
+      "exit_price": "102.276",
+      "fees": "0",
+      "pnl": "-1.229889365226",
       "reason": "hold_period"
     }
   ],
@@ -595,9 +596,9 @@
         }
       }
     ],
-    "cost_drag": "1.227003651517746821",
+    "cost_drag": "1.253843706782248821",
     "trades_closed": 0,
-    "pending_trades": 0,
+    "pending_trades": 1,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
