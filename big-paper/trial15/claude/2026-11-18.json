@@ -1,0 +1,62 @@
+{
+ "status": "read",
+ "note": "16 new, 0 failed",
+ "spent_usd": 0.0020274750000000004,
+ "by_symbol": {
+  "ASML": {
+   "sentiment": 0.1,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "BE": {
+   "sentiment": -0.2,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "COIN": {
+   "sentiment": 0.3,
+   "materiality": 0.35,
+   "items": 1.0
+  },
+  "HOOD": {
+   "sentiment": -0.05,
+   "materiality": 0.175,
+   "items": 2.0
+  },
+  "IONQ": {
+   "sentiment": 0.4,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "MU": {
+   "sentiment": 0.2,
+   "materiality": 0.25,
+   "items": 1.0
+  },
+  "ORCL": {
+   "sentiment": -0.05000000000000002,
+   "materiality": 0.35,
+   "items": 2.0
+  },
+  "PANW": {
+   "sentiment": 0.2,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "RBLX": {
+   "sentiment": -0.05000000000000002,
+   "materiality": 0.325,
+   "items": 2.0
+  },
+  "RBRK": {
+   "sentiment": 0.06666666666666667,
+   "materiality": 0.13333333333333333,
+   "items": 3.0
+  },
+  "SOFI": {
+   "sentiment": 0.1,
+   "materiality": 0.2,
+   "items": 1.0
+  }
+ }
+}
