@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -105,3 +106,29 @@ def test_trial_log_lists_every_trial_on_the_dashboard() -> None:
     assert numbers[0] == "1 to 5" and "16" in numbers
     assert all(t.verdict for t in rows())
     assert "Defense contract awards" in html and "<table" in html
+
+
+def test_trial_reads_the_spent_holdout_through_its_own_reader_and_the_wall_stays(
+    tmp_path: Path,
+) -> None:
+    """The owner's decision of 2026-11-19: trial 20 reads 2026-07-01 to 2026-10-23 through
+    its own minute reader; the news brain's reader still refuses those days."""
+    from stoa import clock
+    from stoa.commod.run18 import Minutes, TrialMinuteStore
+    from stoa.newsbrain import sealed
+    from stoa.newsbrain.timing import MinuteStore
+
+    day = date(2026, 7, 29)
+    t0 = pd.Timestamp(clock.at_ny(day, "10:35"))
+    (tmp_path / "2026-07").mkdir()
+    pd.DataFrame(
+        {
+            "symbol": ["UNG", "UNG"],
+            "t": [t0, t0 + pd.Timedelta(minutes=1)],
+            "o": np.array([12.5, 12.6], dtype="float32"),
+            "c": np.array([12.55, 12.65], dtype="float32"),
+        }
+    ).to_parquet(tmp_path / "2026-07" / "group0.parquet")
+    assert Minutes(TrialMinuteStore(tmp_path))("UNG", day, "10:35") == 12.5
+    with pytest.raises(sealed.HoldoutBreach):
+        MinuteStore(tmp_path).day("UNG", day)

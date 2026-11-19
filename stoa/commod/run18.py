@@ -80,8 +80,14 @@ def common() -> dict[str, Any]:
         "earlier years, and degree days count only if posted before the release",
         "run_once": "run once; no tuning after the run; a bug that invalidates the run is logged "
         "as void with its reason and the rerun is a new trial number",
-        "rerun_of": f"trial {t18.VOID[0]}, void: {t18.VOID[1]}; same rules, the fix only skips "
-        "reports before the window, which no rule traded",
+        "rerun_of": "; ".join(f"trial {n}, void: {why}" for n, why in t18.VOID)
+        + "; same rules: the fixes only skip reports before the window, which no rule traded, "
+        "and read the window's minute bars through the trial's own reader",
+        "holdout_months": "2026-07-01 to 2026-10-23 were trial 12's holdout, spent on "
+        "2026-10-27; by the owner's decision of 2026-11-19 (docs/DECISIONS.md, 'Trials 17 and "
+        "20 read the spent holdout months') they are ordinary out-of-sample history here, read "
+        "through the trial's own minute reader (TrialMinuteStore); the news brain's wall "
+        "(stoa/newsbrain/sealed.py) stays in place for the news brain's loaders",
         "claude": "Claude never reads a historical EIA report; the numbers go straight from the "
         "API into code",
     }
@@ -153,14 +159,51 @@ def daily(sym: str) -> pd.DataFrame:
     return df[~df.index.duplicated(keep="last")].sort_index()
 
 
+class TrialMinuteStore:
+    """This trial's own reader of the compacted monthly minute files (the files the news
+    brain's ``MinuteStore`` reads). It does not go through the news brain's holdout wall: by
+    the owner's decision of 2026-11-19 (docs/DECISIONS.md, "Trials 17 and 20 read the spent
+    holdout months") this trial reads 2026-07-01 to 2026-10-23 as ordinary history, while the
+    wall stays in place for the news brain's own loaders. Same files, columns and rounding."""
+
+    def __init__(self, root: Path | None = None) -> None:
+        from stoa.newsbrain.alpaca_pull import MINUTE_STORE_DIR
+
+        self.root = root if root is not None else MINUTE_STORE_DIR
+        self._index: dict[str, dict[str, Path]] = {}
+
+    def _month(self, stamp: str) -> dict[str, Path]:
+        if stamp not in self._index:
+            out: dict[str, Path] = {}
+            for path in sorted((self.root / stamp).glob("*.parquet")):
+                syms = pd.read_parquet(path, columns=["symbol"])["symbol"].astype(str).unique()
+                for s in syms:
+                    out[s] = path
+            self._index[stamp] = out
+        return self._index[stamp]
+
+    def day(self, symbol: str, day: date) -> pd.DataFrame:
+        path = self._month(f"{day.year:04d}-{day.month:02d}").get(symbol)
+        if path is None:
+            return pd.DataFrame(columns=["t", "o", "c"])
+        lo = pd.Timestamp(clock.session(day).open) - pd.Timedelta(hours=6)
+        hi = pd.Timestamp(clock.session(day).close)
+        df = pd.read_parquet(
+            path,
+            columns=["symbol", "t", "o", "c"],
+            filters=[("symbol", "==", symbol), ("t", ">=", lo), ("t", "<=", hi)],
+        )
+        for col in ("o", "c"):  # float32 in the compacted files: back to the price as stored
+            df[col] = df[col].astype("float64").round(4)
+        return df[["t", "o", "c"]]
+
+
 class Minutes:
     """The open of the first minute bar at or after a time, within 30 minutes: the compacted
-    store through October 2026, the trial 18 tail after."""
+    store through October 2026 (read by the trial's own reader), the trial's tail after."""
 
-    def __init__(self) -> None:
-        from stoa.newsbrain.timing import MinuteStore
-
-        self.store = MinuteStore()
+    def __init__(self, store: TrialMinuteStore | None = None) -> None:
+        self.store = store if store is not None else TrialMinuteStore()
         self.tail: dict[str, pd.DataFrame] = {}
 
     def _day(self, sym: str, day: date) -> pd.DataFrame:

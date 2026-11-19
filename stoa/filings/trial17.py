@@ -148,8 +148,11 @@ def spec_a() -> dict[str, Any]:
         "account": f"${EQUITY:,.0f} (the big paper account); fractional shares",
         "window": f"{DATA_START} (the first bar on disk; Alpaca has no bars before 2016, so "
         f"2015 cannot be traded) to {END}, the latest close at registration. The months "
-        "2026-07-01 to 2026-10-23 were trial 12's holdout, spent on 2026-10-27; here they "
-        "are ordinary out-of-sample months, as the owner set the window",
+        "2026-07-01 to 2026-10-23 were trial 12's holdout, spent on 2026-10-27; by the "
+        "owner's decision of 2026-11-19 (docs/DECISIONS.md, 'Trials 17 and 20 read the spent "
+        "holdout months') they are ordinary out-of-sample months here. The trial reads daily "
+        "bars and its own EDGAR pull, never the news brain's loaders, whose holdout wall "
+        "(stoa/newsbrain/sealed.py) stays in place for the news brain",
         "benchmarks": "SPY bought with all equity at the first rebalance open and held; and "
         "the equal weight portfolio of every ranked filer in the same filters (all five "
         "quintiles), same rules and costs",

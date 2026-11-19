@@ -39,15 +39,22 @@ import pandas as pd
 from stoa import clock, metrics, wide
 from stoa.newsbrain.panel import FEE
 
-# Trial 18 was pre-registered 2026-11-19 and crashed before any result (reports from before
-# the window reached the trading calendar); it is void in the registry, and the same rules
-# run as trial 19.
-TRIAL = 19
+# Trials 18 and 19 (these rules) each crashed before any result and are void in the
+# registry; the same rules run as trial 20 (docs/DECISIONS.md, "Trials 17 and 20 read the
+# spent holdout months").
+TRIAL = 20
 VOID = (
-    18,
-    "the run crashed before any result: reports from before the trading window "
-    "(EIA history back to 1982) were looked up in the trading calendar, which starts in "
-    "2015; no trade, return or grade was produced",
+    (
+        18,
+        "the run crashed before any result: reports from before the trading window "
+        "(EIA history back to 1982) were looked up in the trading calendar, which starts in "
+        "2015; no trade, return or grade was produced",
+    ),
+    (
+        19,
+        "the run crashed before any result: 18b's minute bars for 2026-07 went through the "
+        "news brain's holdout wall, which refused them; no trade, return or grade was produced",
+    ),
 )
 SPEC_A = f"trial{TRIAL}a:eia:next_open:v1"
 SPEC_B = f"trial{TRIAL}b:eia:intraday:v1"
