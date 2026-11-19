@@ -102,6 +102,35 @@ TRIALS: tuple[Trial, ...] = (
         "FAIL",
         "680 trades, 42.2% beat SPY after costs, -0.08% a trade.",
     ),
+    Trial(
+        "17",
+        "Filings that barely change (Lazy Prices)",
+        "",
+        "In progress",
+        "Pre-registered rules; waits for the EDGAR pull of every liquid filer.",
+    ),
+    Trial(
+        "18",
+        "EIA weekly reports (first run)",
+        "",
+        "Void",
+        "Crashed before any result on pre-2015 EIA history; fixed, rerun as trial 20.",
+    ),
+    Trial(
+        "19",
+        "EIA weekly reports (second run)",
+        "",
+        "Void",
+        "Crashed before any result at the news brain's holdout wall; rerun as trial 20.",
+    ),
+    Trial(
+        "20",
+        "EIA weekly reports: UNG and USO after a bullish surprise",
+        "2026-11-19",
+        "FAIL",
+        "Next open: -59.8%, 181 trades, 47% won. Same day from 10:35 am: -24.1%, 160 trades, "
+        "38% won. Holding both funds: -13.4%.",
+    ),
 )
 
 

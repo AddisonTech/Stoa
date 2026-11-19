@@ -789,3 +789,22 @@ Decided by the owner 2026-11-19, before trial 20 or 17a ran.
 **The wall stays.** `stoa/newsbrain/sealed.py` keeps the news brain's loaders (minute bars, 9:45 am prices, news, filings) off those months for every news brain model, unchanged. Trials 17 and 20 do not lift it or call around it: they read through their own paths. Trial 17 reads daily bars and its own EDGAR pull, which never went through the news brain's loaders. Trial 20 reads the same compacted minute files through its own reader in `stoa/commod/run18.py`, and a test holds that the news brain's reader still refuses a holdout day. The exemption is written into both specs.
 
 **Trials 18 and 19, void.** Trial 18 (pre-registered 2026-11-19) crashed before any result: the EIA API returns history back to 1982 and the trade functions looked those reports up in the trading calendar, which starts in 2015; fixed so reports before the window only feed the averages and the scaling (a test pins it). Trial 19, the same rules, crashed before any result: its 18b minute bars for July 2026 went through the news brain's wall, which refused them. No trade, return or grade came out of either; both are void in the registry with their reasons, and trial 20 runs the same rules once.
+
+## Trial 20: the EIA weekly reports, graded
+
+Run once 2026-11-19 as pre-registered (trial 18's rules; specs b11b7f658189d4c8 and 3963a636b6dd6943, stoa-state 32fd2a5; graded entries 2337129b38cd and 14e649eb4e71, stoa-state 94c2bfe). The known-answer harness passed first. Window 2016-01-04 to 2026-11-13, $100,000 in two sleeves (UNG for gas, USO for oil), against holding both funds (-13.4%; UNG alone -92.6%, USO +65.7%). Both fail.
+
+| | 20a: next open, hold | 20b: 10:35 am to the close | Holding both |
+|---|---|---|---|
+| Total return | -59.8% | -24.1% | -13.4% |
+| Sharpe | -0.54 | -0.70 | 0.14 |
+| Max drawdown | 63.6% | 26.6% | 74.9% |
+| Trades | 181 | 160 | |
+| Made money after costs | 47.0% | 38.1% | |
+| Average trade after costs | -0.78% | -0.35% | |
+| Deflated Sharpe | 0.000 | 0.000 | |
+| Tune windows beaten | 0 of 3 | 0 of 3 | |
+
+Each passes only drawdown against holding both funds (it holds the funds a third and a twentieth of the time) and the trade count; it fails Sharpe, Sortino, beating cash, the deflated Sharpe, the 25% drawdown cap, the tune windows, the 54% hit rate and the average trade. Both fuels lose on their own (20a: gas -1.06% a trade, oil -0.63%; 20b: gas -0.25%, oil -0.40%). Diagnostics, not graded: BOIL on bullish gas surprises -0.76% a trade over 56, KOLD on bearish ones +0.30% over 32 (median -0.37%).
+
+**In plain words.** A bigger draw than the rebuilt 5-year average does not lead UNG or USO higher, not the next morning and not from 10:35 am on the day; by 10:35 am the report has been out five minutes and what is left does not pay the spread. Nothing is wired into Stoa. Trying again with changes is a new trial.
