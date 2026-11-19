@@ -30,7 +30,9 @@ yahoo = ["yfinance>=0.2.40"]
 # FinBERT for the morning news sweep and the news research. CPU torch is enough
 # for the sweep; install CUDA torch first for GPU scoring.
 reader = ["torch>=2.4", "transformers>=4.44"]
-dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10", "pandas-stubs", "types-PyYAML", "scipy-stubs"]
+# Backing up and restoring data/ through the private Hugging Face dataset repo.
+backup = ["huggingface_hub>=1.0", "zstandard>=0.23"]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10", "pandas-stubs", "types-PyYAML", "scipy-stubs", "zstandard>=0.23"]
 
 [project.scripts]
 stoa = "stoa.cli:main"

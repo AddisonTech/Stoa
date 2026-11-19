@@ -487,6 +487,50 @@ Only set `STOA__MODEL__USE_TEXT=true` if the ablation shows lower log loss with 
 
 Local runs keep state in `state/`. The workflow keeps its own copy on the `stoa-state` branch. Do not run both against the same Alpaca account on the same day.
 
+## 15a. Moving to a new machine
+
+The git-ignored `data/` folder (bars, minute bars, EDGAR filings and scores, EIA and NOAA data, trained models, about 56 GB) is backed up to the **private** Hugging Face dataset repo `ASmith91/stoa-data` (free tier, 100 GB of private storage shared with `ASmith91/stoa-feed`). The repo holds `manifest.json` (every file's path, size and SHA-256) and `shards/<folder>/<run>-<n>.tar.zst` (tar archives with zstd, each under 4 GB of input, the folder layout kept inside). Files go in byte for byte; most of the folder is already Parquet with zstd.
+
+Left out on purpose: logs (`*.log`, `*.out`, `*.err`, every `logs/` folder except the filings pipeline's `filings/logs/*.jsonl` progress files, which hold the EDGAR pull log), caches (`__pycache__`) and temp files. Never uploaded: `.env`, the `state-branch` checkout, `state/`. Before packing, the backup checks every file it will upload (file names, text, Parquet string columns, pickles, zip members) for key and token shapes and for every value in `.env`, and stops on any match, printing the path and the pattern only.
+
+**One-time setup on any machine** (the token never goes in the repo):
+
+1. Sign in to huggingface.co as ASmith91, open Settings > Access Tokens, create a token with write access to your own repos (read is enough for a restore-only machine).
+2. `pip install -e ".[dev,backup]"` (adds `huggingface_hub` and `zstandard`).
+3. `hf auth login` and paste the token; answer no to the git credential question. It is stored in `~/.cache/huggingface/token`, outside the repo.
+
+**Restore on the new laptop:**
+
+```bash
+git clone https://github.com/AddisonTech/Stoa.git && cd Stoa
+python -m venv .venv && .venv\Scripts\activate
+pip install -e ".[dev,backup]"
+hf auth login
+python scripts/data_restore.py
+```
+
+It downloads one shard at a time, unpacks into `data/`, checks every file's size and SHA-256 against the manifest, restores modification times, and deletes each shard after unpacking. It exits 1 and lists the files if anything is missing or differs. Add `--verify` to re-hash the whole folder at the end, or `--dest <folder>` to restore somewhere else as a test. It refuses a `data/` folder that already has files unless you pass `--force`.
+
+**Recreate `.env` by hand** at the repository root (`KEY=value` lines; never copied by the backup). It needs:
+
+- `ALPACA_PAPER_KEY_ID`
+- `ALPACA_PAPER_SECRET`
+- `EIA_API_KEY`
+- `STOA_SEC_USER_AGENT` (the SEC contact string: a name and an email address)
+
+The Hugging Face token is not in `.env`; it comes from `hf auth login`.
+
+**Back up again after new data:**
+
+```bash
+python scripts/data_backup.py --plan   # sizes, what goes up, what is skipped
+python scripts/data_backup.py          # pack and upload only what changed
+```
+
+Only files that are new or whose size or modification time changed since the repo's manifest are packed. New shards go up first (with `upload_large_folder`, which huggingface_hub 2.x folded into `upload_folder`; either resumes if interrupted), then the manifest, then shards nothing points at any more are deleted. Packed shards wait in `%TEMP%\stoa-data-backup` until they are up, so rerunning the same command after an interruption finishes the upload first. `--pack-only` packs without uploading; `--full` repacks every file and drops all old shards. The script confirms the repo is private before uploading and refuses otherwise, and it prints the private storage in use at the end. Keep the total under 90 GB. If more than 10% of the backed-up files are missing from `data\` (for example on a machine where it was cleared after the backup, or before a restore), the script stops instead of dropping them from the backup; restore first, or pass `--allow-deletes` when the files were removed on purpose.
+
+On 2026-11-19 the Dell's `data\` was cleared after a check that every shard was on Hugging Face with the right size and SHA-256 and every local file matched the manifest. Only the 226 log and cache files the backup skips are left there. Do not run `data_backup.py` on the Dell again without restoring first.
+
 ## No alerts at all
 
 1. In the ntfy app, check the topic name matches the `STOA_NTFY_TOPIC` secret exactly.
