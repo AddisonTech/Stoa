@@ -50,6 +50,7 @@ DOWNLOADS = 24  # documents in flight across them
 CIKS = Path("data/newsbrain/sec/ciks.parquet")
 WIDE_BARS = Path("data/bars/wide")
 SUBMISSIONS = Path("data/sec")
+RAW_ROW_GROUP = 4
 RAW_COLUMNS = ["cik", "accn", "form", "filed", "accepted", "report_date", "doc", "status", "raw"]
 
 
@@ -184,12 +185,18 @@ def have(cik: int) -> set[str]:
     return set(df.loc[df["status"] == "ok", "accn"])
 
 
-def write(df: pd.DataFrame, path: Path) -> None:
+def write(df: pd.DataFrame, path: Path, row_group_size: int | None = None) -> None:
     from stoa.files import replace_file
 
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
-    df.to_parquet(tmp, index=False, compression="zstd", compression_level=PARQUET_LEVEL)
+    df.to_parquet(
+        tmp,
+        index=False,
+        compression="zstd",
+        compression_level=PARQUET_LEVEL,
+        row_group_size=row_group_size,
+    )
     replace_file(tmp, path)
 
 
@@ -254,7 +261,8 @@ class Puller:
         if old is not None:
             new = pd.concat([old[old["accn"].isin(done)], new], ignore_index=True)
         new["accepted"] = pd.to_datetime(new["accepted"], utc=True)
-        write(new.sort_values("filed").reset_index(drop=True), raw_path(cik))
+        # small row groups: the parse can then hold one filing at a time
+        write(new.sort_values("filed").reset_index(drop=True), raw_path(cik), RAW_ROW_GROUP)
         return {
             "cik": cik,
             "filings": len(idx),

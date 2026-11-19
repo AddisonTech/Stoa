@@ -35,9 +35,10 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pyarrow.parquet as pq
 
 from stoa.filings import LOGS, RAW, TEXT
-from stoa.filings.pull import write
+from stoa.filings.pull import RAW_COLUMNS, write
 from stoa.newsbrain.pace import log_progress
 
 log = logging.getLogger(__name__)
@@ -228,11 +229,18 @@ def parse_file(path: Path) -> dict[str, Any]:
         old = pd.read_parquet(out, columns=["parse_version"])
         if set(old["parse_version"]) <= {VERSION}:
             return {"cik": cik, "skipped": True}
-    raw = pd.read_parquet(path)
-    raw = raw[raw["status"] == "ok"]
+    meta = pd.read_parquet(path, columns=[c for c in RAW_COLUMNS if c != "raw"])
     rows = []
-    for r in raw.itertuples(index=False):
-        p = parse_doc(str(r.raw), str(r.form))
+    # one filing's text in memory at a time: a filer's raw table can run to gigabytes
+    texts = (
+        str(v)
+        for b in pq.ParquetFile(path).iter_batches(batch_size=1, columns=["raw"])
+        for v in b.column(0).to_pylist()
+    )
+    for r, text in zip(meta.itertuples(index=False), texts, strict=True):
+        if r.status != "ok":
+            continue
+        p = parse_doc(text, str(r.form))
         rows.append(
             {
                 "cik": cik,
