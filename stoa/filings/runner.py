@@ -139,6 +139,30 @@ def spreads(
     return out
 
 
+def coverage() -> dict[str, Any]:
+    """Every filer whose stock met the liquidity floor on any session since 2015-12-01 (bars
+    through the window's end) has been through the pull: its index read and every filing
+    fetched. The trial runs only on a complete universe."""
+    from stoa.filings import pull
+
+    liquid = pull.ever_liquid()
+    book = pull.filers()
+    need = {c for c, syms in book.items() if any(s in liquid for s in syms)}
+    seen: set[int] = set()
+    log_path = ROOT / "logs" / "pull.jsonl"
+    for line in log_path.read_text(encoding="utf-8").splitlines():
+        rec = json.loads(line)
+        if "cik" in rec and "error" not in rec:
+            seen.add(int(rec["cik"]))
+    missing = sorted(need - seen)
+    return {
+        "liquid_filers": len(need),
+        "pulled": len(need & seen),
+        "missing": len(missing),
+        "missing_sample": missing[:20],
+    }
+
+
 def run_a(registry: Registry, out: Path) -> dict[str, Any]:
     spec = t17.spec_a()
     if not t17.preregistered(registry, t17.NAME_A, spec):
@@ -151,6 +175,10 @@ def run_a(registry: Registry, out: Path) -> dict[str, Any]:
     t17.save(report, out / "report.json")
     if report["known_answer"]["verdict"] != "honest":
         raise Stop("the look-ahead known-answer harness failed")
+    report["coverage"] = coverage()
+    t17.save(report, out / "report.json")
+    if report["coverage"]["missing"]:
+        raise Stop(f"the filings universe is not complete: {report['coverage']}")
     filings = t17.load_filings()
     prices, sessions = prices_for(filings)
     first = t17.first_rebalance(sessions)
