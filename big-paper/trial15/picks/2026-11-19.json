@@ -1,0 +1,121 @@
+{
+ "session": "2026-11-19",
+ "model": "t9-frozen",
+ "picks": [
+  {
+   "rank": 1,
+   "symbol": "DELL",
+   "conviction": 0.5720580705369123,
+   "detail": "conviction 0.572, news tone +0.39, articles 1, surprise +0.0, filing tone +0.00, ripple +0.00, last day -3.0%",
+   "saw": {
+    "symbol": "DELL",
+    "conviction": 0.5720580705369123,
+    "p": 0.6274509803921569,
+    "adv": 2810183034.0385003,
+    "sent": 0.38639330863952637,
+    "n": 1.0,
+    "surprise": 0.02104894540899308,
+    "filing_tone": 0.0,
+    "ripple": 0.0,
+    "ret_1": -0.029988537439201934,
+    "ret_5": -0.1620905587668593,
+    "vol_20": 0.06635131284325706,
+    "log_adv": 21.75651545483927,
+    "coverage": 1.208960345836975,
+    "first_break": 1.0
+   }
+  },
+  {
+   "rank": 2,
+   "symbol": "MSTR",
+   "conviction": 0.5713798491312038,
+   "detail": "conviction 0.571, news tone +0.00, articles 0, surprise +0.0, filing tone +0.00, ripple +0.08, last day -6.4%",
+   "saw": {
+    "symbol": "MSTR",
+    "conviction": 0.5713798491312038,
+    "p": 0.6274509803921569,
+    "adv": 2270737758.373,
+    "sent": 0.0,
+    "n": 0.0,
+    "surprise": 0.0,
+    "filing_tone": 0.0,
+    "ripple": 0.08050825702434912,
+    "ret_1": -0.06404145077720214,
+    "ret_5": -0.2617899468737229,
+    "vol_20": 0.04142481664522135,
+    "log_adv": 21.54337061932601,
+    "coverage": 0.0,
+    "first_break": 0.0
+   }
+  },
+  {
+   "rank": 3,
+   "symbol": "CRWV",
+   "conviction": 0.5690113836120503,
+   "detail": "conviction 0.569, news tone +0.22, articles 1, surprise +0.4, filing tone +0.00, ripple -0.09, last day -4.1%",
+   "saw": {
+    "symbol": "CRWV",
+    "conviction": 0.5690113836120503,
+    "p": 0.6274509803921569,
+    "adv": 3676470885.4089994,
+    "sent": 0.22247546911239624,
+    "n": 1.0,
+    "surprise": 0.3593267356995838,
+    "filing_tone": 0.0,
+    "ripple": -0.08616363726871686,
+    "ret_1": -0.041290839847664906,
+    "ret_5": -0.21293401349350016,
+    "vol_20": 0.08790311298619653,
+    "log_adv": 22.025219130463796,
+    "coverage": 1.5040773967762742,
+    "first_break": 1.0
+   }
+  },
+  {
+   "rank": 4,
+   "symbol": "MRNA",
+   "conviction": 0.5676714915184339,
+   "detail": "conviction 0.568, news tone +0.44, articles 2, surprise +0.1, filing tone +0.00, ripple +0.00, last day -4.8%",
+   "saw": {
+    "symbol": "MRNA",
+    "conviction": 0.5676714915184339,
+    "p": 0.6274509803921569,
+    "adv": 2974811178.6227503,
+    "sent": 0.44076493978500364,
+    "n": 2.0,
+    "surprise": 0.08796685597493424,
+    "filing_tone": 0.0,
+    "ripple": 0.0,
+    "ret_1": -0.04840425531914905,
+    "ret_5": -0.2086935542241345,
+    "vol_20": 0.06439265903310025,
+    "log_adv": 21.813446404559233,
+    "coverage": 0.8892620594862357,
+    "first_break": 0.5
+   }
+  },
+  {
+   "rank": 5,
+   "symbol": "MRVL",
+   "conviction": 0.5635664969828478,
+   "detail": "conviction 0.564, news tone +0.89, articles 1, surprise +1.1, filing tone +0.00, ripple +0.00, last day -2.2%",
+   "saw": {
+    "symbol": "MRVL",
+    "conviction": 0.5635664969828478,
+    "p": 0.5909090909090909,
+    "adv": 5414292456.5645,
+    "sent": 0.8879271149635315,
+    "n": 1.0,
+    "surprise": 1.0806357851380934,
+    "filing_tone": 0.0,
+    "ripple": 0.0,
+    "ret_1": -0.02151405136479778,
+    "ret_5": -0.13779620853080576,
+    "vol_20": 0.07502575608584945,
+    "log_adv": 22.41230804525447,
+    "coverage": 1.0116009116784799,
+    "first_break": 1.0
+   }
+  }
+ ]
+}

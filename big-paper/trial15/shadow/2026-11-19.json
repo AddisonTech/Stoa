@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-19",
+ "version": "t15-learn-20261112",
+ "picks": [
+  "IONQ",
+  "MSTR",
+  "ASTS",
+  "AAOI",
+  "CTVA"
+ ],
+ "sha256": "d806de51fa194a5b5749848999b57310cc2fcf565b32e8a7f09d84051237c809",
+ "locked_at": "2026-11-19T14:04:25.155584+00:00"
+}

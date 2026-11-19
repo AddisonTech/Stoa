@@ -1,0 +1,87 @@
+{
+ "status": "read",
+ "note": "23 new, 0 failed",
+ "spent_usd": 0.0028531850000000003,
+ "by_symbol": {
+  "ASTS": {
+   "sentiment": 0.0,
+   "materiality": 0.35,
+   "items": 2.0
+  },
+  "BE": {
+   "sentiment": 0.1,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "COIN": {
+   "sentiment": 0.30000000000000004,
+   "materiality": 0.32499999999999996,
+   "items": 2.0
+  },
+  "CRWV": {
+   "sentiment": 0.2,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "DELL": {
+   "sentiment": 0.2,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "HL": {
+   "sentiment": 0.1,
+   "materiality": 0.275,
+   "items": 2.0
+  },
+  "INTC": {
+   "sentiment": 0.3333333333333333,
+   "materiality": 0.3666666666666667,
+   "items": 3.0
+  },
+  "IONQ": {
+   "sentiment": 0.1,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "MRNA": {
+   "sentiment": 0.15,
+   "materiality": 0.125,
+   "items": 2.0
+  },
+  "MRVL": {
+   "sentiment": 0.0,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "MU": {
+   "sentiment": 0.5,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "NOW": {
+   "sentiment": 0.05,
+   "materiality": 0.125,
+   "items": 2.0
+  },
+  "ORCL": {
+   "sentiment": 0.3,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "OSCR": {
+   "sentiment": 0.2,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "PAAS": {
+   "sentiment": 0.1,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "UNH": {
+   "sentiment": -0.5,
+   "materiality": 0.6,
+   "items": 1.0
+  }
+ }
+}
