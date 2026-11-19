@@ -39,10 +39,20 @@ import pandas as pd
 from stoa import clock, metrics, wide
 from stoa.newsbrain.panel import FEE
 
-SPEC_A = "trial18a:eia:next_open:v1"
-SPEC_B = "trial18b:eia:intraday:v1"
-NAME_A = "trial18a:preregistration"
-NAME_B = "trial18b:preregistration"
+# Trial 18 was pre-registered 2026-11-19 and crashed before any result (reports from before
+# the window reached the trading calendar); it is void in the registry, and the same rules
+# run as trial 19.
+TRIAL = 19
+VOID = (
+    18,
+    "the run crashed before any result: reports from before the trading window "
+    "(EIA history back to 1982) were looked up in the trading calendar, which starts in "
+    "2015; no trade, return or grade was produced",
+)
+SPEC_A = f"trial{TRIAL}a:eia:next_open:v1"
+SPEC_B = f"trial{TRIAL}b:eia:intraday:v1"
+NAME_A = f"trial{TRIAL}a:preregistration"
+NAME_B = f"trial{TRIAL}b:preregistration"
 DECIDED = date(2026, 11, 16)
 FUNDS = {"gas": "UNG", "oil": "USO"}
 DIAGNOSTIC = {"gas_bull": "BOIL", "gas_bear": "KOLD"}
@@ -160,6 +170,8 @@ def trades_next_open(
     cur: dict[str, Any] | None = None
     bull = sig[sig["bullish"]]
     for released, z in zip(pd.to_datetime(bull["released"], utc=True), bull["z"], strict=True):
+        if released.tz_convert("America/New_York").date() < START:
+            continue  # before the window: EIA history only feeds the averages and scaling
         e = entry_session(released)
         if e not in idx or e > end:
             continue
@@ -223,7 +235,12 @@ def trades_intraday(
     hits = sig[sig[side]]
     for rel, z in zip(pd.to_datetime(hits["released"], utc=True), hits["z"], strict=True):
         day = rel.tz_convert("America/New_York").date()
-        if day > end or not clock.is_session(day) or pd.Timestamp(day) not in bars.index:
+        if (
+            day < START
+            or day > end
+            or not clock.is_session(day)
+            or pd.Timestamp(day) not in bars.index
+        ):
             continue
         t_entry = pd.Timestamp(clock.at_ny(day, INTRADAY_ENTRY))
         if t_entry <= rel:

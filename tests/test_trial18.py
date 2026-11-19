@@ -46,6 +46,22 @@ def test_entry_is_the_first_open_after_release() -> None:
     assert t18.entry_session(early) == date(2024, 3, 14)
 
 
+def test_reports_before_the_window_feed_history_but_never_trade() -> None:
+    """EIA history reaches back decades, before the trading calendar starts: those reports
+    feed the averages and the scaling only, and no trade function looks them up."""
+    from stoa import clock
+
+    rel = pd.to_datetime(["1988-11-16 15:30", "2010-01-07 15:30", "2016-03-10 15:30"], utc=True)
+    sig = pd.DataFrame({"released": rel, "z": [-3.0, -3.0, -3.0], "bullish": True})
+    days = clock.sessions_between(date(2016, 1, 4), date(2016, 4, 29))
+    idx = pd.DatetimeIndex([pd.Timestamp(d) for d in days])
+    bars = pd.DataFrame({"open": 10.0, "close": 10.0, "volume": 1e8}, index=idx)
+    a = t18.trades_next_open(sig, "gas", "UNG", bars, date(2016, 4, 29))
+    b = t18.trades_intraday(sig, "gas", "UNG", bars, lambda *_: 10.0, date(2016, 4, 29))
+    assert [t.entry_day for t in a] == [date(2016, 3, 11)]
+    assert [t.entry_day for t in b] == [date(2016, 3, 10)]
+
+
 def test_known_answer_is_honest() -> None:
     from stoa.commod.known18 import known_answer
 

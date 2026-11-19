@@ -80,6 +80,8 @@ def common() -> dict[str, Any]:
         "earlier years, and degree days count only if posted before the release",
         "run_once": "run once; no tuning after the run; a bug that invalidates the run is logged "
         "as void with its reason and the rerun is a new trial number",
+        "rerun_of": f"trial {t18.VOID[0]}, void: {t18.VOID[1]}; same rules, the fix only skips "
+        "reports before the window, which no rule traded",
         "claude": "Claude never reads a historical EIA report; the numbers go straight from the "
         "API into code",
     }
@@ -206,7 +208,7 @@ def grade(
             **t18.trade_stats(trades),
         },
         returns=r.reset_index(drop=True),
-        tags=["trial18"],
+        tags=[f"trial{t18.TRIAL}"],
         now=datetime.now(UTC),
     )
     dsr = deflate(registry, list(r), variance_kind="backtest")
@@ -275,10 +277,10 @@ def run(registry: Registry, out: Path) -> dict[str, Any]:
     }
     eq_b = t18.equity_curve(tb, bars, END, intraday=True)
     report["18a"] = grade(
-        "trial18a:test", "a", eq_a, [t for v in ta.values() for t in v], bh, registry
+        f"trial{t18.TRIAL}a:test", "a", eq_a, [t for v in ta.values() for t in v], bh, registry
     )
     report["18b"] = grade(
-        "trial18b:test", "b", eq_b, [t for v in tb.values() for t in v], bh, registry
+        f"trial{t18.TRIAL}b:test", "b", eq_b, [t for v in tb.values() for t in v], bh, registry
     )
     boil = t18.trades_intraday(no_hol["gas"], "gas", "BOIL", bars["BOIL"], mins, END, "bullish")
     kold = t18.trades_intraday(no_hol["gas"], "gas", "KOLD", bars["KOLD"], mins, END, "bearish")
@@ -291,7 +293,7 @@ def run(registry: Registry, out: Path) -> dict[str, Any]:
     for nm, ts in (("boil", boil), ("kold", kold)):
         registry.append(
             kind="diagnostic",
-            name=f"trial18:diagnostic:{nm}",
+            name=f"trial{t18.TRIAL}:diagnostic:{nm}",
             config_hash=spec_hash(spec_b()),
             data_hash="trades",
             params={"spec": t18.SPEC_B, "symbol": nm.upper()},
@@ -322,7 +324,7 @@ def main(argv: list[str]) -> int:
         s = spec_a() if argv[1] == "a" else spec_b()
         print(json.dumps({"which": argv[1], "spec_hash": spec_hash(s), "written_now": wrote}))
         return 0
-    out = ROOT / "results" / f"trial18-{datetime.now(UTC).strftime('%Y%m%d-%H%M')}"
+    out = ROOT / "results" / f"trial{t18.TRIAL}-{datetime.now(UTC).strftime('%Y%m%d-%H%M')}"
     rep = run(reg, out)
     print(json.dumps({k: rep[k]["verdict"] for k in ("18a", "18b")} | {"out": str(out)}))
     return 0
