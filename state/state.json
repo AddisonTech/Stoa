@@ -13,9 +13,9 @@
     "equity": "100",
     "benchmark_close": "759.97"
   },
-  "last_close_session": "2026-11-18",
-  "last_close_equity": "83.39278583582",
-  "last_benchmark_close": "730.2",
+  "last_close_session": "2026-11-19",
+  "last_close_equity": "81.30333675723",
+  "last_benchmark_close": "715.87",
   "decided_sessions": [
     "2026-10-23",
     "2026-10-26",
@@ -35,7 +35,8 @@
     "2026-11-13",
     "2026-11-16",
     "2026-11-17",
-    "2026-11-18"
+    "2026-11-18",
+    "2026-11-19"
   ],
   "executed_sessions": [
     "2026-10-26",
@@ -610,11 +611,24 @@
         "reference_closes": {
           "MTUM": "65.205"
         }
+      },
+      {
+        "session": "2026-11-19",
+        "mode": "paper",
+        "broker_equity": "81.30333675723",
+        "adjusted_equity": "79.940877523759273179",
+        "benchmark_close": "715.87",
+        "trades_closed": 4,
+        "flow": "0",
+        "strategy": "mirror_trial15",
+        "reference_closes": {
+          "MTUM": "63.9"
+        }
       }
     ],
     "cost_drag": "1.362459233470726821",
     "trades_closed": 0,
-    "pending_trades": 4,
+    "pending_trades": 0,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
@@ -628,29 +642,29 @@
   "protective_stops": [],
   "stop_outs": [],
   "holdings_at_close": {
-    "CRCL": {
-      "qty": "0.309753108",
-      "close": "53.31"
+    "CRWV": {
+      "qty": "0.328555508",
+      "close": "44.91"
     },
-    "HOOD": {
-      "qty": "0.248329496",
-      "close": "69.17"
+    "DELL": {
+      "qty": "0.051185957",
+      "close": "312.54"
     },
-    "IONQ": {
-      "qty": "0.675477776",
-      "close": "23.48"
+    "MRNA": {
+      "qty": "0.087950295",
+      "close": "199.33"
+    },
+    "MRVL": {
+      "qty": "0.111720893",
+      "close": "138.47"
     },
     "MSTR": {
       "qty": "0.179137647",
-      "close": "90.32"
-    },
-    "QXO": {
-      "qty": "1.418041418",
-      "close": "11.25"
+      "close": "86.13"
     }
   },
   "last_reference_closes": {
-    "MTUM": "65.205"
+    "MTUM": "63.9"
   },
   "cap_raises": [],
   "cap_asks": [],
