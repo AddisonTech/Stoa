@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-20",
+ "version": "t15-learn-20261112",
+ "picks": [
+  "AMD",
+  "MSTR",
+  "MU",
+  "TEM",
+  "BKNG"
+ ],
+ "sha256": "795d092ba273d069a03eef7164fc83bf3860cadc365ebc4e6a1be15a9b6507f9",
+ "locked_at": "2026-11-20T14:03:20.407905+00:00"
+}

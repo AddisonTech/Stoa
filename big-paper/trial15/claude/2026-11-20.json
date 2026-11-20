@@ -1,0 +1,77 @@
+{
+ "status": "read",
+ "note": "21 new, 0 failed",
+ "spent_usd": 0.0024802250000000004,
+ "by_symbol": {
+  "AMAT": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "AMD": {
+   "sentiment": -0.4,
+   "materiality": 0.5,
+   "items": 1.0
+  },
+  "BE": {
+   "sentiment": 0.3,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "CRCL": {
+   "sentiment": 0.4,
+   "materiality": 0.35,
+   "items": 1.0
+  },
+  "CRWV": {
+   "sentiment": 0.26666666666666666,
+   "materiality": 0.2833333333333333,
+   "items": 3.0
+  },
+  "DELL": {
+   "sentiment": 0.2,
+   "materiality": 0.22499999999999998,
+   "items": 2.0
+  },
+  "HOOD": {
+   "sentiment": 0.0,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "MRVL": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 2.0
+  },
+  "MU": {
+   "sentiment": 0.0,
+   "materiality": 0.125,
+   "items": 2.0
+  },
+  "ORCL": {
+   "sentiment": 0.1,
+   "materiality": 0.15,
+   "items": 1.0
+  },
+  "SOFI": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 2.0
+  },
+  "TEM": {
+   "sentiment": 0.1,
+   "materiality": 0.15,
+   "items": 1.0
+  },
+  "TSM": {
+   "sentiment": -0.2,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "UNH": {
+   "sentiment": 0.0,
+   "materiality": 0.125,
+   "items": 2.0
+  }
+ }
+}
