@@ -57,7 +57,8 @@
     "2026-11-16",
     "2026-11-17",
     "2026-11-18",
-    "2026-11-19"
+    "2026-11-19",
+    "2026-11-20"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -86,33 +87,9 @@
   ],
   "pending_plan": null,
   "positions_meta": {
-    "MSTR": {
-      "entry_session": "2026-11-12",
-      "entry_price": "113.568",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
-    "DELL": {
-      "entry_session": "2026-11-19",
-      "entry_price": "334.076",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
     "CRWV": {
       "entry_session": "2026-11-19",
       "entry_price": "52.046",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
-    "MRNA": {
-      "entry_session": "2026-11-19",
-      "entry_price": "194.428",
       "entry_atr": "0",
       "ref_session": null,
       "ref_close": null,
@@ -125,10 +102,34 @@
       "ref_session": null,
       "ref_close": null,
       "stop_price": null
+    },
+    "AMD": {
+      "entry_session": "2026-11-20",
+      "entry_price": "463.048",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "MU": {
+      "entry_session": "2026-11-20",
+      "entry_price": "639.19",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
+    },
+    "UNH": {
+      "entry_session": "2026-11-20",
+      "entry_price": "340.248",
+      "entry_atr": "0",
+      "ref_session": null,
+      "ref_close": null,
+      "stop_price": null
     }
   },
   "realized_by_year": {
-    "2026": "-9.141520665542358"
+    "2026": "-15.247003856150698"
   },
   "llm_spend_by_month": {
     "2026-10": "0.000917"
@@ -139,39 +140,6 @@
   "withdrawn_since_milestone": "0",
   "principal_flow_pending": false,
   "recent_trades": [
-    {
-      "symbol": "STRL",
-      "entry_session": "2026-11-10",
-      "exit_session": "2026-11-11",
-      "qty": "0.066002329",
-      "entry_price": "293.626",
-      "exit_price": "304.024",
-      "fees": "0",
-      "pnl": "0.686292216942",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "CRDO",
-      "entry_session": "2026-11-11",
-      "exit_session": "2026-11-12",
-      "qty": "0.139987517",
-      "entry_price": "137.798",
-      "exit_price": "138.388",
-      "fees": "0",
-      "pnl": "0.082592635030",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "DELL",
-      "entry_session": "2026-11-11",
-      "exit_session": "2026-11-12",
-      "qty": "0.053078497",
-      "entry_price": "363.424",
-      "exit_price": "360.04",
-      "fees": "0",
-      "pnl": "-0.179617633848",
-      "reason": "hold_period"
-    },
     {
       "symbol": "IREN",
       "entry_session": "2026-11-11",
@@ -357,6 +325,39 @@
       "exit_price": "11.22",
       "fees": "0",
       "pnl": "-0.249575289568",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "DELL",
+      "entry_session": "2026-11-19",
+      "exit_session": "2026-11-20",
+      "qty": "0.051185957",
+      "entry_price": "334.076",
+      "exit_price": "289.68",
+      "fees": "0",
+      "pnl": "-2.272451746972",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "MRNA",
+      "entry_session": "2026-11-19",
+      "exit_session": "2026-11-20",
+      "qty": "0.087950295",
+      "entry_price": "194.428",
+      "exit_price": "206.15",
+      "fees": "0",
+      "pnl": "1.030953357990",
+      "reason": "hold_period"
+    },
+    {
+      "symbol": "MSTR",
+      "entry_session": "2026-11-12",
+      "exit_session": "2026-11-20",
+      "qty": "0.179137647",
+      "entry_price": "113.568",
+      "exit_price": "85.052",
+      "fees": "0",
+      "pnl": "-4.86398480162634",
       "reason": "hold_period"
     }
   ],
@@ -627,9 +628,9 @@
         }
       }
     ],
-    "cost_drag": "1.362459233470726821",
+    "cost_drag": "1.440451491326160821",
     "trades_closed": 0,
-    "pending_trades": 0,
+    "pending_trades": 3,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
