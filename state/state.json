@@ -59,7 +59,8 @@
     "2026-11-17",
     "2026-11-18",
     "2026-11-19",
-    "2026-11-20"
+    "2026-11-20",
+    "2026-11-23"
   ],
   "swept_sessions": [
     "2026-10-26",
@@ -88,50 +89,9 @@
     "2026-10-26"
   ],
   "pending_plan": null,
-  "positions_meta": {
-    "CRWV": {
-      "entry_session": "2026-11-19",
-      "entry_price": "52.046",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
-    "MRVL": {
-      "entry_session": "2026-11-19",
-      "entry_price": "153.06",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
-    "AMD": {
-      "entry_session": "2026-11-20",
-      "entry_price": "463.048",
-      "entry_atr": "0",
-      "ref_session": "2026-11-20",
-      "ref_close": "424.39",
-      "stop_price": null
-    },
-    "MU": {
-      "entry_session": "2026-11-20",
-      "entry_price": "639.19",
-      "entry_atr": "0",
-      "ref_session": null,
-      "ref_close": null,
-      "stop_price": null
-    },
-    "UNH": {
-      "entry_session": "2026-11-20",
-      "entry_price": "340.248",
-      "entry_atr": "0",
-      "ref_session": "2026-11-20",
-      "ref_close": "339.85",
-      "stop_price": null
-    }
-  },
+  "positions_meta": {},
   "realized_by_year": {
-    "2026": "-15.247003856150698"
+    "2026": "-17.565738533655295"
   },
   "llm_spend_by_month": {
     "2026-10": "0.000917"
@@ -142,61 +102,6 @@
   "withdrawn_since_milestone": "0",
   "principal_flow_pending": false,
   "recent_trades": [
-    {
-      "symbol": "IREN",
-      "entry_session": "2026-11-11",
-      "exit_session": "2026-11-12",
-      "qty": "0.934321418",
-      "entry_price": "20.646",
-      "exit_price": "19.396",
-      "fees": "0",
-      "pnl": "-1.167901772500",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "MU",
-      "entry_session": "2026-11-11",
-      "exit_session": "2026-11-12",
-      "qty": "0.024746505",
-      "entry_price": "779.504",
-      "exit_price": "786.002",
-      "fees": "0",
-      "pnl": "0.160802789490",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "AAOI",
-      "entry_session": "2026-11-12",
-      "exit_session": "2026-11-13",
-      "qty": "0.359285956",
-      "entry_price": "52.994",
-      "exit_price": "50.54",
-      "fees": "0",
-      "pnl": "-0.881687736024",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "BLDR",
-      "entry_session": "2026-11-12",
-      "exit_session": "2026-11-13",
-      "qty": "0.30257763",
-      "entry_price": "62.926",
-      "exit_price": "60.698",
-      "fees": "0",
-      "pnl": "-0.67414295964",
-      "reason": "hold_period"
-    },
-    {
-      "symbol": "ZS",
-      "entry_session": "2026-11-12",
-      "exit_session": "2026-11-13",
-      "qty": "0.10046327",
-      "entry_price": "189.522",
-      "exit_price": "191.578",
-      "fees": "0",
-      "pnl": "0.20655248312",
-      "reason": "hold_period"
-    },
     {
       "symbol": "AXON",
       "entry_session": "2026-11-13",
@@ -361,6 +266,61 @@
       "fees": "0",
       "pnl": "-4.86398480162634",
       "reason": "hold_period"
+    },
+    {
+      "symbol": "AMD",
+      "entry_session": "2026-11-20",
+      "exit_session": "2026-11-23",
+      "qty": "0.033279487",
+      "entry_price": "463.048",
+      "exit_price": "451.59",
+      "fees": "0",
+      "pnl": "-0.381316362046",
+      "reason": "kill_switch"
+    },
+    {
+      "symbol": "CRWV",
+      "entry_session": "2026-11-19",
+      "exit_session": "2026-11-23",
+      "qty": "0.365606619",
+      "entry_price": "52.046",
+      "exit_price": "48.422",
+      "fees": "0",
+      "pnl": "-0.956596191168597",
+      "reason": "kill_switch"
+    },
+    {
+      "symbol": "MRVL",
+      "entry_session": "2026-11-19",
+      "exit_session": "2026-11-23",
+      "qty": "0.111720893",
+      "entry_price": "153.06",
+      "exit_price": "141.422",
+      "fees": "0",
+      "pnl": "-1.300207752734",
+      "reason": "kill_switch"
+    },
+    {
+      "symbol": "MU",
+      "entry_session": "2026-11-20",
+      "exit_session": "2026-11-23",
+      "qty": "0.024108637",
+      "entry_price": "639.19",
+      "exit_price": "676.822",
+      "fees": "0",
+      "pnl": "0.907256227584",
+      "reason": "kill_switch"
+    },
+    {
+      "symbol": "UNH",
+      "entry_session": "2026-11-20",
+      "exit_session": "2026-11-23",
+      "qty": "0.045290493",
+      "entry_price": "340.248",
+      "exit_price": "327.268",
+      "fees": "0",
+      "pnl": "-0.587870599140",
+      "reason": "kill_switch"
     }
   ],
   "open_orders": [],
@@ -643,9 +603,9 @@
         }
       }
     ],
-    "cost_drag": "1.440451491326160821",
+    "cost_drag": "1.530287123498226821",
     "trades_closed": 0,
-    "pending_trades": 0,
+    "pending_trades": 5,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
