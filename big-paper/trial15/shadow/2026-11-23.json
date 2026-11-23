@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-23",
+ "version": "t15-learn-20261112",
+ "picks": [
+  "ADI",
+  "AMD",
+  "VRT",
+  "NXT",
+  "BE"
+ ],
+ "sha256": "24e30c9e0ec7fcba46620abcaf515266642eb5d3c67608270ddd3bc674bed705",
+ "locked_at": "2026-11-23T14:04:27.704762+00:00"
+}

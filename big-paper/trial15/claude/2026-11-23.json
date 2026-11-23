@@ -1,0 +1,97 @@
+{
+ "status": "read",
+ "note": "31 new, 0 failed",
+ "spent_usd": 0.004126025,
+ "by_symbol": {
+  "AMD": {
+   "sentiment": -0.2,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "ASML": {
+   "sentiment": -0.4,
+   "materiality": 0.5,
+   "items": 1.0
+  },
+  "BE": {
+   "sentiment": 0.1,
+   "materiality": 0.05,
+   "items": 1.0
+  },
+  "CAT": {
+   "sentiment": 0.15000000000000002,
+   "materiality": 0.2,
+   "items": 2.0
+  },
+  "CBRS": {
+   "sentiment": -0.1,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "CEG": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 2.0
+  },
+  "COIN": {
+   "sentiment": 0.13333333333333333,
+   "materiality": 0.2833333333333334,
+   "items": 3.0
+  },
+  "CRCL": {
+   "sentiment": 0.1,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "GEV": {
+   "sentiment": 0.25,
+   "materiality": 0.15000000000000002,
+   "items": 2.0
+  },
+  "GS": {
+   "sentiment": 0.0,
+   "materiality": 0.125,
+   "items": 4.0
+  },
+  "HOOD": {
+   "sentiment": -0.1,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "INTC": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "LITE": {
+   "sentiment": 0.0,
+   "materiality": 0.6,
+   "items": 1.0
+  },
+  "ON": {
+   "sentiment": 0.1,
+   "materiality": 0.15000000000000002,
+   "items": 2.0
+  },
+  "ORCL": {
+   "sentiment": 0.125,
+   "materiality": 0.47500000000000003,
+   "items": 4.0
+  },
+  "PLTR": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 2.0
+  },
+  "SHOP": {
+   "sentiment": 0.3,
+   "materiality": 0.35,
+   "items": 1.0
+  },
+  "TSM": {
+   "sentiment": 0.0,
+   "materiality": 0.3,
+   "items": 1.0
+  }
+ }
+}
