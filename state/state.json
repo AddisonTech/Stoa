@@ -13,9 +13,9 @@
     "equity": "100",
     "benchmark_close": "759.97"
   },
-  "last_close_session": "2026-11-20",
-  "last_close_equity": "74.46462962958",
-  "last_benchmark_close": "689.81",
+  "last_close_session": "2026-11-23",
+  "last_close_equity": "82.16",
+  "last_benchmark_close": "722.29",
   "decided_sessions": [
     "2026-10-23",
     "2026-10-26",
@@ -37,7 +37,8 @@
     "2026-11-17",
     "2026-11-18",
     "2026-11-19",
-    "2026-11-20"
+    "2026-11-20",
+    "2026-11-23"
   ],
   "executed_sessions": [
     "2026-10-26",
@@ -601,11 +602,24 @@
         "reference_closes": {
           "MTUM": "60.27"
         }
+      },
+      {
+        "session": "2026-11-23",
+        "mode": "paper",
+        "broker_equity": "82.16",
+        "adjusted_equity": "80.629712876501773179",
+        "benchmark_close": "722.29",
+        "trades_closed": 5,
+        "flow": "0",
+        "strategy": "mirror_trial15",
+        "reference_closes": {
+          "MTUM": "63.94"
+        }
       }
     ],
     "cost_drag": "1.530287123498226821",
     "trades_closed": 0,
-    "pending_trades": 5,
+    "pending_trades": 0,
     "last_strategy": "mirror_trial15",
     "expectation": null,
     "fallback_active": false,
@@ -618,30 +632,9 @@
   "approval_required": false,
   "protective_stops": [],
   "stop_outs": [],
-  "holdings_at_close": {
-    "AMD": {
-      "qty": "0.033279487",
-      "close": "424.39"
-    },
-    "CRWV": {
-      "qty": "0.365606619",
-      "close": "39.51"
-    },
-    "MRVL": {
-      "qty": "0.111720893",
-      "close": "122.28"
-    },
-    "MU": {
-      "qty": "0.024108637",
-      "close": "594.51"
-    },
-    "UNH": {
-      "qty": "0.045290493",
-      "close": "339.85"
-    }
-  },
+  "holdings_at_close": {},
   "last_reference_closes": {
-    "MTUM": "60.27"
+    "MTUM": "63.94"
   },
   "cap_raises": [],
   "cap_asks": [],
