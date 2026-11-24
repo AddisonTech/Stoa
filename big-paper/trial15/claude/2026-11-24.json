@@ -1,0 +1,72 @@
+{
+ "status": "read",
+ "note": "16 new, 0 failed",
+ "spent_usd": 0.001991075,
+ "by_symbol": {
+  "AAOI": {
+   "sentiment": 0.6,
+   "materiality": 0.6,
+   "items": 1.0
+  },
+  "APLD": {
+   "sentiment": 0.39999999999999997,
+   "materiality": 0.65,
+   "items": 2.0
+  },
+  "ASX": {
+   "sentiment": 0.4,
+   "materiality": 0.35,
+   "items": 1.0
+  },
+  "BE": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "CRWD": {
+   "sentiment": 0.2,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "CRWV": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "HUM": {
+   "sentiment": -0.05000000000000002,
+   "materiality": 0.4,
+   "items": 2.0
+  },
+  "INOD": {
+   "sentiment": 0.3,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "LRCX": {
+   "sentiment": 0.3,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "PENG": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "TER": {
+   "sentiment": 0.3,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "TTMI": {
+   "sentiment": 0.2,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "UNH": {
+   "sentiment": -0.4,
+   "materiality": 0.625,
+   "items": 2.0
+  }
+ }
+}

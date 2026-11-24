@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-24",
+ "version": "t15-learn-20261112",
+ "picks": [
+  "GOOG",
+  "PBF",
+  "CW",
+  "ATI",
+  "WING"
+ ],
+ "sha256": "fe451dab45c6491513612f0cc5d501d2d9462a1dbc5b3ddaaadae907ad266fad",
+ "locked_at": "2026-11-24T14:04:13.938152+00:00"
+}
