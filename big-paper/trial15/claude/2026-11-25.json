@@ -1,0 +1,72 @@
+{
+ "status": "read",
+ "note": "16 new, 0 failed",
+ "spent_usd": 0.002173175,
+ "by_symbol": {
+  "BMNR": {
+   "sentiment": 0.2,
+   "materiality": 0.3,
+   "items": 1.0
+  },
+  "COHR": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "CRCL": {
+   "sentiment": 0.1,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "FCX": {
+   "sentiment": 0.05,
+   "materiality": 0.30000000000000004,
+   "items": 2.0
+  },
+  "LRCX": {
+   "sentiment": 0.3,
+   "materiality": 0.35,
+   "items": 1.0
+  },
+  "MRVL": {
+   "sentiment": 0.20000000000000004,
+   "materiality": 0.18333333333333335,
+   "items": 3.0
+  },
+  "MU": {
+   "sentiment": -0.2,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "NBIS": {
+   "sentiment": -0.4,
+   "materiality": 0.5,
+   "items": 1.0
+  },
+  "NXT": {
+   "sentiment": -0.5,
+   "materiality": 0.6,
+   "items": 1.0
+  },
+  "ORCL": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "SNDK": {
+   "sentiment": 0.0,
+   "materiality": 0.2,
+   "items": 1.0
+  },
+  "STX": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "VRT": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  }
+ }
+}

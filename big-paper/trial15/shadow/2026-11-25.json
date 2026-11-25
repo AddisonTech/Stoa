@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-25",
+ "version": "t15-learn-20261112",
+ "picks": [
+  "CIEN",
+  "STM",
+  "SNDK",
+  "MSTR",
+  "COHR"
+ ],
+ "sha256": "6acdcd48b0ebf8fb30a1be9509358f75545916c8d63ace4d5733dca9281d0af5",
+ "locked_at": "2026-11-25T14:03:50.997881+00:00"
+}
