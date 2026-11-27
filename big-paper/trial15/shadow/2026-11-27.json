@@ -1,0 +1,13 @@
+{
+ "session": "2026-11-27",
+ "version": "t15-learn-20261112",
+ "picks": [
+  "AMBA",
+  "MU",
+  "ORCL",
+  "SNDK",
+  "GOOG"
+ ],
+ "sha256": "641bea94f17d10c5a2eada853987f200e808fe9912dd437bf5f010c396015e28",
+ "locked_at": "2026-11-27T14:03:40.439847+00:00"
+}

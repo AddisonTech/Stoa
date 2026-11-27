@@ -1,0 +1,87 @@
+{
+ "status": "read",
+ "note": "27 new, 0 failed",
+ "spent_usd": 0.002874505,
+ "by_symbol": {
+  "AAOI": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "AMAT": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "AMZN": {
+   "sentiment": -0.01428571428571429,
+   "materiality": 0.32857142857142857,
+   "items": 7.0
+  },
+  "ANET": {
+   "sentiment": 0.5,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "BE": {
+   "sentiment": 0.1,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "CLS": {
+   "sentiment": 0.4,
+   "materiality": 0.35,
+   "items": 2.0
+  },
+  "CRWD": {
+   "sentiment": 0.1,
+   "materiality": 0.2,
+   "items": 2.0
+  },
+  "CRWV": {
+   "sentiment": -0.09999999999999998,
+   "materiality": 0.6,
+   "items": 2.0
+  },
+  "FORM": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "GEV": {
+   "sentiment": 0.3,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "IBRX": {
+   "sentiment": -0.5,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "INTU": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  },
+  "MU": {
+   "sentiment": 0.3,
+   "materiality": 0.3,
+   "items": 2.0
+  },
+  "NBIS": {
+   "sentiment": 0.4,
+   "materiality": 0.4,
+   "items": 1.0
+  },
+  "ORCL": {
+   "sentiment": -0.15,
+   "materiality": 0.2,
+   "items": 2.0
+  },
+  "SNDK": {
+   "sentiment": 0.0,
+   "materiality": 0.1,
+   "items": 1.0
+  }
+ }
+}
